@@ -17,6 +17,68 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>PVE直通硬盘</title>
+    <link href="http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/"/>
+    <id>http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/</id>
+    <published>2020-05-19T12:36:11.000Z</published>
+    <updated>2020-05-25T08:35:28.000Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h3 id=&quot;进入pve-shell-查看硬盘识别符：&quot;&gt;&lt;a href=&quot;#进入pve-shell-查看硬盘识别符：&quot; class=&quot;headerlink&quot; title=&quot;进入pve shell 查看硬盘识别符：&quot;&gt;&lt;/a&gt;进入pve shell
+        
+      
+    
+    </summary>
+    
+    
+      <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
+    
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
+    
+      <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>PVE上安装黑裙辉6.2</title>
+    <link href="http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/"/>
+    <id>http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/</id>
+    <published>2020-05-19T12:36:11.000Z</published>
+    <updated>2020-08-14T01:33:06.161Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h3 id=&quot;PVE上安装黑裙辉6-2&quot;&gt;&lt;a href=&quot;#PVE上安装黑裙辉6-2&quot; class=&quot;headerlink&quot; title=&quot;PVE上安装黑裙辉6.2&quot;&gt;&lt;/a&gt;PVE上安装黑裙辉6.2&lt;/h3&gt;&lt;p&gt;参考文章：&lt;br&gt;&lt;a
+        
+      
+    
+    </summary>
+    
+    
+      <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
+    
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
+    
+      <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+  </entry>
+  
+  <entry>
     <title>Git分支保存hexo博客源码</title>
     <link href="http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/"/>
     <id>http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/</id>
@@ -48,11 +110,11 @@
   </entry>
   
   <entry>
-    <title>PVE直通硬盘</title>
-    <link href="http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/"/>
-    <id>http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/</id>
+    <title>Git分支保存hexo博客源码</title>
+    <link href="http://zqh2333.github.io/2020/05/19/qun-hui-docker-she-zhi-guo-nei-jing-xiang/"/>
+    <id>http://zqh2333.github.io/2020/05/19/qun-hui-docker-she-zhi-guo-nei-jing-xiang/</id>
     <published>2020-05-19T12:36:11.000Z</published>
-    <updated>2020-05-25T08:35:28.000Z</updated>
+    <updated>2020-08-16T16:23:42.924Z</updated>
     
     <summary type="html">
     
@@ -60,7 +122,8 @@
       
         
         
-          &lt;h3 id=&quot;进入pve-shell-查看硬盘识别符：&quot;&gt;&lt;a href=&quot;#进入pve-shell-查看硬盘识别符：&quot; class=&quot;headerlink&quot; title=&quot;进入pve shell 查看硬盘识别符：&quot;&gt;&lt;/a&gt;进入pve shell
+          &lt;p&gt;&lt;strong&gt;一、打开Docker，注册表-设置-Docker Hub-编辑&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://cdn.rixin.info/2020/08/2029fb81cec128d73b4699162b2f17c5.jpg&quot;
         
       
     
@@ -70,11 +133,11 @@
       <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
     
     
-      <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
     
-      <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
+      <category term="群晖" scheme="http://zqh2333.github.io/tags/%E7%BE%A4%E6%99%96/"/>
     
-      <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+      <category term="ftp" scheme="http://zqh2333.github.io/tags/ftp/"/>
     
   </entry>
   
@@ -111,37 +174,6 @@
       <category term="群晖" scheme="http://zqh2333.github.io/tags/%E7%BE%A4%E6%99%96/"/>
     
       <category term="ftp" scheme="http://zqh2333.github.io/tags/ftp/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>PVE上安装黑裙辉6.2</title>
-    <link href="http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/"/>
-    <id>http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/</id>
-    <published>2020-05-19T12:36:11.000Z</published>
-    <updated>2020-08-14T01:33:06.161Z</updated>
-    
-    <summary type="html">
-    
-      
-      
-        
-        
-          &lt;h3 id=&quot;PVE上安装黑裙辉6-2&quot;&gt;&lt;a href=&quot;#PVE上安装黑裙辉6-2&quot; class=&quot;headerlink&quot; title=&quot;PVE上安装黑裙辉6.2&quot;&gt;&lt;/a&gt;PVE上安装黑裙辉6.2&lt;/h3&gt;&lt;p&gt;参考文章：&lt;br&gt;&lt;a
-        
-      
-    
-    </summary>
-    
-    
-      <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
-    
-    
-      <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
-    
-      <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
-    
-      <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
     
   </entry>
   
