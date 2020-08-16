@@ -17,29 +17,6 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>Hello World</title>
-    <link href="http://zqh2333.github.io/2020/08/14/hello-world/"/>
-    <id>http://zqh2333.github.io/2020/08/14/hello-world/</id>
-    <published>2020-08-14T00:50:13.828Z</published>
-    <updated>2020-05-25T08:35:28.000Z</updated>
-    
-    <summary type="html">
-    
-      
-      
-        
-        
-          &lt;p&gt;Welcome to &lt;a href=&quot;https://hexo.io/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Hexo&lt;/a&gt;! This is your very first post. Check &lt;a
-        
-      
-    
-    </summary>
-    
-    
-    
-  </entry>
-  
-  <entry>
     <title>Git分支保存hexo博客源码</title>
     <link href="http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/"/>
     <id>http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/</id>
@@ -98,6 +75,42 @@
       <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
     
       <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Git分支保存hexo博客源码</title>
+    <link href="http://zqh2333.github.io/2020/05/19/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/"/>
+    <id>http://zqh2333.github.io/2020/05/19/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/</id>
+    <published>2020-05-19T12:36:11.000Z</published>
+    <updated>2020-08-16T14:53:34.622Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;ol&gt;
+&lt;li&gt;&lt;p&gt;在控制面板中开启 ssh 登录&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;通过有 管理员权限的用户登录&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入
+        
+      
+    
+    </summary>
+    
+    
+      <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
+    
+    
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/tags/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="ftp" scheme="http://zqh2333.github.io/tags/ftp/"/>
     
   </entry>
   
