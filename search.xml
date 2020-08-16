@@ -4,11 +4,11 @@
   
     
     <entry>
-      <title>PVE直通硬盘</title>
-      <link href="/2020/05/19/pve-zhi-tong-ying-pan/"/>
-      <url>/2020/05/19/pve-zhi-tong-ying-pan/</url>
+      <title>群晖docker设置国内镜像</title>
+      <link href="/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/"/>
+      <url>/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/</url>
       
-        <content type="html"><![CDATA[<h3 id="进入pve-shell-查看硬盘识别符："><a href="#进入pve-shell-查看硬盘识别符：" class="headerlink" title="进入pve shell 查看硬盘识别符："></a>进入pve shell 查看硬盘识别符：</h3><pre><code> ls -l /dev/disk/by-id/ # 查看硬盘识别符</code></pre><h2 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h2><p> 输入如下命令：</p><pre><code> qm set 107 --sata1 /dev/disk/by-id/ata-ST2000VX008-2E3164_Z528F9AK # 107为直通虚拟机 ata-ST2000VX008-2E3164_Z528F9AK为硬盘识别符 </code></pre><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
+        <content type="html"><![CDATA[<p><strong>一、打开Docker，注册表-设置-Docker Hub-编辑</strong></p><p><a href="https://cdn.rixin.info/2020/08/2029fb81cec128d73b4699162b2f17c5.jpg" target="_blank" rel="noopener"><img src="/medias/loading.gif" data-original="https://cdn.rixin.info/2020/08/2029fb81cec128d73b4699162b2f17c5.jpg" alt="群晖Docker设置阿里云国内镜像加速教程"></a></p><p>二、启用注册表镜像打勾，在注册表镜像URL处填写：</p><pre><code>https:``//gcislbr9.mirror.aliyuncs.com</code></pre><p><a href="https://cdn.rixin.info/2020/08/85520921086d783b01c336fcb9435d56.jpg" target="_blank" rel="noopener"><img src="/medias/loading.gif" data-original="https://cdn.rixin.info/2020/08/85520921086d783b01c336fcb9435d56.jpg" alt="群晖Docker设置阿里云国内镜像加速教程"></a></p><p>以上的镜像如果有问题，可以试下面的地址：</p><pre><code>https:``//ay0r3phx.mirror.aliyuncs.com</code></pre><p>三、点确认后重启<strong><a href="https://www.rixin.info/tags/群晖" target="_blank" rel="noopener">群晖</a></strong>。重启后你再下载一个Docker镜像试一下，感受一下快感吧！</p><p>我现在还有许多Docker容器需要重新安装了，以后大家一定要做好备份。</p><h4 id="国内加速地址"><a href="#国内加速地址" class="headerlink" title="国内加速地址"></a>国内加速地址</h4><ul><li>Docker中国区官方镜像<br><a href="https://registry.docker-cn.com" target="_blank" rel="noopener">https://registry.docker-cn.com</a></li><li>网易<br><a href="http://hub-mirror.c.163.com" target="_blank" rel="noopener">http://hub-mirror.c.163.com</a></li><li>ustc<br><a href="https://docker.mirrors.ustc.edu.cn" target="_blank" rel="noopener">https://docker.mirrors.ustc.edu.cn</a></li><li>中国科技大学<br><a href="https://docker.mirrors.ustc.edu.cn" target="_blank" rel="noopener">https://docker.mirrors.ustc.edu.cn</a></li><li>阿里云容器 服务<br><a href="https://cr.console.aliyun.com/" target="_blank" rel="noopener">https://cr.console.aliyun.com/</a><br>首页点击“创建我的容器镜像” 得到一个专属的镜像加速地址，类似于“<a href="https://1234abcd.mirror.aliyuncs.com”" target="_blank" rel="noopener">https://1234abcd.mirror.aliyuncs.com”</a></li></ul><h6 id=""><a href="#" class="headerlink" title=""></a></h6><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
       
       
       <categories>
@@ -20,11 +20,40 @@
       
         <tags>
             
-            <tag> PVE </tag>
+            <tag> Github </tag>
             
-            <tag> 直通 </tag>
+            <tag> 群晖 </tag>
             
-            <tag> 虚拟机 </tag>
+            <tag> ftp </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>群晖采用root用户登录ftp</title>
+      <link href="/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/"/>
+      <url>/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/</url>
+      
+        <content type="html"><![CDATA[<ol><li><p>在控制面板中开启 ssh 登录</p></li><li><p>通过有 管理员权限的用户登录</p></li><li><p>通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入 root</p></li><li><p>输入如下命令可以修改root 用户的密码 </p><pre class="line-numbers language-bash"><code class="language-bash">synouser --setpw root 123456 <span class="token comment" spellcheck="true">#(123456为密码)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li></ol><ol start="5"><li><p>如果通过ssh登录不进去, 需要去开启</p></li><li><p>进入文件 <code>vi /etc/ssh/sshd_config</code> 搜索文件 “PermitRootLogin” 更改为 yes, 或者 打开注释(如果是注释掉的话)</p></li><li><p>重启 ssh 服务, 在此群晖中没有找到合适的命令, 可以通过网页中的控制面板禁用,启用服务生效.</p></li></ol><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
+      
+      
+      <categories>
+          
+          <category> 软件安装与配置 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> Github </tag>
+            
+            <tag> 群晖 </tag>
+            
+            <tag> ftp </tag>
             
         </tags>
       
@@ -91,40 +120,11 @@
     
     
     <entry>
-      <title>Git分支保存hexo博客源码</title>
-      <link href="/2020/05/19/qun-hui-docker-she-zhi-guo-nei-jing-xiang/"/>
-      <url>/2020/05/19/qun-hui-docker-she-zhi-guo-nei-jing-xiang/</url>
+      <title>PVE直通硬盘</title>
+      <link href="/2020/05/19/pve-zhi-tong-ying-pan/"/>
+      <url>/2020/05/19/pve-zhi-tong-ying-pan/</url>
       
-        <content type="html"><![CDATA[<p><strong>一、打开Docker，注册表-设置-Docker Hub-编辑</strong></p><p><a href="https://cdn.rixin.info/2020/08/2029fb81cec128d73b4699162b2f17c5.jpg" target="_blank" rel="noopener"><img src="/medias/loading.gif" data-original="https://cdn.rixin.info/2020/08/2029fb81cec128d73b4699162b2f17c5.jpg" alt="群晖Docker设置阿里云国内镜像加速教程"></a></p><p>二、启用注册表镜像打勾，在注册表镜像URL处填写：</p><pre><code>https:``//gcislbr9.mirror.aliyuncs.com</code></pre><p><a href="https://cdn.rixin.info/2020/08/85520921086d783b01c336fcb9435d56.jpg" target="_blank" rel="noopener"><img src="/medias/loading.gif" data-original="https://cdn.rixin.info/2020/08/85520921086d783b01c336fcb9435d56.jpg" alt="群晖Docker设置阿里云国内镜像加速教程"></a></p><p>以上的镜像如果有问题，可以试下面的地址：</p><pre><code>https:``//ay0r3phx.mirror.aliyuncs.com</code></pre><p>三、点确认后重启<strong><a href="https://www.rixin.info/tags/群晖" target="_blank" rel="noopener">群晖</a></strong>。重启后你再下载一个Docker镜像试一下，感受一下快感吧！</p><p>我现在还有许多Docker容器需要重新安装了，以后大家一定要做好备份。</p><h4 id="国内加速地址"><a href="#国内加速地址" class="headerlink" title="国内加速地址"></a>国内加速地址</h4><ul><li>Docker中国区官方镜像<br><a href="https://registry.docker-cn.com" target="_blank" rel="noopener">https://registry.docker-cn.com</a></li><li>网易<br><a href="http://hub-mirror.c.163.com" target="_blank" rel="noopener">http://hub-mirror.c.163.com</a></li><li>ustc<br><a href="https://docker.mirrors.ustc.edu.cn" target="_blank" rel="noopener">https://docker.mirrors.ustc.edu.cn</a></li><li>中国科技大学<br><a href="https://docker.mirrors.ustc.edu.cn" target="_blank" rel="noopener">https://docker.mirrors.ustc.edu.cn</a></li><li>阿里云容器 服务<br><a href="https://cr.console.aliyun.com/" target="_blank" rel="noopener">https://cr.console.aliyun.com/</a><br>首页点击“创建我的容器镜像” 得到一个专属的镜像加速地址，类似于“<a href="https://1234abcd.mirror.aliyuncs.com”" target="_blank" rel="noopener">https://1234abcd.mirror.aliyuncs.com”</a></li></ul><h6 id=""><a href="#" class="headerlink" title=""></a></h6><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
-      
-      
-      <categories>
-          
-          <category> 软件安装与配置 </category>
-          
-      </categories>
-      
-      
-        <tags>
-            
-            <tag> Github </tag>
-            
-            <tag> 群晖 </tag>
-            
-            <tag> ftp </tag>
-            
-        </tags>
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title>Git分支保存hexo博客源码</title>
-      <link href="/2020/05/19/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/"/>
-      <url>/2020/05/19/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/</url>
-      
-        <content type="html"><![CDATA[<ol><li><p>在控制面板中开启 ssh 登录</p></li><li><p>通过有 管理员权限的用户登录</p></li><li><p>通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入 root</p></li><li><p>输入如下命令可以修改root 用户的密码 </p><pre><code>synouser --setpw root 123456 #(123456为密码)</code></pre></li></ol><ol start="5"><li><p>如果通过ssh登录不进去, 需要去开启</p></li><li><p>进入文件 <code>vi /etc/ssh/sshd_config</code> 搜索文件 “PermitRootLogin” 更改为 yes, 或者 打开注释(如果是注释掉的话)</p></li><li><p>重启 ssh 服务, 在此群晖中没有找到合适的命令, 可以通过网页中的控制面板禁用,启用服务生效.</p></li></ol><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
+        <content type="html"><![CDATA[<h3 id="进入pve-shell-查看硬盘识别符："><a href="#进入pve-shell-查看硬盘识别符：" class="headerlink" title="进入pve shell 查看硬盘识别符："></a>进入pve shell 查看硬盘识别符：</h3><pre><code> ls -l /dev/disk/by-id/ # 查看硬盘识别符</code></pre><h2 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h2><p> 输入如下命令：</p><pre><code> qm set 107 --sata1 /dev/disk/by-id/ata-ST2000VX008-2E3164_Z528F9AK # 107为直通虚拟机 ata-ST2000VX008-2E3164_Z528F9AK为硬盘识别符 </code></pre><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
       
       
       <categories>
@@ -136,11 +136,11 @@
       
         <tags>
             
-            <tag> Github </tag>
+            <tag> PVE </tag>
             
-            <tag> 群晖 </tag>
+            <tag> 直通 </tag>
             
-            <tag> ftp </tag>
+            <tag> 虚拟机 </tag>
             
         </tags>
       
