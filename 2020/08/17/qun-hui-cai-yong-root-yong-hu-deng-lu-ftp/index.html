@@ -1,5 +1,6 @@
 <!DOCTYPE HTML>
 <html lang="zh-CN">
+<!-- 加载动画  Qihong add 2019.09.11 -->
 
 
 <head>
@@ -166,10 +167,7 @@
 })()
 </script>
 
-来源: 张小菜苔
-文章作者: Small Rose / 张小菜苔
-文章链接: https://zhangxiaocai.cn/posts/7496029d.html
-本文章著作权归作者所有，任何形式的转载都请注明出处。
+
  
 <body>
     
@@ -1170,34 +1168,38 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
-                <a href="/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/">
+                <a href="/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="群晖docker设置国内镜像">
+                        <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="群晖采用root用户登录ftp">
                         
-                        <span class="card-title">群晖docker设置国内镜像</span>
+                        <span class="card-title">群晖采用root用户登录ftp</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            一、打开Docker，注册表-设置-Docker Hub-编辑
+                            
+在控制面板中开启 ssh 登录
 
-二、启用注册表镜像打勾，在注册表镜像URL处填写：
-https:``//gcislbr9.mirror.aliyuncs.com
-以上的镜像如果有问题，可以试下面的地址：
-h
+通过有 管理员权限的用户登录
+
+通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入 root
+
+输入如下命令可以修改root 用户的密码 
+synouser --setp
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2020-08-17
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2020-08-17
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -1218,6 +1220,7 @@ h
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -1244,37 +1247,44 @@ h
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2020/06/17/win10-da-jian-hexo/">
+                <a href="/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="WIN10搭建hexo">
+                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="群晖docker设置国内镜像">
                         
-                        <span class="card-title">WIN10搭建hexo</span>
+                        <span class="card-title">群晖docker设置国内镜像</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            注意，这篇文章篇幅较长，主要针对新手，每一步很详细，所以可能会显得比较啰嗦，所以建议基础比较好小伙伴根据目录选择自己感兴趣的部分跳着看，不要文章没看，上来先喷一下！谢谢( ⊙ o ⊙ )。教程内容随意复制使用，引用的话请加一个参考链接。
+                            一、打开Docker，注册表-设置-Docker Hub-编辑
 
-
+二、启用注册表镜像打勾，在注册表镜像URL处填写：
+https:``//gcislbr9.mirror.aliyuncs.com
+以上的镜像如果有问题，可以试下面的地址：
+h
                         
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2020-06-17
+                                <i class="far fa-clock fa-fw icon-date"></i>2020-08-17
                             </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/hexo/" class="post-category">
-                                    hexo
+                            <a href="/categories/%E7%BE%A4%E6%99%96/" class="post-category">
+                                    群晖
                                 </a>
                             
-                            <a href="/categories/hexo/Github/" class="post-category">
+                            <a href="/categories/%E7%BE%A4%E6%99%96/Github/" class="post-category">
                                     Github
+                                </a>
+                            
+                            <a href="/categories/%E7%BE%A4%E6%99%96/Github/ftp/" class="post-category">
+                                    ftp
                                 </a>
                             
                             
@@ -1737,11 +1747,11 @@ $(function () {
 
 
 
-<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.9}});</script><script>
+<script>
             window.imageLazyLoadSetting = {
                 isSPA: false,
                 processImages: null,
             };
-        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(n){n.imageLazyLoadSetting.processImages=o;var i=n.imageLazyLoadSetting.isSPA,r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]"));function o(){i&&(r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")));for(var t,e,a=0;a<r.length;a++)t=r[a],0<=(e=t.getBoundingClientRect()).bottom&&0<=e.left&&e.top<=(n.innerHeight||document.documentElement.clientHeight)&&function(){var t,e,n,i,o=r[a];t=o,e=function(){r=r.filter(function(t){return o!==t})},n=new Image,i=t.getAttribute("data-original"),n.onload=function(){t.src=i,e&&e()},n.src=i}()}o(),n.addEventListener("scroll",function(){var t,e;t=o,e=n,clearTimeout(t.tId),t.tId=setTimeout(function(){t.call(e)},500)})}(this);</script></body>
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(n){n.imageLazyLoadSetting.processImages=o;var i=n.imageLazyLoadSetting.isSPA,r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]"));function o(){i&&(r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")));for(var t,e,a=0;a<r.length;a++)t=r[a],0<=(e=t.getBoundingClientRect()).bottom&&0<=e.left&&e.top<=(n.innerHeight||document.documentElement.clientHeight)&&function(){var t,e,n,i,o=r[a];t=o,e=function(){r=r.filter(function(t){return o!==t})},n=new Image,i=t.getAttribute("data-original"),n.onload=function(){t.src=i,e&&e()},n.src=i}()}o(),n.addEventListener("scroll",function(){var t,e;t=o,e=n,clearTimeout(t.tId),t.tId=setTimeout(function(){t.call(e)},500)})}(this);</script><script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.9}});</script></body>
 
 </html>

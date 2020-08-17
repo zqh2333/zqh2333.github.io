@@ -1,5 +1,6 @@
 <!DOCTYPE HTML>
 <html lang="zh-CN">
+<!-- 加载动画  Qihong add 2019.09.11 -->
 
 
 <head>
@@ -166,10 +167,7 @@
 })()
 </script>
 
-来源: 张小菜苔
-文章作者: Small Rose / 张小菜苔
-文章链接: https://zhangxiaocai.cn/posts/7496029d.html
-本文章著作权归作者所有，任何形式的转载都请注明出处。
+
  
 <body>
     
@@ -1254,23 +1252,21 @@
             <div class="article-badge left-badge text-color">
                 <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2020/05/19/pve-an-zhuang-hei-qun/">
+                <a href="/2020/05/19/pve-zhi-tong-ying-pan/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/16.jpg" class="responsive-img" alt="PVE上安装黑裙辉6.2">
+                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="PVE直通硬盘">
                         
-                        <span class="card-title">PVE上安装黑裙辉6.2</span>
+                        <span class="card-title">PVE直通硬盘</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            PVE上安装黑裙辉6.2参考文章：https://post.smzdm.com/p/a25r8mo2/
-http://www.myxzy.com/post-488.html
-环境介绍
-1、Proxmox VE（以下简称PVE） 
-2、黑群晖
+                            进入pve shell 查看硬盘识别符： ls -l /dev/disk/by-id/ # 查看硬盘识别符
+后续 输入如下命令：
+ qm set 107 --sata1 /dev/disk/by-id/ata-ST2000VX008-2E3
                         
                     </div>
                     <div class="publish-info">
@@ -1281,15 +1277,15 @@ http://www.myxzy.com/post-488.html
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/%E7%BE%A4%E6%99%96/" class="post-category">
-                                    群晖
-                                </a>
-                            
-                            <a href="/categories/%E7%BE%A4%E6%99%96/PVE/" class="post-category">
+                            <a href="/categories/PVE/" class="post-category">
                                     PVE
                                 </a>
                             
-                            <a href="/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
+                            <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/" class="post-category">
+                                    直通
+                                </a>
+                            
+                            <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
                                     虚拟机
                                 </a>
                             
@@ -1811,11 +1807,11 @@ $(function () {
 
 
 
-<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.9}});</script><script>
+<script>
             window.imageLazyLoadSetting = {
                 isSPA: false,
                 processImages: null,
             };
-        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(n){n.imageLazyLoadSetting.processImages=o;var i=n.imageLazyLoadSetting.isSPA,r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]"));function o(){i&&(r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")));for(var t,e,a=0;a<r.length;a++)t=r[a],0<=(e=t.getBoundingClientRect()).bottom&&0<=e.left&&e.top<=(n.innerHeight||document.documentElement.clientHeight)&&function(){var t,e,n,i,o=r[a];t=o,e=function(){r=r.filter(function(t){return o!==t})},n=new Image,i=t.getAttribute("data-original"),n.onload=function(){t.src=i,e&&e()},n.src=i}()}o(),n.addEventListener("scroll",function(){var t,e;t=o,e=n,clearTimeout(t.tId),t.tId=setTimeout(function(){t.call(e)},500)})}(this);</script></body>
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(n){n.imageLazyLoadSetting.processImages=o;var i=n.imageLazyLoadSetting.isSPA,r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]"));function o(){i&&(r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")));for(var t,e,a=0;a<r.length;a++)t=r[a],0<=(e=t.getBoundingClientRect()).bottom&&0<=e.left&&e.top<=(n.innerHeight||document.documentElement.clientHeight)&&function(){var t,e,n,i,o=r[a];t=o,e=function(){r=r.filter(function(t){return o!==t})},n=new Image,i=t.getAttribute("data-original"),n.onload=function(){t.src=i,e&&e()},n.src=i}()}o(),n.addEventListener("scroll",function(){var t,e;t=o,e=n,clearTimeout(t.tId),t.tId=setTimeout(function(){t.call(e)},500)})}(this);</script><script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.9}});</script></body>
 
 </html>
