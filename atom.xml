@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://zqh2333.github.io/"/>
-  <updated>2020-08-17T05:41:47.240Z</updated>
+  <updated>2020-08-17T05:41:35.684Z</updated>
   <id>http://zqh2333.github.io/</id>
   
   <author>
@@ -17,11 +17,11 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>群晖采用root用户登录ftp</title>
-    <link href="http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/"/>
-    <id>http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/</id>
+    <title>群晖docker设置国内镜像</title>
+    <link href="http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/"/>
+    <id>http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/</id>
     <published>2020-08-17T12:36:11.000Z</published>
-    <updated>2020-08-17T05:41:47.240Z</updated>
+    <updated>2020-08-17T05:41:35.684Z</updated>
     
     <summary type="html">
     
@@ -29,12 +29,8 @@
       
         
         
-          &lt;ol&gt;
-&lt;li&gt;&lt;p&gt;在控制面板中开启 ssh 登录&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;通过有 管理员权限的用户登录&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入
+          &lt;p&gt;&lt;strong&gt;一、打开Docker，注册表-设置-Docker Hub-编辑&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://cdn.rixin.info/2020/08/2029fb81cec128d73b4699162b2f17c5.jpg&quot;
         
       
     
@@ -57,11 +53,11 @@
   </entry>
   
   <entry>
-    <title>群晖docker设置国内镜像</title>
-    <link href="http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/"/>
-    <id>http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/</id>
+    <title>群晖采用root用户登录ftp</title>
+    <link href="http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/"/>
+    <id>http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/</id>
     <published>2020-08-17T12:36:11.000Z</published>
-    <updated>2020-08-17T05:41:35.684Z</updated>
+    <updated>2020-08-17T05:41:47.240Z</updated>
     
     <summary type="html">
     
@@ -69,8 +65,12 @@
       
         
         
-          &lt;p&gt;&lt;strong&gt;一、打开Docker，注册表-设置-Docker Hub-编辑&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://cdn.rixin.info/2020/08/2029fb81cec128d73b4699162b2f17c5.jpg&quot;
+          &lt;ol&gt;
+&lt;li&gt;&lt;p&gt;在控制面板中开启 ssh 登录&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;通过有 管理员权限的用户登录&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入
         
       
     
