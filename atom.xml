@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://zqh2333.github.io/"/>
-  <updated>2020-08-16T17:37:02.148Z</updated>
+  <updated>2020-08-17T05:41:35.684Z</updated>
   <id>http://zqh2333.github.io/</id>
   
   <author>
@@ -21,7 +21,7 @@
     <link href="http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/"/>
     <id>http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/</id>
     <published>2020-08-17T12:36:11.000Z</published>
-    <updated>2020-08-16T17:37:02.148Z</updated>
+    <updated>2020-08-17T05:41:35.684Z</updated>
     
     <summary type="html">
     
@@ -37,7 +37,11 @@
     </summary>
     
     
-      <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
+      <category term="群晖" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/"/>
+    
+      <category term="ftp" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/ftp/"/>
     
     
       <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
@@ -53,7 +57,7 @@
     <link href="http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/"/>
     <id>http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/</id>
     <published>2020-08-17T12:36:11.000Z</published>
-    <updated>2020-08-16T17:38:00.224Z</updated>
+    <updated>2020-08-17T05:41:47.240Z</updated>
     
     <summary type="html">
     
@@ -73,7 +77,11 @@
     </summary>
     
     
-      <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
+      <category term="群晖" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/"/>
+    
+      <category term="ftp" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/ftp/"/>
     
     
       <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
@@ -85,42 +93,11 @@
   </entry>
   
   <entry>
-    <title>PVE上安装黑裙辉6.2</title>
-    <link href="http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/"/>
-    <id>http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/</id>
-    <published>2020-05-19T12:36:11.000Z</published>
-    <updated>2020-08-14T01:33:06.161Z</updated>
-    
-    <summary type="html">
-    
-      
-      
-        
-        
-          &lt;h3 id=&quot;PVE上安装黑裙辉6-2&quot;&gt;&lt;a href=&quot;#PVE上安装黑裙辉6-2&quot; class=&quot;headerlink&quot; title=&quot;PVE上安装黑裙辉6.2&quot;&gt;&lt;/a&gt;PVE上安装黑裙辉6.2&lt;/h3&gt;&lt;p&gt;参考文章：&lt;br&gt;&lt;a
-        
-      
-    
-    </summary>
-    
-    
-      <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
-    
-    
-      <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
-    
-      <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
-    
-      <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
-    
-  </entry>
-  
-  <entry>
     <title>Git分支保存hexo博客源码</title>
     <link href="http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/"/>
     <id>http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/</id>
     <published>2020-05-19T12:36:11.000Z</published>
-    <updated>2020-05-25T08:35:28.000Z</updated>
+    <updated>2020-08-17T05:39:29.096Z</updated>
     
     <summary type="html">
     
@@ -135,7 +112,7 @@
     </summary>
     
     
-      <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
+      <category term="hexo" scheme="http://zqh2333.github.io/categories/hexo/"/>
     
     
       <category term="Hexo" scheme="http://zqh2333.github.io/tags/Hexo/"/>
@@ -147,11 +124,46 @@
   </entry>
   
   <entry>
+    <title>PVE上安装黑裙辉6.2</title>
+    <link href="http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/"/>
+    <id>http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/</id>
+    <published>2020-05-19T12:36:11.000Z</published>
+    <updated>2020-08-17T05:40:04.770Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h3 id=&quot;PVE上安装黑裙辉6-2&quot;&gt;&lt;a href=&quot;#PVE上安装黑裙辉6-2&quot; class=&quot;headerlink&quot; title=&quot;PVE上安装黑裙辉6.2&quot;&gt;&lt;/a&gt;PVE上安装黑裙辉6.2&lt;/h3&gt;&lt;p&gt;参考文章：&lt;br&gt;&lt;a
+        
+      
+    
+    </summary>
+    
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
+    
+      <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+  </entry>
+  
+  <entry>
     <title>PVE直通硬盘</title>
     <link href="http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/"/>
     <id>http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/</id>
     <published>2020-05-19T12:36:11.000Z</published>
-    <updated>2020-05-25T08:35:28.000Z</updated>
+    <updated>2020-08-17T05:40:24.183Z</updated>
     
     <summary type="html">
     
@@ -166,7 +178,11 @@
     </summary>
     
     
-      <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
+      <category term="PVE" scheme="http://zqh2333.github.io/categories/PVE/"/>
+    
+      <category term="直通" scheme="http://zqh2333.github.io/categories/PVE/%E7%9B%B4%E9%80%9A/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
     
     
       <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
@@ -182,7 +198,7 @@
     <link href="http://zqh2333.github.io/2020/05/19/win10-da-jian-hexo/"/>
     <id>http://zqh2333.github.io/2020/05/19/win10-da-jian-hexo/</id>
     <published>2020-05-19T12:36:11.000Z</published>
-    <updated>2020-05-25T08:35:28.000Z</updated>
+    <updated>2020-08-17T05:41:18.865Z</updated>
     
     <summary type="html">
     
@@ -190,7 +206,11 @@
       
         
         
-          &lt;a href=&quot;#博客开源&quot; class=&quot;headerlink&quot;
+          ​    
+
+&lt;meta name=&quot;generator&quot; content=&quot;Hexo 3.9.0&quot;&gt;
+    &lt;meta charset=&quot;utf-8&quot;&gt;
+    &lt;meta name=&quot;keywords&quot; content=&quot;Hexo+Github博客搭建完全教程,
         
       
     
@@ -198,6 +218,12 @@
     
     
       <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
+    
+      <category term="Hexo" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/Hexo/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/Hexo/Github/"/>
+    
+      <category term="博客" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/Hexo/Github/%E5%8D%9A%E5%AE%A2/"/>
     
     
       <category term="Hexo" scheme="http://zqh2333.github.io/tags/Hexo/"/>
