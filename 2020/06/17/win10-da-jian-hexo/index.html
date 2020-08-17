@@ -2615,24 +2615,27 @@ deploy:
             <div class="article-badge left-badge text-color">
                 <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/">
+                <a href="/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="群晖docker设置国内镜像">
+                        <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="群晖采用root用户登录ftp">
                         
-                        <span class="card-title">群晖docker设置国内镜像</span>
+                        <span class="card-title">群晖采用root用户登录ftp</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            一、打开Docker，注册表-设置-Docker Hub-编辑
+                            
+在控制面板中开启 ssh 登录
 
-二、启用注册表镜像打勾，在注册表镜像URL处填写：
-https:``//gcislbr9.mirror.aliyuncs.com
-以上的镜像如果有问题，可以试下面的地址：
-h
+通过有 管理员权限的用户登录
+
+通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入 root
+
+输入如下命令可以修改root 用户的密码 
+synouser --setp
                         
                     </div>
                     <div class="publish-info">
@@ -2685,23 +2688,20 @@ h
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2020/05/19/pve-an-zhuang-hei-qun/">
+                <a href="/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/16.jpg" class="responsive-img" alt="PVE上安装黑裙辉6.2">
+                        <img src="/medias/featureimages/3.jpg" class="responsive-img" alt="Git分支保存hexo博客源码">
                         
-                        <span class="card-title">PVE上安装黑裙辉6.2</span>
+                        <span class="card-title">Git分支保存hexo博客源码</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            PVE上安装黑裙辉6.2参考文章：https://post.smzdm.com/p/a25r8mo2/
-http://www.myxzy.com/post-488.html
-环境介绍
-1、Proxmox VE（以下简称PVE） 
-2、黑群晖
+                            初始化完一个hexo目录之后（假如为HEXO）：$ git init # 初始化本地仓库
+$ git remote add origin git@github.com:username/username.github.io.git    #
                         
                     </div>
                     <div class="publish-info">
@@ -2712,16 +2712,8 @@ http://www.myxzy.com/post-488.html
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/%E7%BE%A4%E6%99%96/" class="post-category">
-                                    群晖
-                                </a>
-                            
-                            <a href="/categories/%E7%BE%A4%E6%99%96/PVE/" class="post-category">
-                                    PVE
-                                </a>
-                            
-                            <a href="/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
-                                    虚拟机
+                            <a href="/categories/hexo/" class="post-category">
+                                    hexo
                                 </a>
                             
                             
@@ -2731,16 +2723,16 @@ http://www.myxzy.com/post-488.html
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/PVE/">
-                        <span class="chip bg-color">PVE</span>
+                    <a href="/tags/Hexo/">
+                        <span class="chip bg-color">Hexo</span>
                     </a>
                     
-                    <a href="/tags/%E7%9B%B4%E9%80%9A/">
-                        <span class="chip bg-color">直通</span>
+                    <a href="/tags/Github/">
+                        <span class="chip bg-color">Github</span>
                     </a>
                     
-                    <a href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/">
-                        <span class="chip bg-color">虚拟机</span>
+                    <a href="/tags/%E5%8D%9A%E5%AE%A2/">
+                        <span class="chip bg-color">博客</span>
                     </a>
                     
                 </div>
