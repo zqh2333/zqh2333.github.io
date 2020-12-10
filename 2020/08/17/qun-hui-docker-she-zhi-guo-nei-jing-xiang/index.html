@@ -579,7 +579,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    261
+                    317
                 </div>
                 
 
@@ -608,14 +608,26 @@
 <p>以上的镜像如果有问题，可以试下面的地址：</p>
 <pre><code>https:``//ay0r3phx.mirror.aliyuncs.com</code></pre><p>三、点确认后重启<strong><a href="https://www.rixin.info/tags/群晖" target="_blank" rel="noopener">群晖</a></strong>。重启后你再下载一个Docker镜像试一下，感受一下快感吧！</p>
 <p>我现在还有许多Docker容器需要重新安装了，以后大家一定要做好备份。</p>
-<h4 id="国内加速地址"><a href="#国内加速地址" class="headerlink" title="国内加速地址"></a>国内加速地址</h4><ul>
-<li>Docker中国区官方镜像<br><a href="https://registry.docker-cn.com" target="_blank" rel="noopener">https://registry.docker-cn.com</a></li>
-<li>网易<br><a href="http://hub-mirror.c.163.com" target="_blank" rel="noopener">http://hub-mirror.c.163.com</a></li>
-<li>ustc<br><a href="https://docker.mirrors.ustc.edu.cn" target="_blank" rel="noopener">https://docker.mirrors.ustc.edu.cn</a></li>
-<li>中国科技大学<br><a href="https://docker.mirrors.ustc.edu.cn" target="_blank" rel="noopener">https://docker.mirrors.ustc.edu.cn</a></li>
-<li>阿里云容器 服务<br><a href="https://cr.console.aliyun.com/" target="_blank" rel="noopener">https://cr.console.aliyun.com/</a><br>首页点击“创建我的容器镜像” 得到一个专属的镜像加速地址，类似于“<a href="https://1234abcd.mirror.aliyuncs.com”" target="_blank" rel="noopener">https://1234abcd.mirror.aliyuncs.com”</a></li>
+<h1 id="国内加速地址"><a href="#国内加速地址" class="headerlink" title="国内加速地址"></a>国内加速地址</h1><ul>
+<li><p>Docker中国区官方镜像<br><a href="https://registry.docker-cn.com" target="_blank" rel="noopener">https://registry.docker-cn.com</a></p>
+</li>
+<li><p>网易<br><a href="http://hub-mirror.c.163.com" target="_blank" rel="noopener">http://hub-mirror.c.163.com</a></p>
+</li>
+<li><p>ustc<br><a href="https://docker.mirrors.ustc.edu.cn" target="_blank" rel="noopener">https://docker.mirrors.ustc.edu.cn</a></p>
+</li>
+<li><p>中国科技大学<br><a href="https://docker.mirrors.ustc.edu.cn" target="_blank" rel="noopener">https://docker.mirrors.ustc.edu.cn</a></p>
+</li>
+<li><p>阿里云容器 服务<br><a href="https://cr.console.aliyun.com/" target="_blank" rel="noopener">https://cr.console.aliyun.com/</a></p>
+</li>
+<li><p>我的加速地址 </p>
+<pre class="line-numbers language-http"><code class="language-http"><span class="token header-name keyword">https:</span>//wjdqup6b.mirror.aliyuncs.com<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+</li>
 </ul>
-<h6 id=""><a href="#" class="headerlink" title=""></a></h6><script>
+<ul>
+<li>首页点击“创建我的容器镜像” 得到一个专属的镜像加速地址，类似于“<a href="https://1234abcd.mirror.aliyuncs.com”" target="_blank" rel="noopener">https://1234abcd.mirror.aliyuncs.com”</a></li>
+</ul>
+<h6 id=""><a href="#" class="headerlink" title=""></a></h6><h1 id="群晖更新"><a href="#群晖更新" class="headerlink" title="群晖更新"></a><strong>群晖更新</strong></h1><p>打开SSH，用Putty连接到群晖， 管理员登录， 分别运行这两个命令， 然后再去更新：</p>
+<pre><code>sudo ln /dev/sda1 /dev/synoboot1</code></pre><pre><code>sudo ln /dev/sda2 /dev/synoboot2</code></pre><script>
         document.querySelectorAll('.github-emoji')
           .forEach(el => {
             if (!el.dataset.src) { return; }
@@ -1163,37 +1175,35 @@
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
-                <a href="/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/">
+                <a href="/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="群晖采用root用户登录ftp">
+                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="群晖docker设置国内镜像">
                         
-                        <span class="card-title">群晖采用root用户登录ftp</span>
+                        <span class="card-title">群晖docker设置国内镜像</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            
-在控制面板中开启 ssh 登录
+                            一、打开Docker，注册表-设置-Docker Hub-编辑
 
-通过有 管理员权限的用户登录
-
-通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入 root
-
-输入如下命令可以修改root 用户的密码 
-synouser --setp
+二、启用注册表镜像打勾，在注册表镜像URL处填写：
+https:``//gcislbr9.mirror.aliyuncs.com
+以上的镜像如果有问题，可以试下面的地址：
+h
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2020-08-17
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2020-08-17
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -1214,6 +1224,7 @@ synouser --setp
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -1240,37 +1251,47 @@ synouser --setp
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2020/06/17/win10-da-jian-hexo/">
+                <a href="/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="WIN10搭建hexo">
+                        <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="群晖采用root用户登录ftp">
                         
-                        <span class="card-title">WIN10搭建hexo</span>
+                        <span class="card-title">群晖采用root用户登录ftp</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            注意，这篇文章篇幅较长，主要针对新手，每一步很详细，所以可能会显得比较啰嗦，所以建议基础比较好小伙伴根据目录选择自己感兴趣的部分跳着看，不要文章没看，上来先喷一下！谢谢( ⊙ o ⊙ )。教程内容随意复制使用，引用的话请加一个参考链接。
+                            
+在控制面板中开启 ssh 登录
 
+通过有 管理员权限的用户登录
 
+通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入 root
+
+输入如下命令可以修改root 用户的密码 
+synouser --setp
                         
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2020-06-17
+                                <i class="far fa-clock fa-fw icon-date"></i>2020-08-17
                             </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/hexo/" class="post-category">
-                                    hexo
+                            <a href="/categories/%E7%BE%A4%E6%99%96/" class="post-category">
+                                    群晖
                                 </a>
                             
-                            <a href="/categories/hexo/Github/" class="post-category">
+                            <a href="/categories/%E7%BE%A4%E6%99%96/Github/" class="post-category">
                                     Github
+                                </a>
+                            
+                            <a href="/categories/%E7%BE%A4%E6%99%96/Github/ftp/" class="post-category">
+                                    ftp
                                 </a>
                             
                             
@@ -1496,7 +1517,7 @@ code[class*="language-"], pre[class*="language-"] { white-space: pre !important;
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">21.8k</span>&nbsp;字
+                class="white-color">20.7k</span>&nbsp;字
             
             
             
