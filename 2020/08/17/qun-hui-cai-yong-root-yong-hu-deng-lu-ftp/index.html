@@ -579,14 +579,14 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    208
+                    550
                 </div>
                 
 
                 
                 <div class="info-break-policy">
                     <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                    1 分
+                    2 分
                 </div>
                 
 
@@ -620,6 +620,19 @@
 <li><p>重启 ssh 服务, 在此群晖中没有找到合适的命令, 可以通过网页中的控制面板禁用,启用服务生效.</p>
 </li>
 </ol>
+<h2 id="群辉root密码"><a href="#群辉root密码" class="headerlink" title="群辉root密码"></a><a href="https://www.cnblogs.com/liushuhe1990/articles/12557674.html" target="_blank" rel="noopener">群辉root密码</a></h2><h1 id="一、控制面板—-终端机和SNMP里，开启SSH功能。"><a href="#一、控制面板—-终端机和SNMP里，开启SSH功能。" class="headerlink" title="一、控制面板—-终端机和SNMP里，开启SSH功能。"></a>一、控制面板—-终端机和SNMP里，开启SSH功能。</h1><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.28.27.png" alt="img"></p>
+<h1 id="二、登陆群晖的SSH，用系统默认用户登陆，我这里是admin，所以我输入以下命令，admin和IP地址修改为你的"><a href="#二、登陆群晖的SSH，用系统默认用户登陆，我这里是admin，所以我输入以下命令，admin和IP地址修改为你的" class="headerlink" title="二、登陆群晖的SSH，用系统默认用户登陆，我这里是admin，所以我输入以下命令，admin和IP地址修改为你的"></a>二、登陆群晖的SSH，用系统默认用户登陆，我这里是admin，所以我输入以下命令，admin和IP地址修改为你的</h1><pre><code>ssh admin@10.10.10.172</code></pre><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.16.55.png" alt="img"></p>
+<h1 id="三、登陆后输入以下命令切换至root账号，这时还需在输入一次你的群晖登陆密码"><a href="#三、登陆后输入以下命令切换至root账号，这时还需在输入一次你的群晖登陆密码" class="headerlink" title="三、登陆后输入以下命令切换至root账号，这时还需在输入一次你的群晖登陆密码"></a>三、登陆后输入以下命令切换至root账号，这时还需在输入一次你的群晖登陆密码</h1><pre><code>sudo -i</code></pre><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.17.15.png" alt="img"></p>
+<p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.17.21.png" alt="img"></p>
+<h1 id="四、输入以下命令进入到ssh的目录"><a href="#四、输入以下命令进入到ssh的目录" class="headerlink" title="四、输入以下命令进入到ssh的目录"></a>四、输入以下命令进入到ssh的目录</h1><pre><code>cd /etc/ssh</code></pre><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.17.41.png" alt="img"></p>
+<h1 id="五、给sshd-config赋予755的权限"><a href="#五、给sshd-config赋予755的权限" class="headerlink" title="五、给sshd_config赋予755的权限"></a>五、给sshd_config赋予755的权限</h1><pre><code>chmod 755 sshd_config</code></pre><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.17.57.png" alt="img"></p>
+<h1 id="六、修改config配置文件内容"><a href="#六、修改config配置文件内容" class="headerlink" title="六、修改config配置文件内容"></a>六、修改config配置文件内容</h1><h3 id="输入"><a href="#输入" class="headerlink" title="输入"></a>输入</h3><pre><code>vi /etc/ssh/sshd_config</code></pre><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.18.13.png" alt="img"></p>
+<h3 id="点击“i”键进入编辑模式，找到"><a href="#点击“i”键进入编辑模式，找到" class="headerlink" title="点击“i”键进入编辑模式，找到"></a>点击“i”键进入编辑模式，找到</h3><pre><code>#PermitRootLogin prohibit password</code></pre><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.19.30-1.png" alt="img"></p>
+<h3 id="更改为-注意前面的“-”号不要"><a href="#更改为-注意前面的“-”号不要" class="headerlink" title="更改为,注意前面的“#”号不要"></a>更改为,注意前面的“#”号不要</h3><pre><code>PermitRootLogin yes</code></pre><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.20.18.png" alt="img"></p>
+<h3 id="按“esc”键退出编辑模式，输入“-wq”保存"><a href="#按“esc”键退出编辑模式，输入“-wq”保存" class="headerlink" title="按“esc”键退出编辑模式，输入“:wq”保存"></a>按“esc”键退出编辑模式，输入“:wq”保存</h3><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.20.35-1.png" alt="img"></p>
+<h1 id="七、重启群晖"><a href="#七、重启群晖" class="headerlink" title="七、重启群晖"></a>七、重启群晖</h1><pre><code>reboot</code></pre><h1 id=""><a href="#" class="headerlink" title=""></a></h1><h1 id="八、重启完成再次以系统默认账户登录群晖SSH-我这里是admin，所以我输入以下命令，admin和IP地址修改为你的"><a href="#八、重启完成再次以系统默认账户登录群晖SSH-我这里是admin，所以我输入以下命令，admin和IP地址修改为你的" class="headerlink" title="八、重启完成再次以系统默认账户登录群晖SSH,我这里是admin，所以我输入以下命令，admin和IP地址修改为你的"></a>八、重启完成再次以系统默认账户登录群晖SSH,我这里是admin，所以我输入以下命令，admin和IP地址修改为你的</h1><pre><code>ssh admin@10.10.10.172</code></pre><h1 id="-1"><a href="#-1" class="headerlink" title=""></a></h1><h1 id="九、再次输入以下命令切换至root账号，这时还需在输入一次你的群晖登陆密码"><a href="#九、再次输入以下命令切换至root账号，这时还需在输入一次你的群晖登陆密码" class="headerlink" title="九、再次输入以下命令切换至root账号，这时还需在输入一次你的群晖登陆密码"></a>九、再次输入以下命令切换至root账号，这时还需在输入一次你的群晖登陆密码</h1><pre><code>sudo -i</code></pre><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.23.39.png" alt="img"></p>
+<h1 id="十、输入下面命令修改root默认密码，xxx改为你要设置的密码，回车没有任何提示即可"><a href="#十、输入下面命令修改root默认密码，xxx改为你要设置的密码，回车没有任何提示即可" class="headerlink" title="十、输入下面命令修改root默认密码，xxx改为你要设置的密码，回车没有任何提示即可"></a>十、输入下面命令修改root默认密码，xxx改为你要设置的密码，回车没有任何提示即可</h1><pre><code>synouser --setpw root xxx</code></pre><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.24.00-1.png" alt="img"></p>
+<h1 id="十一、这时再从新以root权限就可以登陆到ssh了，ip记得改为你群晖的ip哦。"><a href="#十一、这时再从新以root权限就可以登陆到ssh了，ip记得改为你群晖的ip哦。" class="headerlink" title="十一、这时再从新以root权限就可以登陆到ssh了，ip记得改为你群晖的ip哦。"></a>十一、这时再从新以root权限就可以登陆到ssh了，ip记得改为你群晖的ip哦。</h1><pre><code>ssh root@10.10.10.172</code></pre><p><img src="/medias/loading.gif" data-original="https://www.vediotalk.com/wp-content/uploads/2018/09/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7-2018-09-04-%E4%B8%8B%E5%8D%886.24.20.png" alt="img"></p>
 <script>
         document.querySelectorAll('.github-emoji')
           .forEach(el => {
@@ -1498,7 +1511,7 @@ code[class*="language-"], pre[class*="language-"] { white-space: pre !important;
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">20.7k</span>&nbsp;字
+                class="white-color">21k</span>&nbsp;字
             
             
             
