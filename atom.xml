@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://zqh2333.github.io/"/>
-  <updated>2021-08-26T15:34:42.725Z</updated>
+  <updated>2021-08-26T16:32:06.124Z</updated>
   <id>http://zqh2333.github.io/</id>
   
   <author>
@@ -18,10 +18,10 @@
   
   <entry>
     <title>群晖如何使用Crontab设置任务计划</title>
-    <link href="http://zqh2333.github.io/2021/08/26/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/"/>
-    <id>http://zqh2333.github.io/2021/08/26/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/</id>
-    <published>2021-08-26T15:26:38.198Z</published>
-    <updated>2021-08-26T15:34:42.725Z</updated>
+    <link href="http://zqh2333.github.io/2021/08/27/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/"/>
+    <id>http://zqh2333.github.io/2021/08/27/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/</id>
+    <published>2021-08-26T16:27:46.132Z</published>
+    <updated>2021-08-26T16:32:06.124Z</updated>
     
     <summary type="html">
     
@@ -36,6 +36,18 @@
     </summary>
     
     
+      <category term="群晖" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/"/>
+    
+      <category term="crontab" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/crontab/"/>
+    
+    
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/tags/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="crontab" scheme="http://zqh2333.github.io/tags/crontab/"/>
     
   </entry>
   
@@ -116,6 +128,33 @@
   </entry>
   
   <entry>
+    <title>AD去广告规则</title>
+    <link href="http://zqh2333.github.io/2020/08/17/ad-qu-guang-gao/"/>
+    <id>http://zqh2333.github.io/2020/08/17/ad-qu-guang-gao/</id>
+    <published>2020-08-17T12:36:11.000Z</published>
+    <updated>2021-08-26T16:39:36.426Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h5 id=&quot;AD去广告规则如下：&quot;&gt;&lt;a href=&quot;#AD去广告规则如下：&quot; class=&quot;headerlink&quot; title=&quot;AD去广告规则如下：&quot;&gt;&lt;/a&gt;AD去广告规则如下：&lt;/h5&gt;&lt;p&gt;EasyList ——
+        
+      
+    
+    </summary>
+    
+    
+      <category term="AD去广告" scheme="http://zqh2333.github.io/categories/AD%E5%8E%BB%E5%B9%BF%E5%91%8A/"/>
+    
+    
+      <category term="AD去广告" scheme="http://zqh2333.github.io/tags/AD%E5%8E%BB%E5%B9%BF%E5%91%8A/"/>
+    
+  </entry>
+  
+  <entry>
     <title>WIN10搭建hexo</title>
     <link href="http://zqh2333.github.io/2020/06/17/win10-da-jian-hexo/"/>
     <id>http://zqh2333.github.io/2020/06/17/win10-da-jian-hexo/</id>
@@ -149,11 +188,11 @@
   </entry>
   
   <entry>
-    <title>Git分支保存hexo博客源码</title>
+    <title>Git分支保存hexo博客源码和异地使用blog</title>
     <link href="http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/"/>
     <id>http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/</id>
     <published>2020-05-19T12:36:11.000Z</published>
-    <updated>2021-08-26T15:05:06.071Z</updated>
+    <updated>2021-08-26T16:27:12.812Z</updated>
     
     <summary type="html">
     

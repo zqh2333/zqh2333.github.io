@@ -527,12 +527,41 @@
             <div class="row tag-cate">
                 <div class="col s7">
                     
-                          <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
-                          </div>
+                    <div class="article-tag">
+                        
+                            <a href="/tags/Github/">
+                                <span class="chip bg-color">Github</span>
+                            </a>
+                        
+                            <a href="/tags/%E7%BE%A4%E6%99%96/">
+                                <span class="chip bg-color">群晖</span>
+                            </a>
+                        
+                            <a href="/tags/crontab/">
+                                <span class="chip bg-color">crontab</span>
+                            </a>
+                        
+                    </div>
                     
                 </div>
                 <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fas fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/%E7%BE%A4%E6%99%96/" class="post-category">
+                                群晖
+                            </a>
+                        
+                            <a href="/categories/%E7%BE%A4%E6%99%96/Github/" class="post-category">
+                                Github
+                            </a>
+                        
+                            <a href="/categories/%E7%BE%A4%E6%99%96/Github/crontab/" class="post-category">
+                                crontab
+                            </a>
+                        
+                    </div>
                     
                 </div>
             </div>
@@ -541,7 +570,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2021-08-26
+                    2021-08-27
                 </div>
                 
 
@@ -550,7 +579,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    291
+                    343
                 </div>
                 
 
@@ -573,18 +602,22 @@
         <div class="card-content article-card-content">
             <div id="articleContent">
                 <h1 id="群晖如何使用Crontab设置任务计划！"><a href="#群晖如何使用Crontab设置任务计划！" class="headerlink" title="群晖如何使用Crontab设置任务计划！"></a>群晖如何使用Crontab设置任务计划！</h1><p>与其他类Unix系统不同的是，群晖上面并不能直接 crontab -e 来管理计划任务。默认群晖NAS是不允许root直接登陆的，所以我们要先来切换用户身份到root。</p>
-<ul>
-<li>切换到<code>root</code>用户之后，我们就可以使用文本编辑工具(<code>vim或者nano</code>)来编辑<code>crontab的计划任务</code>了。</li>
-</ul>
-<pre class="line-numbers language-html"><code class="language-html">root@DiskStation:~# vim /etc/crontab
-MAILTO=""PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/syno/sbin:/usr/syno/bin:/usr/local/sbin:/usr/local/bin
-#minute hour    mday    month   wday    who command0 0 * * * echo "hello synology"
+<p>切换到root用户之后，我们就可以使用文本编辑工具(vim或者nano)来编辑crontab的计划任务了。</p>
+<pre class="line-numbers language-bash"><code class="language-bash">root@DiskStation:~<span class="token comment" spellcheck="true"># vim /etc/crontab</span>
+MAILTO<span class="token operator">=</span><span class="token string">""</span>PATH<span class="token operator">=</span>/sbin:/bin:/usr/sbin:/usr/bin:/usr/syno/sbin:/usr/syno/bin:/usr/local/sbin:/usr/local/bin
+<span class="token comment" spellcheck="true">#minute hour    mday    month   wday    who command0 0 * * * echo "hello synology"</span>
 
-#例如：每隔一分钟往tmp目录写入一个以时间戳命名的文件
-*/1 * * * *  root touch /tmp/$(date +\%Y\%m\%d\%H\%M\%S)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token comment" spellcheck="true">#例如：每隔一分钟往tmp目录写入一个以时间戳命名的文件</span>
+*/1 * * * *  root <span class="token function">touch</span> /tmp/<span class="token variable"><span class="token variable">$(</span><span class="token function">date</span> +\%Y\%m\%d\%H\%M\%S<span class="token variable">)</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>最后restart一下crontab服务就可以了。</p>
-<pre class="line-numbers language-html"><code class="language-html">root@DiskStation:~# synoservice --restart crond<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-<p>注意：遇到关机或重启，需要手动启动cron服务。或者以root用户运行 vim /etc/rc在exit 0前添加一行synoservice —start crond或者设置为开机启动。</p>
+<pre class="line-numbers language-bash"><code class="language-bash">root@DiskStation:~<span class="token comment" spellcheck="true"># synoservice --restart crond</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>注意：遇到关机或重启，需要手动启动cron服务。或者以root用户运行 vim /etc/rc在exit 0前添加一行synoservice —start crond或者设置为开机启动。如下图：</p>
+<p><img src="/medias/loading.gif" data-original="https://img-blog.csdnimg.cn/20210103200033471.png" alt="在这里插入图片描述"></p>
+<h3 id="定时启动、关闭docker里某一容器"><a href="#定时启动、关闭docker里某一容器" class="headerlink" title="定时启动、关闭docker里某一容器"></a>定时启动、关闭docker里某一容器</h3><p>结合前面的crontab设置来实现，需要用到的代码，如下：</p>
+<pre class="line-numbers language-bash"><code class="language-bash">启动命令
+docker start 容器名
+关闭命令
+docker stop 容器名<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 <script>
         document.querySelectorAll('.github-emoji')
           .forEach(el => {
@@ -628,7 +661,7 @@ MAILTO=""PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/syno/sbin:/usr/syno/bin:/usr/lo
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://zqh2333.github.io/2021/08/26/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/">http://zqh2333.github.io/2021/08/26/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/</a>
+                    <a href="http://zqh2333.github.io/2021/08/27/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/">http://zqh2333.github.io/2021/08/27/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -665,7 +698,19 @@ MAILTO=""PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/syno/sbin:/usr/syno/bin:/usr/lo
                 <div class="post-meta__tag-list" style="display: inline-block;">
                     
                         <div class="article-tag">
-                            <span class="chip bg-color">无标签</span>
+                            
+                                <a href="/tags/Github/">
+                                    <span class="chip bg-color">Github</span>
+                                </a>
+                            
+                                <a href="/tags/%E7%BE%A4%E6%99%96/">
+                                    <span class="chip bg-color">群晖</span>
+                                </a>
+                            
+                                <a href="/tags/crontab/">
+                                    <span class="chip bg-color">crontab</span>
+                                </a>
+                            
                         </div>
                     
                 </div>
@@ -834,7 +879,7 @@ MAILTO=""PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/syno/sbin:/usr/syno/bin:/usr/lo
         repo: 'zqh2333.github.io',
         owner: 'zqh2333',
         admin: ["zqh2333"],
-        id: '2021-08-26T23-26-38',
+        id: '2021-08-27T00-27-46',
         distractionFreeMode: false  // Facebook-like distraction free mode
     });
 
@@ -1126,7 +1171,7 @@ MAILTO=""PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/syno/sbin:/usr/syno/bin:/usr/lo
                 <i class="far fa-dot-circle"></i>&nbsp;本篇
             </div>
             <div class="card">
-                <a href="/2021/08/26/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/">
+                <a href="/2021/08/27/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/">
                     <div class="card-image">
                         
                         
@@ -1139,23 +1184,50 @@ MAILTO=""PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/syno/sbin:/usr/syno/bin:/usr/lo
                     <div class="summary block-with-text">
                         
                             群晖如何使用Crontab设置任务计划！与其他类Unix系统不同的是，群晖上面并不能直接 crontab -e 来管理计划任务。默认群晖NAS是不允许root直接登陆的，所以我们要先来切换用户身份到root。
-
-切换到root用户之后，我们
+切换到root用户之后，我们就
                         
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2021-08-26
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-08-27
                             </span>
                         <span class="publish-author">
                             
-                            <i class="fas fa-user fa-fw"></i>
-                            Qihong
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E7%BE%A4%E6%99%96/" class="post-category">
+                                    群晖
+                                </a>
+                            
+                            <a href="/categories/%E7%BE%A4%E6%99%96/Github/" class="post-category">
+                                    Github
+                                </a>
+                            
+                            <a href="/categories/%E7%BE%A4%E6%99%96/Github/crontab/" class="post-category">
+                                    crontab
+                                </a>
+                            
                             
                         </span>
                     </div>
                 </div>
 
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Github/">
+                        <span class="chip bg-color">Github</span>
+                    </a>
+                    
+                    <a href="/tags/%E7%BE%A4%E6%99%96/">
+                        <span class="chip bg-color">群晖</span>
+                    </a>
+                    
+                    <a href="/tags/crontab/">
+                        <span class="chip bg-color">crontab</span>
+                    </a>
+                    
+                </div>
                 
             </div>
         </div>
@@ -1429,7 +1501,7 @@ code[class*="language-"], pre[class*="language-"] { white-space: pre !important;
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">22.1k</span>&nbsp;字
+                class="white-color">23.9k</span>&nbsp;字
             
             
             
