@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://zqh2333.github.io/"/>
-  <updated>2021-08-26T16:32:06.124Z</updated>
+  <updated>2021-10-27T17:22:49.881Z</updated>
   <id>http://zqh2333.github.io/</id>
   
   <author>
@@ -15,6 +15,41 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>解决黑群晖系统可用空间不足问题</title>
+    <link href="http://zqh2333.github.io/2021/10/28/jie-jue-hei-qun-hui-xi-tong-ke-yong-kong-jian-bu-zu-wen-ti/"/>
+    <id>http://zqh2333.github.io/2021/10/28/jie-jue-hei-qun-hui-xi-tong-ke-yong-kong-jian-bu-zu-wen-ti/</id>
+    <published>2021-10-27T17:18:49.668Z</published>
+    <updated>2021-10-27T17:22:49.881Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h2 id=&quot;实施步骤&quot;&gt;&lt;a href=&quot;#实施步骤&quot; class=&quot;headerlink&quot; title=&quot;实施步骤&quot;&gt;&lt;/a&gt;实施步骤&lt;/h2&gt;&lt;h3 id=&quot;1、先用sudo-i获取root权限，然后用df检查占用。&quot;&gt;&lt;a
+        
+      
+    
+    </summary>
+    
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/"/>
+    
+      <category term="存储空间不足" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/%E5%AD%98%E5%82%A8%E7%A9%BA%E9%97%B4%E4%B8%8D%E8%B6%B3/"/>
+    
+    
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/tags/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="ftp" scheme="http://zqh2333.github.io/tags/ftp/"/>
+    
+  </entry>
   
   <entry>
     <title>群晖如何使用Crontab设置任务计划</title>

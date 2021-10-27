@@ -4,6 +4,39 @@
   
     
     <entry>
+      <title>解决黑群晖系统可用空间不足问题</title>
+      <link href="/2021/10/28/jie-jue-hei-qun-hui-xi-tong-ke-yong-kong-jian-bu-zu-wen-ti/"/>
+      <url>/2021/10/28/jie-jue-hei-qun-hui-xi-tong-ke-yong-kong-jian-bu-zu-wen-ti/</url>
+      
+        <content type="html"><![CDATA[<h2 id="实施步骤"><a href="#实施步骤" class="headerlink" title="实施步骤"></a>实施步骤</h2><h3 id="1、先用sudo-i获取root权限，然后用df检查占用。"><a href="#1、先用sudo-i获取root权限，然后用df检查占用。" class="headerlink" title="1、先用sudo -i获取root权限，然后用df检查占用。"></a>1、先用<code>sudo -i</code>获取root权限，然后用df检查占用。</h3><p>发现【/dev/md0 】这个占用100%。</p><p><img src="/medias/loading.gif" data-original="https://image.kejiwanjia.com/wp-content/uploads/2021/10/image-45.png" alt="img"></p><h3 id="2、接着用du-sh-发现一个【1-8G-usr】usr这个文件"><a href="#2、接着用du-sh-发现一个【1-8G-usr】usr这个文件" class="headerlink" title="2、接着用du -sh /*发现一个【1.8G  /usr】usr这个文件"></a>2、接着用<code>du -sh /*</code>发现一个【1.8G  /usr】usr这个文件</h3><p><img src="/medias/loading.gif" data-original="https://image.kejiwanjia.com/wp-content/uploads/2021/10/image-46.png" alt="img"></p><p>这应该不会占用那么大的空间，最后找到是<strong>go1.16.7.linux-amd64.tar.gz</strong>这个文件。</p><h3 id="3、删除无用的文件（夹）"><a href="#3、删除无用的文件（夹）" class="headerlink" title="3、删除无用的文件（夹）"></a>3、删除无用的文件（夹）</h3><p>删除用命令<strong><code>rm -rf</code></strong>，此删除命令慎用，作用是删除子目录及子目录中所有档案删除,并且不用一一确认。</p><h3 id="4、再用df-h-d1查看本级目录占用空间"><a href="#4、再用df-h-d1查看本级目录占用空间" class="headerlink" title="4、再用df -h-d1查看本级目录占用空间"></a>4、再用<code>df -h</code>-d1查看本级目录占用空间</h3><p>发现占用63%，这样基本满足了我的需求，我也就懒得找其他文件删除了。</p><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/kity@2.0.4/dist/kity.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/kityminder-core@1.4.50/dist/kityminder.core.min.js"></script><script defer="true" type="text/javascript" src="https://cdn.jsdelivr.net/npm/hexo-simple-mindmap@0.2.0/dist/mindmap.min.js"></script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/hexo-simple-mindmap@0.2.0/dist/mindmap.min.css">]]></content>
+      
+      
+      <categories>
+          
+          <category> 群晖 </category>
+          
+          <category> Github </category>
+          
+          <category> 存储空间不足 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> Github </tag>
+            
+            <tag> 群晖 </tag>
+            
+            <tag> ftp </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>群晖如何使用Crontab设置任务计划</title>
       <link href="/2021/08/27/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/"/>
       <url>/2021/08/27/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/</url>

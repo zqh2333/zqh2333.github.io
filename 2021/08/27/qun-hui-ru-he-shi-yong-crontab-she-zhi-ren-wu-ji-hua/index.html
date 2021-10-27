@@ -1166,31 +1166,32 @@ docker stop 容器名<span aria-hidden="true" class="line-numbers-rows"><span></
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="far fa-dot-circle"></i>&nbsp;本篇
-            </div>
+                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2021/08/27/qun-hui-ru-he-shi-yong-crontab-she-zhi-ren-wu-ji-hua/">
+                <a href="/2021/10/28/jie-jue-hei-qun-hui-xi-tong-ke-yong-kong-jian-bu-zu-wen-ti/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/16.jpg" class="responsive-img" alt="群晖如何使用Crontab设置任务计划">
+                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="解决黑群晖系统可用空间不足问题">
                         
-                        <span class="card-title">群晖如何使用Crontab设置任务计划</span>
+                        <span class="card-title">解决黑群晖系统可用空间不足问题</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            群晖如何使用Crontab设置任务计划！与其他类Unix系统不同的是，群晖上面并不能直接 crontab -e 来管理计划任务。默认群晖NAS是不允许root直接登陆的，所以我们要先来切换用户身份到root。
-切换到root用户之后，我们就
+                            实施步骤1、先用sudo -i获取root权限，然后用df检查占用。发现【/dev/md0 】这个占用100%。
+
+2、接着用du -sh /*发现一个【1.8G  /usr】usr这个文件
+这应该不会占用那么大的空间，最后找到是go1.1
                         
                     </div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2021-08-27
-                            </span>
+                        <span class="publish-date">
+                            <i class="far fa-clock fa-fw icon-date"></i>2021-10-28
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -1203,15 +1204,14 @@ docker stop 容器名<span aria-hidden="true" class="line-numbers-rows"><span></
                                     Github
                                 </a>
                             
-                            <a href="/categories/%E7%BE%A4%E6%99%96/Github/crontab/" class="post-category">
-                                    crontab
+                            <a href="/categories/%E7%BE%A4%E6%99%96/Github/%E5%AD%98%E5%82%A8%E7%A9%BA%E9%97%B4%E4%B8%8D%E8%B6%B3/" class="post-category">
+                                    存储空间不足
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
@@ -1223,8 +1223,8 @@ docker stop 容器名<span aria-hidden="true" class="line-numbers-rows"><span></
                         <span class="chip bg-color">群晖</span>
                     </a>
                     
-                    <a href="/tags/crontab/">
-                        <span class="chip bg-color">crontab</span>
+                    <a href="/tags/ftp/">
+                        <span class="chip bg-color">ftp</span>
                     </a>
                     
                 </div>
@@ -1501,7 +1501,7 @@ code[class*="language-"], pre[class*="language-"] { white-space: pre !important;
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">23.9k</span>&nbsp;字
+                class="white-color">24.1k</span>&nbsp;字
             
             
             

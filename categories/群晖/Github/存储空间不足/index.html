@@ -5,7 +5,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="分类: hexo, Qihong&#39;s Blog">
+    <meta name="keywords" content="分类: 存储空间不足, Qihong&#39;s Blog">
     <meta name="description" content="绵阳师范学院 | 电子信息科学与技术">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -17,7 +17,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>分类: hexo | Qihong&#39;s Blog</title>
+    <title>分类: 存储空间不足 | Qihong&#39;s Blog</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -456,7 +456,7 @@
                 
                 <a href="/categories/hexo/" title="hexo: 2">
                     <span class="chip center-align waves-effect waves-light
-                             chip-active "
+                             chip-default "
                             style="background-color: #F5EEF8;">hexo
                         <span class="tag-length">2</span>
                     </span>
@@ -564,7 +564,7 @@
                 
                 <a href="/categories/%E7%BE%A4%E6%99%96/Github/%E5%AD%98%E5%82%A8%E7%A9%BA%E9%97%B4%E4%B8%8D%E8%B6%B3/" title="存储空间不足: 1">
                     <span class="chip center-align waves-effect waves-light
-                             chip-default "
+                             chip-active "
                             style="background-color: #F5EEF8;">存储空间不足
                         <span class="tag-length">1</span>
                     </span>
@@ -584,37 +584,42 @@
             
             <div class="article tag-post col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
-                    <a href="/2020/06/17/win10-da-jian-hexo/">
+                    <a href="/2021/10/28/jie-jue-hei-qun-hui-xi-tong-ke-yong-kong-jian-bu-zu-wen-ti/">
                         <div class="card-image tag-image">
                             
                             
-                            <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="WIN10搭建hexo">
+                            <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="解决黑群晖系统可用空间不足问题">
                             
-                            <span class="card-title">WIN10搭建hexo</span>
+                            <span class="card-title">解决黑群晖系统可用空间不足问题</span>
                         </div>
                     </a>
                     <div class="card-content article-content">
                         <div class="summary block-with-text">
                             
-                                注意，这篇文章篇幅较长，主要针对新手，每一步很详细，所以可能会显得比较啰嗦，所以建议基础比较好小伙伴根据目录选择自己感兴趣的部分跳着看，不要文章没看，上来先喷一下！谢谢( ⊙ o ⊙ )。教程内容随意复制使用，引用的话请加一个参考链接。
+                                实施步骤1、先用sudo -i获取root权限，然后用df检查占用。发现【/dev/md0 】这个占用100%。
 
-
+2、接着用du -sh /*发现一个【1.8G  /usr】usr这个文件
+这应该不会占用那么大的空间，最后找到是go1.1
                             
                         </div>
                         <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2020-06-17
+                                <i class="far fa-clock fa-fw icon-date"></i>2021-10-28
                             </span>
                             <span class="publish-author">
                                 
                                 <i class="fas fa-bookmark fa-fw icon-category"></i>
                                 
-                                <a href="/categories/hexo/" class="post-category">
-                                    hexo
+                                <a href="/categories/%E7%BE%A4%E6%99%96/" class="post-category">
+                                    群晖
                                 </a>
                                 
-                                <a href="/categories/hexo/Github/" class="post-category">
+                                <a href="/categories/%E7%BE%A4%E6%99%96/Github/" class="post-category">
                                     Github
+                                </a>
+                                
+                                <a href="/categories/%E7%BE%A4%E6%99%96/Github/%E5%AD%98%E5%82%A8%E7%A9%BA%E9%97%B4%E4%B8%8D%E8%B6%B3/" class="post-category">
+                                    存储空间不足
                                 </a>
                                 
                                 
@@ -635,61 +640,6 @@
                         
                         <a href="/tags/ftp/">
                             <span class="chip bg-color">ftp</span>
-                        </a>
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-            <div class="article tag-post col s12 m6 l4" data-aos="zoom-in">
-                <div class="card">
-                    <a href="/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/">
-                        <div class="card-image tag-image">
-                            
-                            
-                            <img src="/medias/featureimages/2.jpg" class="responsive-img" alt="Git分支保存hexo博客源码和异地使用blog">
-                            
-                            <span class="card-title">Git分支保存hexo博客源码和异地使用blog</span>
-                        </div>
-                    </a>
-                    <div class="card-content article-content">
-                        <div class="summary block-with-text">
-                            
-                                初始化完一个hexo目录之后（假如为HEXO）：$ git init # 初始化本地仓库
-$ git remote add origin git@github.com:username/username.github.io.git    #
-                            
-                        </div>
-                        <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2020-05-19
-                            </span>
-                            <span class="publish-author">
-                                
-                                <i class="fas fa-bookmark fa-fw icon-category"></i>
-                                
-                                <a href="/categories/hexo/" class="post-category">
-                                    hexo
-                                </a>
-                                
-                                
-                            </span>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card-action article-tags">
-                        
-                        <a href="/tags/Hexo/">
-                            <span class="chip bg-color">Hexo</span>
-                        </a>
-                        
-                        <a href="/tags/Github/">
-                            <span class="chip bg-color">Github</span>
-                        </a>
-                        
-                        <a href="/tags/%E5%8D%9A%E5%AE%A2/">
-                            <span class="chip bg-color">博客</span>
                         </a>
                         
                     </div>
