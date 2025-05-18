@@ -571,7 +571,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    194
+                    399
                 </div>
                 
 
@@ -601,7 +601,19 @@ $ git push origin master:remotebranch # remotebranch为远程仓的分支名，�
 <p>更改后更新只需要输入如下命令即可更新修改后的文件：</p>
 <pre><code>$ git add .
 $ git commit -m "blog"
-$ git push origin master:remotebranch # remotebranch为远程仓的分支名，例如hexo;</code></pre><script>
+$ git push origin master:remotebranch # remotebranch为远程仓的分支名，例如hexo;</code></pre><p>1.当heox init时有以下报错<br>代码语言：bash<br>AI代码解释</p>
+<pre><code>ERROR Cannot find module 'hexo' from 'F:\Hexoblog'
+ERROR Local hexo loading failed in F:\Hexoblog
+ERROR Try running: 'rm -rf node_modules &amp;&amp; npm install --force'</code></pre><p>原因：已经安装了hexo但是依旧报这个错误，可能是没有加入环境变量</p>
+<p>解决：</p>
+<p>找到自己安装hexo的位置，将其加入环境变量中</p>
+<p>例如我的位置是：C:\Users\32649\AppData\Roaming\npm\node_modules\hexo\bin</p>
+<p>记住环境变量保存要每个窗口都点确定。</p>
+<p>2.npm install hexo-renderer-sass –save安装时报错<br>尝试修改淘宝源，但是还是有问题</p>
+<p>代码语言：bash<br>AI代码解释</p>
+<pre><code>$ npm install -g cnpm --registry=https://registry.npm.taobao.org
+$ npm config set registry https://registry.npm.taobao.org</code></pre><p>总的问题原因<br>安装的node.js版本太高，建议安装10.16.2版本</p>
+<script>
         document.querySelectorAll('.github-emoji')
           .forEach(el => {
             if (!el.dataset.src) { return; }
@@ -1478,7 +1490,7 @@ code[class*="language-"], pre[class*="language-"] { white-space: pre !important;
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">22.7k</span>&nbsp;字
+                class="white-color">22.9k</span>&nbsp;字
             
             
             
