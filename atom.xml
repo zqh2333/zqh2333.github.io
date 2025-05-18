@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Qihong&#39;s Blog</title>
+  
+  <subtitle>不折腾和咸鱼有什么区别</subtitle>
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="http://zqh2333.github.io/"/>
+  <updated>2025-05-17T23:37:59.667Z</updated>
+  <id>http://zqh2333.github.io/</id>
+  
+  <author>
+    <name>Qihong</name>
+    
+  </author>
+  
+  <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>京东云无线宝一代2.3.15，修复工具，免拆机刷breed不死</title>
+    <link href="http://zqh2333.github.io/2025/05/18/jing-dong-yun-wu-xian-bao-yi-dai-2.3.15-xiu-fu-gong-ju-mian-chai-ji-shua-breed-bu-si/"/>
+    <id>http://zqh2333.github.io/2025/05/18/jing-dong-yun-wu-xian-bao-yi-dai-2.3.15-xiu-fu-gong-ju-mian-chai-ji-shua-breed-bu-si/</id>
+    <published>2025-05-17T23:28:52.138Z</published>
+    <updated>2025-05-17T23:37:59.667Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;p&gt;京东云无线宝一代2.3.15，修复工具，免拆机刷breed不死，刷padavan固件&lt;/p&gt;
+&lt;p&gt;第一步：官方修复&lt;br&gt;1、路由器wan口接网络，lan口接电脑，路由器联网&lt;br&gt;注意：家庭网络中一定不能存在192.168.1.1的其他路由器或光猫，不然修复会在卡在进度
+        
+      
+    
+    </summary>
+    
+    
+      <category term="京东云无线宝" scheme="http://zqh2333.github.io/categories/%E4%BA%AC%E4%B8%9C%E4%BA%91%E6%97%A0%E7%BA%BF%E5%AE%9D/"/>
+    
+      <category term="不死breed" scheme="http://zqh2333.github.io/categories/%E4%BA%AC%E4%B8%9C%E4%BA%91%E6%97%A0%E7%BA%BF%E5%AE%9D/%E4%B8%8D%E6%AD%BBbreed/"/>
+    
+    
+      <category term="Hexo" scheme="http://zqh2333.github.io/tags/Hexo/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
+    
+      <category term="博客" scheme="http://zqh2333.github.io/tags/%E5%8D%9A%E5%AE%A2/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>群晖采用root用户登录ftp</title>
+    <link href="http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/"/>
+    <id>http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/</id>
+    <published>2020-08-17T12:36:11.000Z</published>
+    <updated>2025-05-17T23:21:36.232Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;ol&gt;
+&lt;li&gt;&lt;p&gt;在控制面板中开启 ssh 登录&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;通过有 管理员权限的用户登录&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入
+        
+      
+    
+    </summary>
+    
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/"/>
+    
+      <category term="ftp" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/ftp/"/>
+    
+    
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/tags/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="ftp" scheme="http://zqh2333.github.io/tags/ftp/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>群晖docker设置国内镜像</title>
+    <link href="http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/"/>
+    <id>http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/</id>
+    <published>2020-08-17T12:36:11.000Z</published>
+    <updated>2025-05-17T23:21:36.231Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;p&gt;&lt;strong&gt;一、打开Docker，注册表-设置-Docker Hub-编辑&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://cdn.rixin.info/2020/08/2029fb81cec128d73b4699162b2f17c5.jpg&quot;
+        
+      
+    
+    </summary>
+    
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/"/>
+    
+      <category term="ftp" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/ftp/"/>
+    
+    
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/tags/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="ftp" scheme="http://zqh2333.github.io/tags/ftp/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>WIN10搭建hexo</title>
+    <link href="http://zqh2333.github.io/2020/06/17/win10-da-jian-hexo/"/>
+    <id>http://zqh2333.github.io/2020/06/17/win10-da-jian-hexo/</id>
+    <published>2020-06-17T12:36:11.000Z</published>
+    <updated>2025-05-17T23:21:36.227Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;p&gt;注意，这篇文章篇幅较长，主要针对新手，每一步很详细，所以可能会显得比较啰嗦，所以建议基础比较好小伙伴根据目录选择自己感兴趣的部分跳着看，不要文章没看，上来先喷一下！谢谢( ⊙ o ⊙
+        
+      
+    
+    </summary>
+    
+    
+      <category term="hexo" scheme="http://zqh2333.github.io/categories/hexo/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/categories/hexo/Github/"/>
+    
+    
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/tags/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="ftp" scheme="http://zqh2333.github.io/tags/ftp/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Git分支保存hexo博客源码</title>
+    <link href="http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/"/>
+    <id>http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/</id>
+    <published>2020-05-19T12:36:11.000Z</published>
+    <updated>2025-05-17T23:21:36.223Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h3 id=&quot;初始化完一个hexo目录之后（假如为HEXO）：&quot;&gt;&lt;a href=&quot;#初始化完一个hexo目录之后（假如为HEXO）：&quot; class=&quot;headerlink&quot;
+        
+      
+    
+    </summary>
+    
+    
+      <category term="hexo" scheme="http://zqh2333.github.io/categories/hexo/"/>
+    
+    
+      <category term="Hexo" scheme="http://zqh2333.github.io/tags/Hexo/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
+    
+      <category term="博客" scheme="http://zqh2333.github.io/tags/%E5%8D%9A%E5%AE%A2/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>PVE上安装黑裙辉6.2</title>
+    <link href="http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/"/>
+    <id>http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/</id>
+    <published>2020-05-19T12:36:11.000Z</published>
+    <updated>2025-05-17T23:21:36.228Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h3 id=&quot;PVE上安装黑裙辉6-2&quot;&gt;&lt;a href=&quot;#PVE上安装黑裙辉6-2&quot; class=&quot;headerlink&quot; title=&quot;PVE上安装黑裙辉6.2&quot;&gt;&lt;/a&gt;PVE上安装黑裙辉6.2&lt;/h3&gt;&lt;p&gt;参考文章：&lt;br&gt;&lt;a
+        
+      
+    
+    </summary>
+    
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
+    
+      <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>PVE直通硬盘</title>
+    <link href="http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/"/>
+    <id>http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/</id>
+    <published>2020-05-19T12:36:11.000Z</published>
+    <updated>2025-05-17T23:21:36.229Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h3 id=&quot;进入pve-shell-查看硬盘识别符：&quot;&gt;&lt;a href=&quot;#进入pve-shell-查看硬盘识别符：&quot; class=&quot;headerlink&quot; title=&quot;进入pve shell 查看硬盘识别符：&quot;&gt;&lt;/a&gt;进入pve shell
+        
+      
+    
+    </summary>
+    
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/categories/PVE/"/>
+    
+      <category term="直通" scheme="http://zqh2333.github.io/categories/PVE/%E7%9B%B4%E9%80%9A/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
+    
+      <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>博客开源</title>
+    <link href="http://zqh2333.github.io/2019/08/27/blog-open-source/"/>
+    <id>http://zqh2333.github.io/2019/08/27/blog-open-source/</id>
+    <published>2019-08-27T03:41:03.000Z</published>
+    <updated>2025-05-17T23:21:36.222Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h1 id=&quot;效果演示&quot;&gt;&lt;a href=&quot;#效果演示&quot; class=&quot;headerlink&quot; title=&quot;效果演示&quot;&gt;&lt;/a&gt;效果演示&lt;/h1&gt;&lt;p&gt;&lt;img src=&quot;/medias/loading.gif&quot;
+        
+      
+    
+    </summary>
+    
+    
+      <category term="软件安装与配置" scheme="http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/"/>
+    
+    
+      <category term="Hexo" scheme="http://zqh2333.github.io/tags/Hexo/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
+    
+      <category term="博客" scheme="http://zqh2333.github.io/tags/%E5%8D%9A%E5%AE%A2/"/>
+    
+  </entry>
+  
+</feed>
