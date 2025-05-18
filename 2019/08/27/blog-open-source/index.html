@@ -1252,20 +1252,21 @@
             <div class="article-badge left-badge text-color">
                 <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma-yi-di-dian-nao-fa-bu-wen-zhang/">
+                <a href="/2020/05/19/pve-zhi-tong-ying-pan/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/0.jpg" class="responsive-img" alt="Git分支保存hexo博客源码&amp;异地电脑发布文章">
+                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="PVE直通硬盘">
                         
-                        <span class="card-title">Git分支保存hexo博客源码&amp;异地电脑发布文章</span>
+                        <span class="card-title">PVE直通硬盘</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            初始化完一个hexo目录之后（假如为HEXO）：git init # 初始化本地仓库
-git remote add origin git@github.com:username/username.github.io.git    #关联远程
+                            进入pve shell 查看硬盘识别符： ls -l /dev/disk/by-id/ # 查看硬盘识别符
+后续 输入如下命令：
+ qm set 107 --sata1 /dev/disk/by-id/ata-ST2000VX008-2E3
                         
                     </div>
                     <div class="publish-info">
@@ -1276,8 +1277,16 @@ git remote add origin git@github.com:username/username.github.io.git    #关联�
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/hexo/" class="post-category">
-                                    hexo
+                            <a href="/categories/PVE/" class="post-category">
+                                    PVE
+                                </a>
+                            
+                            <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/" class="post-category">
+                                    直通
+                                </a>
+                            
+                            <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
+                                    虚拟机
                                 </a>
                             
                             
@@ -1287,16 +1296,16 @@ git remote add origin git@github.com:username/username.github.io.git    #关联�
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/Hexo/">
-                        <span class="chip bg-color">Hexo</span>
+                    <a href="/tags/PVE/">
+                        <span class="chip bg-color">PVE</span>
                     </a>
                     
-                    <a href="/tags/Github/">
-                        <span class="chip bg-color">Github</span>
+                    <a href="/tags/%E7%9B%B4%E9%80%9A/">
+                        <span class="chip bg-color">直通</span>
                     </a>
                     
-                    <a href="/tags/%E5%8D%9A%E5%AE%A2/">
-                        <span class="chip bg-color">博客</span>
+                    <a href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/">
+                        <span class="chip bg-color">虚拟机</span>
                     </a>
                     
                 </div>

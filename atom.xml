@@ -48,11 +48,11 @@
   </entry>
   
   <entry>
-    <title>群晖采用root用户登录ftp</title>
-    <link href="http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/"/>
-    <id>http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/</id>
+    <title>群晖docker设置国内镜像</title>
+    <link href="http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/"/>
+    <id>http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/</id>
     <published>2020-08-17T12:36:11.000Z</published>
-    <updated>2025-05-17T23:21:36.232Z</updated>
+    <updated>2025-05-17T23:21:36.231Z</updated>
     
     <summary type="html">
     
@@ -60,12 +60,8 @@
       
         
         
-          &lt;ol&gt;
-&lt;li&gt;&lt;p&gt;在控制面板中开启 ssh 登录&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;通过有 管理员权限的用户登录&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;&lt;p&gt;通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入
+          &lt;p&gt;&lt;strong&gt;一、打开Docker，注册表-设置-Docker Hub-编辑&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://cdn.rixin.info/2020/08/2029fb81cec128d73b4699162b2f17c5.jpg&quot;
         
       
     
@@ -88,11 +84,11 @@
   </entry>
   
   <entry>
-    <title>群晖docker设置国内镜像</title>
-    <link href="http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/"/>
-    <id>http://zqh2333.github.io/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/</id>
+    <title>群晖采用root用户登录ftp</title>
+    <link href="http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/"/>
+    <id>http://zqh2333.github.io/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/</id>
     <published>2020-08-17T12:36:11.000Z</published>
-    <updated>2025-05-17T23:21:36.231Z</updated>
+    <updated>2025-05-17T23:21:36.232Z</updated>
     
     <summary type="html">
     
@@ -100,8 +96,12 @@
       
         
         
-          &lt;p&gt;&lt;strong&gt;一、打开Docker，注册表-设置-Docker Hub-编辑&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;a href=&quot;https://cdn.rixin.info/2020/08/2029fb81cec128d73b4699162b2f17c5.jpg&quot;
+          &lt;ol&gt;
+&lt;li&gt;&lt;p&gt;在控制面板中开启 ssh 登录&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;通过有 管理员权限的用户登录&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入
         
       
     
@@ -192,6 +192,37 @@
   </entry>
   
   <entry>
+    <title>Git分支保存hexo博客源码&amp;异地电脑发布文章</title>
+    <link href="http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma-yi-di-dian-nao-fa-bu-wen-zhang/"/>
+    <id>http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma-yi-di-dian-nao-fa-bu-wen-zhang/</id>
+    <published>2020-05-19T12:36:11.000Z</published>
+    <updated>2025-05-18T01:50:34.970Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h3 id=&quot;初始化完一个hexo目录之后（假如为HEXO）：&quot;&gt;&lt;a href=&quot;#初始化完一个hexo目录之后（假如为HEXO）：&quot; class=&quot;headerlink&quot;
+        
+      
+    
+    </summary>
+    
+    
+      <category term="hexo" scheme="http://zqh2333.github.io/categories/hexo/"/>
+    
+    
+      <category term="Hexo" scheme="http://zqh2333.github.io/tags/Hexo/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
+    
+      <category term="博客" scheme="http://zqh2333.github.io/tags/%E5%8D%9A%E5%AE%A2/"/>
+    
+  </entry>
+  
+  <entry>
     <title>PVE直通硬盘</title>
     <link href="http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/"/>
     <id>http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/</id>
@@ -223,37 +254,6 @@
       <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
     
       <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Git分支保存hexo博客源码&amp;异地电脑发布文章</title>
-    <link href="http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma-yi-di-dian-nao-fa-bu-wen-zhang/"/>
-    <id>http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma-yi-di-dian-nao-fa-bu-wen-zhang/</id>
-    <published>2020-05-19T12:36:11.000Z</published>
-    <updated>2025-05-18T01:50:34.970Z</updated>
-    
-    <summary type="html">
-    
-      
-      
-        
-        
-          &lt;h3 id=&quot;初始化完一个hexo目录之后（假如为HEXO）：&quot;&gt;&lt;a href=&quot;#初始化完一个hexo目录之后（假如为HEXO）：&quot; class=&quot;headerlink&quot;
-        
-      
-    
-    </summary>
-    
-    
-      <category term="hexo" scheme="http://zqh2333.github.io/categories/hexo/"/>
-    
-    
-      <category term="Hexo" scheme="http://zqh2333.github.io/tags/Hexo/"/>
-    
-      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
-    
-      <category term="博客" scheme="http://zqh2333.github.io/tags/%E5%8D%9A%E5%AE%A2/"/>
     
   </entry>
   
