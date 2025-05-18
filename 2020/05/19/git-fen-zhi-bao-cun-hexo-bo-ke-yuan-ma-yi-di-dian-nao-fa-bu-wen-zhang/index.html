@@ -5,7 +5,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="Git分支保存hexo博客源码, Qihong&#39;s Blog">
+    <meta name="keywords" content="Git分支保存hexo博客源码&amp;异地电脑发布文章, Qihong&#39;s Blog">
     <meta name="description" content="绵阳师范学院 | 电子信息科学与技术">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -17,7 +17,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>Git分支保存hexo博客源码 | Qihong&#39;s Blog</title>
+    <title>Git分支保存hexo博客源码&amp;异地电脑发布文章 | Qihong&#39;s Blog</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -407,12 +407,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/3.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/0.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">Git分支保存hexo博客源码</h1>
+                    <h1 class="description center-align post-title">Git分支保存hexo博客源码&amp;异地电脑发布文章</h1>
                 </div>
             </div>
         </div>
@@ -571,7 +571,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    529
+                    530
                 </div>
                 
 
@@ -594,39 +594,53 @@
         <div class="card-content article-card-content">
             <div id="articleContent">
                 <h3 id="初始化完一个hexo目录之后（假如为HEXO）："><a href="#初始化完一个hexo目录之后（假如为HEXO）：" class="headerlink" title="初始化完一个hexo目录之后（假如为HEXO）："></a>初始化完一个hexo目录之后（假如为HEXO）：</h3><pre><code>$ git init # 初始化本地仓库
+
 $ git remote add origin git@github.com:username/username.github.io.git    #关联远程服务器
+
 $ git add .
+
 $ git commit -m "blog"
+
 $ git push origin master:remotebranch # remotebranch为远程仓的分支名，例如hexo;</code></pre><h2 id="后续"><a href="#后续" class="headerlink" title="后续"></a>后续</h2><p> 之后再做修改可以在github的 repository setting 中设置默认分支为hexo源码的分支。</p>
 <p>更改后更新只需要输入如下命令即可更新修改后的文件：</p>
 <pre class="line-numbers language-bash"><code class="language-bash">$ <span class="token function">git</span> add <span class="token keyword">.</span>
+
 $ <span class="token function">git</span> commit -m <span class="token string">"blog"</span>
-$ <span class="token function">git</span> push origin master:remotebranch <span class="token comment" spellcheck="true"># remotebranch为远程仓的分支名，例如hexo;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+$ <span class="token function">git</span> push origin master:remotebranch <span class="token comment" spellcheck="true"># remotebranch为远程仓的分支名，例如hexo;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <h3 id="异地电脑发布文章"><a href="#异地电脑发布文章" class="headerlink" title="异地电脑发布文章"></a>异地电脑发布文章</h3><p>克隆仓库</p>
 <pre class="line-numbers language-bash"><code class="language-bash"><span class="token function">git</span> clone -b hexo https://github.com/zqh2333/zqh2333.github.io.git<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 <p>生成<code>SSH</code>添加到<code>GitHub</code>，连接<code>Github</code>与本地。<br>右键打开<code>git bash</code>，然后输入下面命令：</p>
-<pre class="line-numbers language-bash"><code class="language-bash"><span class="token function">git</span> config --global user.name                               <span class="token comment" spellcheck="true"># "zqh2333" zqh2333输入你的GitHub用户名</span>
-<span class="token function">git</span> config --global user.email <span class="token string">"zqh2287849749@gmail.com"</span>    <span class="token comment" spellcheck="true"># zqh2287849749@gmail.com输入你GitHub的邮箱</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token function">git</span> config --global user.name     <span class="token comment" spellcheck="true"># "zqh2333" zqh2333输入你的GitHub用户名</span>
+
+<span class="token function">git</span> config --global user.email <span class="token string">"zqh2287849749@gmail.com"</span>    <span class="token comment" spellcheck="true"># zqh2287849749@gmail.com输入你GitHub的邮箱</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 <p>可以用以下两条，检查一下你有没有输对</p>
 <pre class="line-numbers language-bash"><code class="language-bash"><span class="token function">git</span> config user.name
-<span class="token function">git</span> config user.email<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<span class="token function">git</span> config user.email<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 <p>然后创建<code>SSH</code>,一路回车</p>
 <pre class="line-numbers language-bash"><code class="language-bash">ssh-keygen -t rsa -C <span class="token string">"zqh2287849749@gmail.com"</span>
-<span class="token function">cat</span> ~/.ssh/id_rsa.pub<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<span class="token function">cat</span> ~/.ssh/id_rsa.pub<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 <pre class="line-numbers language-bash"><code class="language-bash">hexo g  <span class="token comment" spellcheck="true"># 生成静态文章</span>
 
 hexo d  <span class="token comment" spellcheck="true"># 发布文章</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 <h3 id="可能遇到的问题"><a href="#可能遇到的问题" class="headerlink" title="可能遇到的问题"></a>可能遇到的问题</h3><p>1.当heox init时有以下报错</p>
-<pre><code>ERROR Cannot find module 'hexo' from 'F:\Hexoblog'
-ERROR Local hexo loading failed in F:\Hexoblog
-ERROR Try running: 'rm -rf node_modules &amp;&amp; npm install --force'</code></pre><p>原因：已经安装了hexo但是依旧报这个错误，可能是没有加入环境变量</p>
+<pre class="line-numbers language-bash"><code class="language-bash">ERROR Cannot <span class="token function">find</span> module <span class="token string">'hexo'</span> from <span class="token string">'F:\Hexoblog'</span>
+
+ERROR Local hexo loading failed <span class="token keyword">in</span> F:\Hexoblog
+
+ERROR Try running: <span class="token string">'rm -rf node_modules &amp;&amp; npm install --force'</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>原因：已经安装了hexo但是依旧报这个错误，可能是没有加入环境变量</p>
 <p>解决：</p>
 <p>找到自己安装hexo的位置，将其加入环境变量中</p>
 <p>例如我的位置是：C:\Users\32649\AppData\Roaming\npm\node_modules\hexo\bin</p>
 <p>记住环境变量保存要每个窗口都点确定。</p>
 <p>2.npm install hexo-renderer-sass –save安装时报错<br>尝试修改淘宝源，但是还是有问题</p>
-<pre><code>$ npm install -g cnpm --registry=https://registry.npm.taobao.org
-$ npm config set registry https://registry.npm.taobao.org</code></pre><p>总的问题原因<br>安装的node.js版本太高，建议安装10.16.2版本</p>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> -g cnpm --registry<span class="token operator">=</span>https://registry.npm.taobao.org
+
+<span class="token function">npm</span> config <span class="token keyword">set</span> registry https://registry.npm.taobao.org<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>总的问题原因<br>安装的node.js版本太高，建议安装10.16.2版本</p>
 <script>
         document.querySelectorAll('.github-emoji')
           .forEach(el => {
@@ -670,7 +684,7 @@ $ npm config set registry https://registry.npm.taobao.org</code></pre><p>总的�
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/">http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/</a>
+                    <a href="http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma-yi-di-dian-nao-fa-bu-wen-zhang/">http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma-yi-di-dian-nao-fa-bu-wen-zhang/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -1179,105 +1193,40 @@ $ npm config set registry https://registry.npm.taobao.org</code></pre><p>总的�
             <div class="article-badge left-badge text-color">
                 <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2020/06/17/win10-da-jian-hexo/">
+                <a href="/2020/05/19/pve-zhi-tong-ying-pan/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="WIN10搭建hexo">
+                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="PVE直通硬盘">
                         
-                        <span class="card-title">WIN10搭建hexo</span>
+                        <span class="card-title">PVE直通硬盘</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            注意，这篇文章篇幅较长，主要针对新手，每一步很详细，所以可能会显得比较啰嗦，所以建议基础比较好小伙伴根据目录选择自己感兴趣的部分跳着看，不要文章没看，上来先喷一下！谢谢( ⊙ o ⊙ )。教程内容随意复制使用，引用的话请加一个参考链接。
-
-
+                            进入pve shell 查看硬盘识别符： ls -l /dev/disk/by-id/ # 查看硬盘识别符
+后续 输入如下命令：
+ qm set 107 --sata1 /dev/disk/by-id/ata-ST2000VX008-2E3
                         
                     </div>
                     <div class="publish-info">
                         <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2020-06-17
+                            <i class="far fa-clock fa-fw icon-date"></i>2020-05-19
                         </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/hexo/" class="post-category">
-                                    hexo
-                                </a>
-                            
-                            <a href="/categories/hexo/Github/" class="post-category">
-                                    Github
-                                </a>
-                            
-                            
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="card-action article-tags">
-                    
-                    <a href="/tags/Github/">
-                        <span class="chip bg-color">Github</span>
-                    </a>
-                    
-                    <a href="/tags/%E7%BE%A4%E6%99%96/">
-                        <span class="chip bg-color">群晖</span>
-                    </a>
-                    
-                    <a href="/tags/ftp/">
-                        <span class="chip bg-color">ftp</span>
-                    </a>
-                    
-                </div>
-                
-            </div>
-        </div>
-        
-        
-        <div class="article col s12 m6" data-aos="fade-up">
-            <div class="article-badge right-badge text-color">
-                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
-            </div>
-            <div class="card">
-                <a href="/2020/05/19/pve-an-zhuang-hei-qun/">
-                    <div class="card-image">
-                        
-                        
-                        <img src="/medias/featureimages/16.jpg" class="responsive-img" alt="PVE上安装黑裙辉6.2">
-                        
-                        <span class="card-title">PVE上安装黑裙辉6.2</span>
-                    </div>
-                </a>
-                <div class="card-content article-content">
-                    <div class="summary block-with-text">
-                        
-                            PVE上安装黑裙辉6.2参考文章：https://post.smzdm.com/p/a25r8mo2/
-http://www.myxzy.com/post-488.html
-环境介绍
-1、Proxmox VE（以下简称PVE） 
-2、黑群晖
-                        
-                    </div>
-                    <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2020-05-19
-                            </span>
-                        <span class="publish-author">
-                            
-                            <i class="fas fa-bookmark fa-fw icon-category"></i>
-                            
-                            <a href="/categories/%E7%BE%A4%E6%99%96/" class="post-category">
-                                    群晖
-                                </a>
-                            
-                            <a href="/categories/%E7%BE%A4%E6%99%96/PVE/" class="post-category">
+                            <a href="/categories/PVE/" class="post-category">
                                     PVE
                                 </a>
                             
-                            <a href="/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
+                            <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/" class="post-category">
+                                    直通
+                                </a>
+                            
+                            <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
                                     虚拟机
                                 </a>
                             
@@ -1298,6 +1247,63 @@ http://www.myxzy.com/post-488.html
                     
                     <a href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/">
                         <span class="chip bg-color">虚拟机</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2019/08/27/blog-open-source/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/16.jpg" class="responsive-img" alt="博客开源">
+                        
+                        <span class="card-title">博客开源</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary block-with-text">
+                        
+                            倒腾了一两周总算把个人博客网站完善了，目前这个版本使用应该是够了，当然还有一些优化项和功能增加后续在慢慢更新，为了回馈开源，今天准备把我自己修改完善的`blog`网站源代码开源。这不是生成后的网页文件，是您可以直接使用的源码，您只需要把博客相关信息换成您自己的就可以部署了。
+                        
+                    </div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2019-08-27
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fas fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/" class="post-category">
+                                    软件安装与配置
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/Hexo/">
+                        <span class="chip bg-color">Hexo</span>
+                    </a>
+                    
+                    <a href="/tags/Github/">
+                        <span class="chip bg-color">Github</span>
+                    </a>
+                    
+                    <a href="/tags/%E5%8D%9A%E5%AE%A2/">
+                        <span class="chip bg-color">博客</span>
                     </a>
                     
                 </div>

@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://zqh2333.github.io/"/>
-  <updated>2025-05-18T00:29:54.405Z</updated>
+  <updated>2025-05-18T01:41:37.179Z</updated>
   <id>http://zqh2333.github.io/</id>
   
   <author>
@@ -21,7 +21,7 @@
     <link href="http://zqh2333.github.io/2025/05/18/jing-dong-yun-wu-xian-bao-yi-dai-2.3.15-xiu-fu-gong-ju-mian-chai-ji-shua-breed-bu-si/"/>
     <id>http://zqh2333.github.io/2025/05/18/jing-dong-yun-wu-xian-bao-yi-dai-2.3.15-xiu-fu-gong-ju-mian-chai-ji-shua-breed-bu-si/</id>
     <published>2025-05-17T23:28:52.138Z</published>
-    <updated>2025-05-18T00:29:54.405Z</updated>
+    <updated>2025-05-18T01:41:37.179Z</updated>
     
     <summary type="html">
     
@@ -157,37 +157,6 @@
   </entry>
   
   <entry>
-    <title>Git分支保存hexo博客源码</title>
-    <link href="http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/"/>
-    <id>http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma/</id>
-    <published>2020-05-19T12:36:11.000Z</published>
-    <updated>2025-05-18T00:54:46.445Z</updated>
-    
-    <summary type="html">
-    
-      
-      
-        
-        
-          &lt;h3 id=&quot;初始化完一个hexo目录之后（假如为HEXO）：&quot;&gt;&lt;a href=&quot;#初始化完一个hexo目录之后（假如为HEXO）：&quot; class=&quot;headerlink&quot;
-        
-      
-    
-    </summary>
-    
-    
-      <category term="hexo" scheme="http://zqh2333.github.io/categories/hexo/"/>
-    
-    
-      <category term="Hexo" scheme="http://zqh2333.github.io/tags/Hexo/"/>
-    
-      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
-    
-      <category term="博客" scheme="http://zqh2333.github.io/tags/%E5%8D%9A%E5%AE%A2/"/>
-    
-  </entry>
-  
-  <entry>
     <title>PVE上安装黑裙辉6.2</title>
     <link href="http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/"/>
     <id>http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/</id>
@@ -254,6 +223,37 @@
       <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
     
       <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Git分支保存hexo博客源码&amp;异地电脑发布文章</title>
+    <link href="http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma-yi-di-dian-nao-fa-bu-wen-zhang/"/>
+    <id>http://zqh2333.github.io/2020/05/19/git-fen-zhi-bao-cun-hexo-bo-ke-yuan-ma-yi-di-dian-nao-fa-bu-wen-zhang/</id>
+    <published>2020-05-19T12:36:11.000Z</published>
+    <updated>2025-05-18T01:40:49.012Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h3 id=&quot;初始化完一个hexo目录之后（假如为HEXO）：&quot;&gt;&lt;a href=&quot;#初始化完一个hexo目录之后（假如为HEXO）：&quot; class=&quot;headerlink&quot;
+        
+      
+    
+    </summary>
+    
+    
+      <category term="hexo" scheme="http://zqh2333.github.io/categories/hexo/"/>
+    
+    
+      <category term="Hexo" scheme="http://zqh2333.github.io/tags/Hexo/"/>
+    
+      <category term="Github" scheme="http://zqh2333.github.io/tags/Github/"/>
+    
+      <category term="博客" scheme="http://zqh2333.github.io/tags/%E5%8D%9A%E5%AE%A2/"/>
     
   </entry>
   

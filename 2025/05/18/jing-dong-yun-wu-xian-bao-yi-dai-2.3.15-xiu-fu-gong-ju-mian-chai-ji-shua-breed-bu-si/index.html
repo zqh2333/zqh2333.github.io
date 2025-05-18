@@ -606,8 +606,10 @@
 <p><strong>2、此时路由器telent已经打开，登录后输入账户名root，路由器密码（密码输入不可见），回车可以查看路由器信息</strong></p>
 <p><img src="/medias/loading.gif" data-original="https://pic1.zhimg.com/v2-25a8249fa9e74a5b7dff4ed57e03a3e6_1440w.jpg" alt="img"></p>
 <p><strong>3、现在路由器未联网，依次输入以下指令并回车执行</strong></p>
-<pre><code>wget -P /tmp https://breed.hackpascal.net/breed-mt7621-jd-cloud-1.bin --no-check-certificate`
-mtd write /tmp/breed-mt7621-jd-cloud-1.bin u-boot`</code></pre><p>路由器此时执行指令不成功，但是指令界面会记住这两条指令，后续可通过按“上”“下”键直接选择指令，为防止联网后，东哥后台封堵telent 口，节约输指令时间<br><strong>4、wan口插入网络，通过按“上”“下”键直接选择指令01并执行，完毕后拔掉wan口网线，按“上”“下”键选择指令02并执行。</strong></p>
+<pre class="line-numbers language-bash"><code class="language-bash"><span class="token function">wget</span> -P /tmp https://breed.hackpascal.net/breed-mt7621-jd-cloud-1.bin --no-check-certificate<span class="token variable"><span class="token variable">`</span>
+
+mtd <span class="token function">write</span> /tmp/breed-mt7621-jd-cloud-1.bin u-boot<span class="token variable">`</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>路由器此时执行指令不成功，但是指令界面会记住这两条指令，后续可通过按“上”“下”键直接选择指令，为防止联网后，东哥后台封堵telent 口，节约输指令时间<br><strong>4、wan口插入网络，通过按“上”“下”键直接选择指令01并执行，完毕后拔掉wan口网线，按“上”“下”键选择指令02并执行。</strong></p>
 <p><img src="/medias/loading.gif" data-original="https://pic1.zhimg.com/v2-a651ca4b58003609392a1dc59a30a9da_1440w.jpg" alt="img"></p>
 <p><strong>5、此时breed已经写入路由器，拔掉路由器电源，一直按住菊花，重新插入电源，先出现白灯，然后出现蓝色闪烁时，松开菊花。输入192.168.1.1，可以进入breed设置界面。</strong>（后续就是刷固件过程，大佬可跳过）</p>
 <p><img src="/medias/loading.gif" data-original="https://pic3.zhimg.com/v2-866e92154ef3c58df1e4f5f40452778e_1440w.jpg" alt="img"></p>
