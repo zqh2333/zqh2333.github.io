@@ -233,20 +233,6 @@
   </url>
   
   <url>
-    <loc>http://zqh2333.github.io/tags/%E7%BE%A4%E6%99%96/</loc>
-    <lastmod>2025-10-18</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://zqh2333.github.io/tags/ftp/</loc>
-    <lastmod>2025-10-18</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://zqh2333.github.io/tags/%E8%B7%AF%E7%94%B1%E5%99%A8/</loc>
     <lastmod>2025-10-18</lastmod>
     <changefreq>weekly</changefreq>
@@ -260,14 +246,21 @@
     <priority>0.2</priority>
   </url>
   
-
-  
   <url>
-    <loc>http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/</loc>
+    <loc>http://zqh2333.github.io/tags/%E7%BE%A4%E6%99%96/</loc>
     <lastmod>2025-10-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
+  
+  <url>
+    <loc>http://zqh2333.github.io/tags/ftp/</loc>
+    <lastmod>2025-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+
   
   <url>
     <loc>http://zqh2333.github.io/categories/hexo/</loc>
@@ -277,7 +270,7 @@
   </url>
   
   <url>
-    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/</loc>
+    <loc>http://zqh2333.github.io/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/</loc>
     <lastmod>2025-10-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -298,7 +291,7 @@
   </url>
   
   <url>
-    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/</loc>
+    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/</loc>
     <lastmod>2025-10-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -312,13 +305,6 @@
   </url>
   
   <url>
-    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/</loc>
-    <lastmod>2025-10-18</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://zqh2333.github.io/categories/%E4%BA%AC%E4%B8%9C%E4%BA%91%E6%97%A0%E7%BA%BF%E5%AE%9D/%E4%B8%8D%E6%AD%BBbreed/</loc>
     <lastmod>2025-10-18</lastmod>
     <changefreq>weekly</changefreq>
@@ -326,7 +312,14 @@
   </url>
   
   <url>
-    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/</loc>
+    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/</loc>
+    <lastmod>2025-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/</loc>
     <lastmod>2025-10-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -341,6 +334,13 @@
   
   <url>
     <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/ftp/</loc>
+    <lastmod>2025-10-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/</loc>
     <lastmod>2025-10-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
