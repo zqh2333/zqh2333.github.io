@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://zqh2333.github.io/"/>
-  <updated>2025-05-18T01:41:37.179Z</updated>
+  <updated>2025-10-18T02:42:38.551Z</updated>
   <id>http://zqh2333.github.io/</id>
   
   <author>
@@ -15,6 +15,41 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>win10气泡屏幕保护程序</title>
+    <link href="http://zqh2333.github.io/2025/05/19/win10-qi-pao-ping-mu-bao-hu-cheng-xu/"/>
+    <id>http://zqh2333.github.io/2025/05/19/win10-qi-pao-ping-mu-bao-hu-cheng-xu/</id>
+    <published>2025-05-19T12:36:11.000Z</published>
+    <updated>2025-10-18T02:42:38.551Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;p&gt;Windows 任务计划程序：设置透明气泡屏保 (Bubbles.scr)&lt;br&gt;目的&lt;br&gt;通过任务计划程序配置 Bubbles.scr 屏保在电脑空闲时自动启动。使用 explorer.exe
+        
+      
+    
+    </summary>
+    
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/categories/PVE/"/>
+    
+      <category term="直通" scheme="http://zqh2333.github.io/categories/PVE/%E7%9B%B4%E9%80%9A/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
+    
+      <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+  </entry>
   
   <entry>
     <title>京东云无线宝一代2.3.15，修复工具，免拆机刷breed不死</title>

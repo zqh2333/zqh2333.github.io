@@ -4,6 +4,39 @@
   
     
     <entry>
+      <title>win10气泡屏幕保护程序</title>
+      <link href="/2025/05/19/win10-qi-pao-ping-mu-bao-hu-cheng-xu/"/>
+      <url>/2025/05/19/win10-qi-pao-ping-mu-bao-hu-cheng-xu/</url>
+      
+        <content type="html"><![CDATA[<p>Windows 任务计划程序：设置透明气泡屏保 (Bubbles.scr)<br>目的<br>通过任务计划程序配置 Bubbles.scr 屏保在电脑空闲时自动启动。使用 explorer.exe 启动，解决背景变黑的问题，并采用优化的触发器设置解决系统检测延迟。</p><p>操作步骤<br>步骤一：创建任务并设置权限（“常规”选项卡）</p><p>打开 任务计划程序。点击右侧的 “创建任务…”。</p><p>在 “常规” 选项卡中设置：</p><p>名称： 填写 Bubbles 屏保 (Idle)</p><p>安全选项 - 用户账户： 点击 “更改用户或组…”，设置为您的当前 Windows 用户名。</p><p>安全选项： 勾选 “只在用户登录时运行”。</p><p>安全选项： 勾选 “使用最高权限运行”。</p><p>步骤二：配置优化触发器（“触发器”选项卡）</p><p>我们使用重复计划触发器来解决系统空闲检测的延迟问题。</p><p>切换到 “触发器” 选项卡，点击 “新建…”。</p><p>在“开始任务”下拉菜单中选择 “按计划”。</p><p>在“设置”部分：</p><p>选择 “一次”。</p><p>勾选 “重复任务间隔”：设置为 1 分钟。</p><p>“持续时间”设置为 “无限期”。</p><p>点击 “确定”。</p><p>步骤三：配置操作（“操作”选项卡）</p><p>使用 explorer.exe 启动屏保是实现透明背景的关键。</p><p>切换到 “操作” 选项卡，点击 “新建…”。</p><p>在“操作”下拉菜单中选择 “启动程序”。</p><p>设置命令和参数：</p><p>程序或脚本： explorer.exe</p><p>添加参数： C:\Windows\System32\Bubbles.scr</p><p>点击 “确定”。</p><p>步骤四：配置空闲条件（“条件”选项卡）</p><p>切换到 “条件” 选项卡。</p><p>在 “空闲” 部分设置：</p><p>勾选 “仅当计算机空闲时间超过下列值时才启动此任务(C)”：设置为 1 分钟。</p><p>勾选 “停止如果计算机不再空闲”。</p><p>勾选 “重新启动如果空闲状态恢复”。</p><p>在 “电源” 部分：</p><p>（笔记本用户）建议取消勾选 “只有在计算机使用交流电源时才启动(A)”。</p><p>步骤五：完成并测试</p><p>点击底部的 “确定” 完成任务创建（可能需要输入当前用户密码）。</p><p>验证： 停止操作 1 到 2 分钟，屏保应自动启动，且背景为透明。</p><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/kity@2.0.4/dist/kity.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/kityminder-core@1.4.50/dist/kityminder.core.min.js"></script><script defer="true" type="text/javascript" src="https://cdn.jsdelivr.net/npm/hexo-simple-mindmap@0.2.0/dist/mindmap.min.js"></script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/hexo-simple-mindmap@0.2.0/dist/mindmap.min.css">]]></content>
+      
+      
+      <categories>
+          
+          <category> PVE </category>
+          
+          <category> 直通 </category>
+          
+          <category> 虚拟机 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> PVE </tag>
+            
+            <tag> 直通 </tag>
+            
+            <tag> 虚拟机 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>京东云无线宝一代2.3.15，修复工具，免拆机刷breed不死</title>
       <link href="/2025/05/18/jing-dong-yun-wu-xian-bao-yi-dai-2.3.15-xiu-fu-gong-ju-mian-chai-ji-shua-breed-bu-si/"/>
       <url>/2025/05/18/jing-dong-yun-wu-xian-bao-yi-dai-2.3.15-xiu-fu-gong-ju-mian-chai-ji-shua-breed-bu-si/</url>
