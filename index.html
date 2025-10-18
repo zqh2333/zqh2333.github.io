@@ -714,7 +714,9 @@
                     <div class="card-content article-content">
                         <div class="summary block-with-text">
                             
-                                Windows 任务计划程序：设置透明气泡屏保 (Bubbles.scr)目的通过任务计划程序配置 Bubbles.scr 屏保在电脑空闲时自动启动。使用 explorer.exe 启动，解决背景变黑的问题，并采用优化的触发器设置解决系统检
+                                这段文档的排版已经非常清晰且符合 Markdown 格式规范，它使用了标题、列表、粗体等元素。
+
+Windows 任务计划程序：设置透明气泡屏保 (Bubbles.scr)目的通过任务计划程序配置 Bubbles.scr 屏保在电脑空闲时自
                             
                         </div>
                         <div class="publish-info">
@@ -725,16 +727,8 @@
                                 
                                 <i class="fas fa-bookmark fa-fw icon-category"></i>
                                 
-                                <a href="/categories/PVE/" class="post-category">
-                                    PVE
-                                </a>
-                                
-                                <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/" class="post-category">
-                                    直通
-                                </a>
-                                
-                                <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
-                                    虚拟机
+                                <a href="/categories/win10/" class="post-category">
+                                    win10
                                 </a>
                                 
                                 
@@ -745,16 +739,12 @@
                     
                     <div class="card-action article-tags">
                         
-                        <a href="/tags/PVE/">
-                            <span class="chip bg-color">PVE</span>
+                        <a href="/tags/win10/">
+                            <span class="chip bg-color">win10</span>
                         </a>
                         
-                        <a href="/tags/%E7%9B%B4%E9%80%9A/">
-                            <span class="chip bg-color">直通</span>
-                        </a>
-                        
-                        <a href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/">
-                            <span class="chip bg-color">虚拟机</span>
+                        <a href="/tags/%E5%B1%8F%E5%B9%95%E4%BF%9D%E6%8A%A4%E7%A8%8B%E5%BA%8F/">
+                            <span class="chip bg-color">屏幕保护程序</span>
                         </a>
                         
                     </div>
@@ -819,28 +809,25 @@
             
             <div class="article col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
-                    <a href="/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/">
+                    <a href="/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/">
                         <div class="card-image">
                             
                             
-                            <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="群晖采用root用户登录ftp">
+                            <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="群晖docker设置国内镜像">
                             
-                            <span class="card-title">群晖采用root用户登录ftp</span>
+                            <span class="card-title">群晖docker设置国内镜像</span>
                         </div>
                     </a>
 
                     <div class="card-content article-content">
                         <div class="summary block-with-text">
                             
-                                
-在控制面板中开启 ssh 登录
+                                一、打开Docker，注册表-设置-Docker Hub-编辑
 
-通过有 管理员权限的用户登录
-
-通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入 root
-
-输入如下命令可以修改root 用户的密码 
-synouser --setp
+二、启用注册表镜像打勾，在注册表镜像URL处填写：
+https:``//gcislbr9.mirror.aliyuncs.com
+以上的镜像如果有问题，可以试下面的地址：
+h
                             
                         </div>
                         <div class="publish-info">
@@ -890,25 +877,28 @@ synouser --setp
             
             <div class="article col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
-                    <a href="/2020/08/17/qun-hui-docker-she-zhi-guo-nei-jing-xiang/">
+                    <a href="/2020/08/17/qun-hui-cai-yong-root-yong-hu-deng-lu-ftp/">
                         <div class="card-image">
                             
                             
-                            <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="群晖docker设置国内镜像">
+                            <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="群晖采用root用户登录ftp">
                             
-                            <span class="card-title">群晖docker设置国内镜像</span>
+                            <span class="card-title">群晖采用root用户登录ftp</span>
                         </div>
                     </a>
 
                     <div class="card-content article-content">
                         <div class="summary block-with-text">
                             
-                                一、打开Docker，注册表-设置-Docker Hub-编辑
+                                
+在控制面板中开启 ssh 登录
 
-二、启用注册表镜像打勾，在注册表镜像URL处填写：
-https:``//gcislbr9.mirror.aliyuncs.com
-以上的镜像如果有问题，可以试下面的地址：
-h
+通过有 管理员权限的用户登录
+
+通过输入 sudo -i 或者 sudo su - , 然后输入当前用户密码, 进入 root
+
+输入如下命令可以修改root 用户的密码 
+synouser --setp
                             
                         </div>
                         <div class="publish-info">
@@ -1075,71 +1065,6 @@ git remote add origin git@github.com:username/username.github.io.git    #关联�
             
             <div class="article col s12 m6 l4" data-aos="zoom-in">
                 <div class="card">
-                    <a href="/2020/05/19/pve-zhi-tong-ying-pan/">
-                        <div class="card-image">
-                            
-                            
-                            <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="PVE直通硬盘">
-                            
-                            <span class="card-title">PVE直通硬盘</span>
-                        </div>
-                    </a>
-
-                    <div class="card-content article-content">
-                        <div class="summary block-with-text">
-                            
-                                进入pve shell 查看硬盘识别符： ls -l /dev/disk/by-id/ # 查看硬盘识别符
-后续 输入如下命令：
- qm set 107 --sata1 /dev/disk/by-id/ata-ST2000VX008-2E3
-                            
-                        </div>
-                        <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2020-05-19
-                            </span>
-                            <span class="publish-author">
-                                
-                                <i class="fas fa-bookmark fa-fw icon-category"></i>
-                                
-                                <a href="/categories/PVE/" class="post-category">
-                                    PVE
-                                </a>
-                                
-                                <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/" class="post-category">
-                                    直通
-                                </a>
-                                
-                                <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
-                                    虚拟机
-                                </a>
-                                
-                                
-                            </span>
-                        </div>
-                    </div>
-
-                    
-                    <div class="card-action article-tags">
-                        
-                        <a href="/tags/PVE/">
-                            <span class="chip bg-color">PVE</span>
-                        </a>
-                        
-                        <a href="/tags/%E7%9B%B4%E9%80%9A/">
-                            <span class="chip bg-color">直通</span>
-                        </a>
-                        
-                        <a href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/">
-                            <span class="chip bg-color">虚拟机</span>
-                        </a>
-                        
-                    </div>
-                    
-                </div>
-            </div>
-            
-            <div class="article col s12 m6 l4" data-aos="zoom-in">
-                <div class="card">
                     <a href="/2020/05/19/pve-an-zhuang-hei-qun/">
                         <div class="card-image">
                             
@@ -1177,6 +1102,71 @@ http://www.myxzy.com/post-488.html
                                 </a>
                                 
                                 <a href="/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
+                                    虚拟机
+                                </a>
+                                
+                                
+                            </span>
+                        </div>
+                    </div>
+
+                    
+                    <div class="card-action article-tags">
+                        
+                        <a href="/tags/PVE/">
+                            <span class="chip bg-color">PVE</span>
+                        </a>
+                        
+                        <a href="/tags/%E7%9B%B4%E9%80%9A/">
+                            <span class="chip bg-color">直通</span>
+                        </a>
+                        
+                        <a href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/">
+                            <span class="chip bg-color">虚拟机</span>
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="article col s12 m6 l4" data-aos="zoom-in">
+                <div class="card">
+                    <a href="/2020/05/19/pve-zhi-tong-ying-pan/">
+                        <div class="card-image">
+                            
+                            
+                            <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="PVE直通硬盘">
+                            
+                            <span class="card-title">PVE直通硬盘</span>
+                        </div>
+                    </a>
+
+                    <div class="card-content article-content">
+                        <div class="summary block-with-text">
+                            
+                                进入pve shell 查看硬盘识别符： ls -l /dev/disk/by-id/ # 查看硬盘识别符
+后续 输入如下命令：
+ qm set 107 --sata1 /dev/disk/by-id/ata-ST2000VX008-2E3
+                            
+                        </div>
+                        <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2020-05-19
+                            </span>
+                            <span class="publish-author">
+                                
+                                <i class="fas fa-bookmark fa-fw icon-category"></i>
+                                
+                                <a href="/categories/PVE/" class="post-category">
+                                    PVE
+                                </a>
+                                
+                                <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/" class="post-category">
+                                    直通
+                                </a>
+                                
+                                <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
                                     虚拟机
                                 </a>
                                 
@@ -1334,7 +1324,7 @@ http://www.myxzy.com/post-488.html
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">23.6k</span>&nbsp;字
+                class="white-color">23.7k</span>&nbsp;字
             
             
             
@@ -1571,11 +1561,11 @@ $(function () {
 
 
 
-<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.9}});</script><script>
+<script>
             window.imageLazyLoadSetting = {
                 isSPA: false,
                 processImages: null,
             };
-        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(n){n.imageLazyLoadSetting.processImages=o;var i=n.imageLazyLoadSetting.isSPA,r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]"));function o(){i&&(r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")));for(var t,e,a=0;a<r.length;a++)t=r[a],0<=(e=t.getBoundingClientRect()).bottom&&0<=e.left&&e.top<=(n.innerHeight||document.documentElement.clientHeight)&&function(){var t,e,n,i,o=r[a];t=o,e=function(){r=r.filter(function(t){return o!==t})},n=new Image,i=t.getAttribute("data-original"),n.onload=function(){t.src=i,e&&e()},n.src=i}()}o(),n.addEventListener("scroll",function(){var t,e;t=o,e=n,clearTimeout(t.tId),t.tId=setTimeout(function(){t.call(e)},500)})}(this);</script></body>
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(n){n.imageLazyLoadSetting.processImages=o;var i=n.imageLazyLoadSetting.isSPA,r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]"));function o(){i&&(r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")));for(var t,e,a=0;a<r.length;a++)t=r[a],0<=(e=t.getBoundingClientRect()).bottom&&0<=e.left&&e.top<=(n.innerHeight||document.documentElement.clientHeight)&&function(){var t,e,n,i,o=r[a];t=o,e=function(){r=r.filter(function(t){return o!==t})},n=new Image,i=t.getAttribute("data-original"),n.onload=function(){t.src=i,e&&e()},n.src=i}()}o(),n.addEventListener("scroll",function(){var t,e;t=o,e=n,clearTimeout(t.tId),t.tId=setTimeout(function(){t.call(e)},500)})}(this);</script><script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.9}});</script></body>
 
 </html>

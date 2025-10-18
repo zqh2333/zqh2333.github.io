@@ -529,16 +529,12 @@
                     
                     <div class="article-tag">
                         
-                            <a href="/tags/PVE/">
-                                <span class="chip bg-color">PVE</span>
+                            <a href="/tags/win10/">
+                                <span class="chip bg-color">win10</span>
                             </a>
                         
-                            <a href="/tags/%E7%9B%B4%E9%80%9A/">
-                                <span class="chip bg-color">直通</span>
-                            </a>
-                        
-                            <a href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/">
-                                <span class="chip bg-color">虚拟机</span>
+                            <a href="/tags/%E5%B1%8F%E5%B9%95%E4%BF%9D%E6%8A%A4%E7%A8%8B%E5%BA%8F/">
+                                <span class="chip bg-color">屏幕保护程序</span>
                             </a>
                         
                     </div>
@@ -549,16 +545,8 @@
                     <div class="post-cate">
                         <i class="fas fa-bookmark fa-fw icon-category"></i>
                         
-                            <a href="/categories/PVE/" class="post-category">
-                                PVE
-                            </a>
-                        
-                            <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/" class="post-category">
-                                直通
-                            </a>
-                        
-                            <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
-                                虚拟机
+                            <a href="/categories/win10/" class="post-category">
+                                win10
                             </a>
                         
                     </div>
@@ -579,7 +567,7 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    605
+                    639
                 </div>
                 
 
@@ -601,42 +589,64 @@
         <hr class="clearfix">
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>Windows 任务计划程序：设置透明气泡屏保 (Bubbles.scr)<br>目的<br>通过任务计划程序配置 Bubbles.scr 屏保在电脑空闲时自动启动。使用 explorer.exe 启动，解决背景变黑的问题，并采用优化的触发器设置解决系统检测延迟。</p>
-<p>操作步骤<br>步骤一：创建任务并设置权限（“常规”选项卡）</p>
-<p>打开 任务计划程序。点击右侧的 “创建任务…”。</p>
-<p>在 “常规” 选项卡中设置：</p>
-<p>名称： 填写 Bubbles 屏保 (Idle)</p>
-<p>安全选项 - 用户账户： 点击 “更改用户或组…”，设置为您的当前 Windows 用户名。</p>
-<p>安全选项： 勾选 “只在用户登录时运行”。</p>
-<p>安全选项： 勾选 “使用最高权限运行”。</p>
-<p>步骤二：配置优化触发器（“触发器”选项卡）</p>
-<p>我们使用重复计划触发器来解决系统空闲检测的延迟问题。</p>
-<p>切换到 “触发器” 选项卡，点击 “新建…”。</p>
-<p>在“开始任务”下拉菜单中选择 “按计划”。</p>
-<p>在“设置”部分：</p>
-<p>选择 “一次”。</p>
-<p>勾选 “重复任务间隔”：设置为 1 分钟。</p>
-<p>“持续时间”设置为 “无限期”。</p>
-<p>点击 “确定”。</p>
-<p>步骤三：配置操作（“操作”选项卡）</p>
-<p>使用 explorer.exe 启动屏保是实现透明背景的关键。</p>
-<p>切换到 “操作” 选项卡，点击 “新建…”。</p>
-<p>在“操作”下拉菜单中选择 “启动程序”。</p>
-<p>设置命令和参数：</p>
-<p>程序或脚本： explorer.exe</p>
-<p>添加参数： C:\Windows\System32\Bubbles.scr</p>
-<p>点击 “确定”。</p>
-<p>步骤四：配置空闲条件（“条件”选项卡）</p>
-<p>切换到 “条件” 选项卡。</p>
-<p>在 “空闲” 部分设置：</p>
-<p>勾选 “仅当计算机空闲时间超过下列值时才启动此任务(C)”：设置为 1 分钟。</p>
-<p>勾选 “停止如果计算机不再空闲”。</p>
-<p>勾选 “重新启动如果空闲状态恢复”。</p>
-<p>在 “电源” 部分：</p>
-<p>（笔记本用户）建议取消勾选 “只有在计算机使用交流电源时才启动(A)”。</p>
-<p>步骤五：完成并测试</p>
-<p>点击底部的 “确定” 完成任务创建（可能需要输入当前用户密码）。</p>
-<p>验证： 停止操作 1 到 2 分钟，屏保应自动启动，且背景为透明。</p>
+                <p>这段文档的排版已经非常清晰且符合 <strong>Markdown</strong> 格式规范，它使用了标题、列表、粗体等元素。</p>
+<hr>
+<h2 id="Windows-任务计划程序：设置透明气泡屏保-Bubbles-scr"><a href="#Windows-任务计划程序：设置透明气泡屏保-Bubbles-scr" class="headerlink" title="Windows 任务计划程序：设置透明气泡屏保 (Bubbles.scr)"></a>Windows 任务计划程序：设置透明气泡屏保 (Bubbles.scr)</h2><h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><p>通过任务计划程序配置 <strong>Bubbles.scr</strong> 屏保在电脑空闲时自动启动。使用 <strong>explorer.exe</strong> 启动，解决背景变黑的问题，并采用优化的触发器设置解决系统检测延迟。</p>
+<h3 id="操作步骤"><a href="#操作步骤" class="headerlink" title="操作步骤"></a>操作步骤</h3><hr>
+<h3 id="步骤一：创建任务并设置权限（“常规”选项卡）"><a href="#步骤一：创建任务并设置权限（“常规”选项卡）" class="headerlink" title="步骤一：创建任务并设置权限（“常规”选项卡）"></a>步骤一：创建任务并设置权限（“常规”选项卡）</h3><ol>
+<li>打开 ​<strong>任务计划程序</strong>​。点击右侧的 ​<strong>“创建任务…”</strong>​。</li>
+<li>在 <strong>“常规”</strong> 选项卡中设置：<ul>
+<li>​<strong>名称</strong>​：填写 <code>Bubbles 屏保 (Idle)</code></li>
+<li>​<strong>安全选项 - 用户账户</strong>​：点击 ​<strong>“更改用户或组…”</strong>​，设置为您的当前 Windows 用户名。</li>
+<li>​<strong>安全选项</strong>​：勾选 ​<strong>“只在用户登录时运行”</strong>​。</li>
+<li>​<strong>安全选项</strong>​：勾选 ​<strong>“使用最高权限运行”</strong>​。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="步骤二：配置优化触发器（“触发器”选项卡）"><a href="#步骤二：配置优化触发器（“触发器”选项卡）" class="headerlink" title="步骤二：配置优化触发器（“触发器”选项卡）"></a>步骤二：配置优化触发器（“触发器”选项卡）</h3><p>我们使用重复计划触发器来解决系统空闲检测的延迟问题。</p>
+<ol>
+<li>切换到 <strong>“触发器”</strong> 选项卡，点击 ​<strong>“新建…”</strong>​。</li>
+<li>在 <strong>“开始任务”</strong> 下拉菜单中选择 ​<strong>“按计划”</strong>​。</li>
+<li>在 <strong>“设置”</strong> 部分：<ul>
+<li>选择 ​<strong>“一次”</strong>​。</li>
+<li>勾选 ​<strong>“重复任务间隔”</strong>​：设置为 ​<strong>1 分钟</strong>​。</li>
+<li><strong>“持续时间”</strong> 设置为 ​<strong>“无限期”</strong>​。</li>
+</ul>
+</li>
+<li>点击 ​<strong>“确定”</strong>​。</li>
+</ol>
+<hr>
+<h3 id="步骤三：配置操作（“操作”选项卡）"><a href="#步骤三：配置操作（“操作”选项卡）" class="headerlink" title="步骤三：配置操作（“操作”选项卡）"></a>步骤三：配置操作（“操作”选项卡）</h3><p>使用 <strong>explorer.exe</strong> 启动屏保是实现<strong>透明背景</strong>的关键。</p>
+<ol>
+<li>切换到 <strong>“操作”</strong> 选项卡，点击 ​<strong>“新建…”</strong>​。</li>
+<li>在 <strong>“操作”</strong> 下拉菜单中选择 ​<strong>“启动程序”</strong>​。</li>
+<li>设置命令和参数：<ul>
+<li>​<strong>程序或脚本</strong>​： <code>explorer.exe</code></li>
+<li>​<strong>添加参数</strong>​： <code>C:\Windows\System32\Bubbles.scr</code></li>
+</ul>
+</li>
+<li>点击 ​<strong>“确定”</strong>​。</li>
+</ol>
+<hr>
+<h3 id="步骤四：配置空闲条件（“条件”选项卡）"><a href="#步骤四：配置空闲条件（“条件”选项卡）" class="headerlink" title="步骤四：配置空闲条件（“条件”选项卡）"></a>步骤四：配置空闲条件（“条件”选项卡）</h3><ol>
+<li>切换到 <strong>“条件”</strong> 选项卡。</li>
+<li>在 <strong>“空闲”</strong> 部分设置：<ul>
+<li>勾选 ​<strong>“仅当计算机空闲时间超过下列值时才启动此任务(C)”</strong>​：设置为 ​<strong>1 分钟</strong>​。</li>
+<li>勾选 ​<strong>“停止如果计算机不再空闲”</strong>​。</li>
+<li>勾选 ​<strong>“重新启动如果空闲状态恢复”</strong>​。</li>
+</ul>
+</li>
+<li>在 <strong>“电源”</strong> 部分：<ul>
+<li>（笔记本用户）建议取消勾选 ​<strong>“只有在计算机使用交流电源时才启动(A)”</strong>​。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="步骤五：完成并测试"><a href="#步骤五：完成并测试" class="headerlink" title="步骤五：完成并测试"></a>步骤五：完成并测试</h3><ol>
+<li>点击底部的 <strong>“确定”</strong> 完成任务创建（可能需要输入当前用户密码）。</li>
+<li>​<strong>验证</strong>​：停止操作 ​<strong>1 到 2 分钟</strong>​，屏保应自动启动，且背景为​<strong>透明</strong>​。</li>
+</ol>
 <script>
         document.querySelectorAll('.github-emoji')
           .forEach(el => {
@@ -718,16 +728,12 @@
                     
                         <div class="article-tag">
                             
-                                <a href="/tags/PVE/">
-                                    <span class="chip bg-color">PVE</span>
+                                <a href="/tags/win10/">
+                                    <span class="chip bg-color">win10</span>
                                 </a>
                             
-                                <a href="/tags/%E7%9B%B4%E9%80%9A/">
-                                    <span class="chip bg-color">直通</span>
-                                </a>
-                            
-                                <a href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/">
-                                    <span class="chip bg-color">虚拟机</span>
+                                <a href="/tags/%E5%B1%8F%E5%B9%95%E4%BF%9D%E6%8A%A4%E7%A8%8B%E5%BA%8F/">
+                                    <span class="chip bg-color">屏幕保护程序</span>
                                 </a>
                             
                         </div>
@@ -1202,7 +1208,9 @@
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            Windows 任务计划程序：设置透明气泡屏保 (Bubbles.scr)目的通过任务计划程序配置 Bubbles.scr 屏保在电脑空闲时自动启动。使用 explorer.exe 启动，解决背景变黑的问题，并采用优化的触发器设置解决系统检
+                            这段文档的排版已经非常清晰且符合 Markdown 格式规范，它使用了标题、列表、粗体等元素。
+
+Windows 任务计划程序：设置透明气泡屏保 (Bubbles.scr)目的通过任务计划程序配置 Bubbles.scr 屏保在电脑空闲时自
                         
                     </div>
                     <div class="publish-info">
@@ -1213,16 +1221,8 @@
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/PVE/" class="post-category">
-                                    PVE
-                                </a>
-                            
-                            <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/" class="post-category">
-                                    直通
-                                </a>
-                            
-                            <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
-                                    虚拟机
+                            <a href="/categories/win10/" class="post-category">
+                                    win10
                                 </a>
                             
                             
@@ -1233,16 +1233,12 @@
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/PVE/">
-                        <span class="chip bg-color">PVE</span>
+                    <a href="/tags/win10/">
+                        <span class="chip bg-color">win10</span>
                     </a>
                     
-                    <a href="/tags/%E7%9B%B4%E9%80%9A/">
-                        <span class="chip bg-color">直通</span>
-                    </a>
-                    
-                    <a href="/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/">
-                        <span class="chip bg-color">虚拟机</span>
+                    <a href="/tags/%E5%B1%8F%E5%B9%95%E4%BF%9D%E6%8A%A4%E7%A8%8B%E5%BA%8F/">
+                        <span class="chip bg-color">屏幕保护程序</span>
                     </a>
                     
                 </div>
@@ -1506,7 +1502,7 @@ code[class*="language-"], pre[class*="language-"] { white-space: pre !important;
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">23.6k</span>&nbsp;字
+                class="white-color">23.7k</span>&nbsp;字
             
             
             
@@ -1743,11 +1739,11 @@ $(function () {
 
 
 
-<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.9}});</script><script>
+<script>
             window.imageLazyLoadSetting = {
                 isSPA: false,
                 processImages: null,
             };
-        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(n){n.imageLazyLoadSetting.processImages=o;var i=n.imageLazyLoadSetting.isSPA,r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]"));function o(){i&&(r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")));for(var t,e,a=0;a<r.length;a++)t=r[a],0<=(e=t.getBoundingClientRect()).bottom&&0<=e.left&&e.top<=(n.innerHeight||document.documentElement.clientHeight)&&function(){var t,e,n,i,o=r[a];t=o,e=function(){r=r.filter(function(t){return o!==t})},n=new Image,i=t.getAttribute("data-original"),n.onload=function(){t.src=i,e&&e()},n.src=i}()}o(),n.addEventListener("scroll",function(){var t,e;t=o,e=n,clearTimeout(t.tId),t.tId=setTimeout(function(){t.call(e)},500)})}(this);</script></body>
+        </script><script>window.addEventListener("load",function(){var t=/\.(gif|jpg|jpeg|tiff|png)$/i,r=/^data:image\/[a-z]+;base64,/;Array.prototype.slice.call(document.querySelectorAll("img[data-original]")).forEach(function(a){var e=a.parentNode;"A"===e.tagName&&(e.href.match(t)||e.href.match(r))&&(e.href=a.dataset.original)})});</script><script>!function(n){n.imageLazyLoadSetting.processImages=o;var i=n.imageLazyLoadSetting.isSPA,r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]"));function o(){i&&(r=Array.prototype.slice.call(document.querySelectorAll("img[data-original]")));for(var t,e,a=0;a<r.length;a++)t=r[a],0<=(e=t.getBoundingClientRect()).bottom&&0<=e.left&&e.top<=(n.innerHeight||document.documentElement.clientHeight)&&function(){var t,e,n,i,o=r[a];t=o,e=function(){r=r.filter(function(t){return o!==t})},n=new Image,i=t.getAttribute("data-original"),n.onload=function(){t.src=i,e&&e()},n.src=i}()}o(),n.addEventListener("scroll",function(){var t,e;t=o,e=n,clearTimeout(t.tId),t.tId=setTimeout(function(){t.call(e)},500)})}(this);</script><script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.9}});</script></body>
 
 </html>
