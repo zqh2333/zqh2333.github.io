@@ -612,23 +612,21 @@ git remote add origin git@github.com:username/username.github.io.git    #关联�
             <article class="cd-timeline-content" data-aos="fade-up">
                 <div class="article col s12 m6">
                     <div class="card">
-                        <a href="/2020/05/19/pve-an-zhuang-hei-qun/">
+                        <a href="/2020/05/19/pve-zhi-tong-ying-pan/">
                             <div class="card-image">
                                 
                                 
-                                <img src="/medias/featureimages/16.jpg" class="responsive-img" alt="PVE上安装黑裙辉6.2">
+                                <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="PVE直通硬盘">
                                 
-                                <span class="card-title">PVE上安装黑裙辉6.2</span>
+                                <span class="card-title">PVE直通硬盘</span>
                             </div>
                         </a>
                         <div class="card-content article-content">
                             <div class="summary block-with-text">
                                 
-                                    PVE上安装黑裙辉6.2参考文章：https://post.smzdm.com/p/a25r8mo2/
-http://www.myxzy.com/post-488.html
-环境介绍
-1、Proxmox VE（以下简称PVE） 
-2、黑群晖
+                                    进入pve shell 查看硬盘识别符： ls -l /dev/disk/by-id/ # 查看硬盘识别符
+后续 输入如下命令：
+ qm set 107 --sata1 /dev/disk/by-id/ata-ST2000VX008-2E3
                                 
                             </div>
                             <div class="publish-info">
@@ -639,15 +637,15 @@ http://www.myxzy.com/post-488.html
                                     
                                     <i class="fas fa-bookmark fa-fw icon-category"></i>
                                     
-                                    <a href="/categories/%E7%BE%A4%E6%99%96/" class="post-category">
-                                    群晖
-                                    </a>
-                                    
-                                    <a href="/categories/%E7%BE%A4%E6%99%96/PVE/" class="post-category">
+                                    <a href="/categories/PVE/" class="post-category">
                                     PVE
                                     </a>
                                     
-                                    <a href="/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
+                                    <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/" class="post-category">
+                                    直通
+                                    </a>
+                                    
+                                    <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
                                     虚拟机
                                     </a>
                                     
@@ -687,21 +685,23 @@ http://www.myxzy.com/post-488.html
             <article class="cd-timeline-content" data-aos="fade-up">
                 <div class="article col s12 m6">
                     <div class="card">
-                        <a href="/2020/05/19/pve-zhi-tong-ying-pan/">
+                        <a href="/2020/05/19/pve-an-zhuang-hei-qun/">
                             <div class="card-image">
                                 
                                 
-                                <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="PVE直通硬盘">
+                                <img src="/medias/featureimages/16.jpg" class="responsive-img" alt="PVE上安装黑裙辉6.2">
                                 
-                                <span class="card-title">PVE直通硬盘</span>
+                                <span class="card-title">PVE上安装黑裙辉6.2</span>
                             </div>
                         </a>
                         <div class="card-content article-content">
                             <div class="summary block-with-text">
                                 
-                                    进入pve shell 查看硬盘识别符： ls -l /dev/disk/by-id/ # 查看硬盘识别符
-后续 输入如下命令：
- qm set 107 --sata1 /dev/disk/by-id/ata-ST2000VX008-2E3
+                                    PVE上安装黑裙辉6.2参考文章：https://post.smzdm.com/p/a25r8mo2/
+http://www.myxzy.com/post-488.html
+环境介绍
+1、Proxmox VE（以下简称PVE） 
+2、黑群晖
                                 
                             </div>
                             <div class="publish-info">
@@ -712,15 +712,15 @@ http://www.myxzy.com/post-488.html
                                     
                                     <i class="fas fa-bookmark fa-fw icon-category"></i>
                                     
-                                    <a href="/categories/PVE/" class="post-category">
+                                    <a href="/categories/%E7%BE%A4%E6%99%96/" class="post-category">
+                                    群晖
+                                    </a>
+                                    
+                                    <a href="/categories/%E7%BE%A4%E6%99%96/PVE/" class="post-category">
                                     PVE
                                     </a>
                                     
-                                    <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/" class="post-category">
-                                    直通
-                                    </a>
-                                    
-                                    <a href="/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
+                                    <a href="/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/" class="post-category">
                                     虚拟机
                                     </a>
                                     

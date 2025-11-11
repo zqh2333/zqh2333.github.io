@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://zqh2333.github.io/"/>
-  <updated>2025-11-11T17:13:15.984Z</updated>
+  <updated>2025-11-11T17:18:15.355Z</updated>
   <id>http://zqh2333.github.io/</id>
   
   <author>
@@ -21,7 +21,7 @@
     <link href="http://zqh2333.github.io/2025/11/12/redmi-k30-pro-hei-zhuan-zheng-jiu-wu-fa-jin-ru-fastboot-huo-hei-ping/"/>
     <id>http://zqh2333.github.io/2025/11/12/redmi-k30-pro-hei-zhuan-zheng-jiu-wu-fa-jin-ru-fastboot-huo-hei-ping/</id>
     <published>2025-11-11T16:33:23.541Z</published>
-    <updated>2025-11-11T17:13:15.984Z</updated>
+    <updated>2025-11-11T17:18:15.355Z</updated>
     
     <summary type="html">
     
@@ -29,7 +29,7 @@
       
         
         
-          &lt;h1 id=&quot;Redmi-K30-Pro-黑砖拯救（无法进入fastboot或黑屏）&quot;&gt;&lt;a href=&quot;#Redmi-K30-Pro-黑砖拯救（无法进入fastboot或黑屏）&quot; class=&quot;headerlink&quot; title=&quot;Redmi K30 Pro
+          &lt;p&gt;title: Redmi K30 Pro 黑砖拯救（无法进入fastboot或黑屏）&lt;br&gt;author: Qihong&lt;br&gt;top: false&lt;br&gt;cover: false&lt;br&gt;toc: true&lt;br&gt;mathjax: false&lt;br&gt;date:
         
       
     
@@ -242,41 +242,6 @@
   </entry>
   
   <entry>
-    <title>PVE上安装黑裙辉6.2</title>
-    <link href="http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/"/>
-    <id>http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/</id>
-    <published>2020-05-19T12:36:11.000Z</published>
-    <updated>2025-05-17T23:21:36.228Z</updated>
-    
-    <summary type="html">
-    
-      
-      
-        
-        
-          &lt;h3 id=&quot;PVE上安装黑裙辉6-2&quot;&gt;&lt;a href=&quot;#PVE上安装黑裙辉6-2&quot; class=&quot;headerlink&quot; title=&quot;PVE上安装黑裙辉6.2&quot;&gt;&lt;/a&gt;PVE上安装黑裙辉6.2&lt;/h3&gt;&lt;p&gt;参考文章：&lt;br&gt;&lt;a
-        
-      
-    
-    </summary>
-    
-    
-      <category term="群晖" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/"/>
-    
-      <category term="PVE" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/"/>
-    
-      <category term="虚拟机" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
-    
-    
-      <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
-    
-      <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
-    
-      <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
-    
-  </entry>
-  
-  <entry>
     <title>PVE直通硬盘</title>
     <link href="http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/"/>
     <id>http://zqh2333.github.io/2020/05/19/pve-zhi-tong-ying-pan/</id>
@@ -301,6 +266,41 @@
       <category term="直通" scheme="http://zqh2333.github.io/categories/PVE/%E7%9B%B4%E9%80%9A/"/>
     
       <category term="虚拟机" scheme="http://zqh2333.github.io/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>
+    
+      <category term="直通" scheme="http://zqh2333.github.io/tags/%E7%9B%B4%E9%80%9A/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/tags/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>PVE上安装黑裙辉6.2</title>
+    <link href="http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/"/>
+    <id>http://zqh2333.github.io/2020/05/19/pve-an-zhuang-hei-qun/</id>
+    <published>2020-05-19T12:36:11.000Z</published>
+    <updated>2025-05-17T23:21:36.228Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h3 id=&quot;PVE上安装黑裙辉6-2&quot;&gt;&lt;a href=&quot;#PVE上安装黑裙辉6-2&quot; class=&quot;headerlink&quot; title=&quot;PVE上安装黑裙辉6.2&quot;&gt;&lt;/a&gt;PVE上安装黑裙辉6.2&lt;/h3&gt;&lt;p&gt;参考文章：&lt;br&gt;&lt;a
+        
+      
+    
+    </summary>
+    
+    
+      <category term="群晖" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/"/>
+    
+      <category term="PVE" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/"/>
+    
+      <category term="虚拟机" scheme="http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/"/>
     
     
       <category term="PVE" scheme="http://zqh2333.github.io/tags/PVE/"/>

@@ -300,27 +300,6 @@
   </url>
   
   <url>
-    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/</loc>
-    <lastmod>2025-11-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/</loc>
-    <lastmod>2025-11-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/</loc>
-    <lastmod>2025-11-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>http://zqh2333.github.io/categories/PVE/</loc>
     <lastmod>2025-11-11</lastmod>
     <changefreq>weekly</changefreq>
@@ -328,14 +307,14 @@
   </url>
   
   <url>
-    <loc>http://zqh2333.github.io/categories/win10/</loc>
+    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/</loc>
     <lastmod>2025-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/</loc>
+    <loc>http://zqh2333.github.io/categories/win10/</loc>
     <lastmod>2025-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -356,7 +335,14 @@
   </url>
   
   <url>
-    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/ftp/</loc>
+    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/</loc>
+    <lastmod>2025-11-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/</loc>
     <lastmod>2025-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -371,6 +357,20 @@
   
   <url>
     <loc>http://zqh2333.github.io/categories/PVE/%E7%9B%B4%E9%80%9A/%E8%99%9A%E6%8B%9F%E6%9C%BA/</loc>
+    <lastmod>2025-11-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/PVE/%E8%99%9A%E6%8B%9F%E6%9C%BA/</loc>
+    <lastmod>2025-11-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>http://zqh2333.github.io/categories/%E7%BE%A4%E6%99%96/Github/ftp/</loc>
     <lastmod>2025-11-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
