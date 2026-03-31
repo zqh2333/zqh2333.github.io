@@ -108,7 +108,7 @@ theme: matery
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
  type: git
- repository: https://github.com/zqh2333/zqh2333.github.io            
+ repository: git@github.com:zqh2333/zqh2333.github.io.git
  branch: master
  
 #emoji表情支持
