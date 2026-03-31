@@ -2,7 +2,7 @@
 set -eu
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-NODE_DIR="$ROOT_DIR/.local/node-v18.20.8-linux-x64/bin"
+NODE_DIR="$ROOT_DIR/.local/node-v20.19.5-linux-x64/bin"
 
 if [ ! -x "$NODE_DIR/node" ]; then
   echo "Local Node 18 not found at: $NODE_DIR" >&2
