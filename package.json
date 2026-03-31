@@ -3,10 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "use-local-node": "sh scripts/use-local-node.sh node -v",
     "build": "hexo generate",
+    "build:local": "sh scripts/use-local-node.sh ./node_modules/.bin/hexo generate",
     "clean": "hexo clean",
+    "clean:local": "sh scripts/use-local-node.sh ./node_modules/.bin/hexo clean",
     "deploy": "hexo deploy",
-    "server": "hexo server"
+    "deploy:local": "sh scripts/use-local-node.sh ./node_modules/.bin/hexo deploy",
+    "server": "hexo server",
+    "server:local": "sh scripts/use-local-node.sh ./node_modules/.bin/hexo server"
   },
   "hexo": {
     "version": "4.2.1"
