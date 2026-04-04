@@ -495,18 +495,34 @@
             
 			
             
-            <span id="busuanzi_container_site_pv" style='display:none'></span>
+            <span id="busuanzi_container_site_pv" style="display:inline;">
                 |&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
-                    class="white-color"></span>&nbsp;次
+                    class="white-color">--</span>&nbsp;次
             </span>
             
 			
             
-            <span id="busuanzi_container_site_uv" style='display:none'></span>
+            <span id="busuanzi_container_site_uv" style="display:inline;">
                 |&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
-                    class="white-color"></span>&nbsp;人
+                    class="white-color">--</span>&nbsp;人
             </span>
             
+            <script>
+                window.addEventListener('load', function () {
+                    setTimeout(function () {
+                        var pv = document.getElementById('busuanzi_value_site_pv');
+                        var uv = document.getElementById('busuanzi_value_site_uv');
+                        var pvWrap = document.getElementById('busuanzi_container_site_pv');
+                        var uvWrap = document.getElementById('busuanzi_container_site_uv');
+
+                        if (pvWrap) pvWrap.style.display = 'inline';
+                        if (uvWrap) uvWrap.style.display = 'inline';
+
+                        if (pv && !pv.textContent.trim()) pv.textContent = '--';
+                        if (uv && !uv.textContent.trim()) uv.textContent = '--';
+                    }, 2500);
+                });
+            </script>
             <br>
             
             <span id="sitetime">载入运行时间...</span>
