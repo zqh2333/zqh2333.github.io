@@ -100,13 +100,13 @@
 </tr>
 </tbody>
 </table>
-<p>* HA 的 SSH 进入的是 <code>core-ssh</code> 插件网络（<code>172.30.33.1/23</code>），不是宿主机网卡视角；对外管理口 <code>&lt;LAN-7&gt;:8123</code> 正常。</p>
+<p>* HA 的 SSH 进入的是 <code>core-ssh</code> 插件网络（<code>&lt;LAN&gt;/23</code>），不是宿主机网卡视角；对外管理口 <code>&lt;LAN-7&gt;:8123</code> 正常。</p>
 <p><strong>结果：8/8 在线，SSH 密钥认证全部成功。</strong></p>
 <hr />
 <h2 id="_2">网络拓扑（逻辑）</h2>
 <pre><code class="language-text">                        ┌─────────────────────────┐
                         │  运营商 / 光猫            │
-                        │  192.168.1.0/24 (modem)  │
+                        │  &lt;LAN&gt;/24 (modem)  │
                         └───────────┬─────────────┘
                                     │ WAN
                         ┌───────────▼─────────────┐
@@ -124,7 +124,7 @@
             │               │                                  │
             │        ┌──────▼──────────┐                       │
             │        │ OpenWrt/iStore  │ &lt;LAN-3&gt;            │
-            │        │ 旁路+IPTV+Clash │ eth2: 10.227.104.79/21 │
+            │        │ 旁路+IPTV+Clash │ eth2: &lt;LAN&gt;/21 │
             │        │ GW→ROS(.2)      │ IPTV 专用路由           │
             │        └─────────────────┘                       │
             │                                                  │
@@ -270,7 +270,7 @@
 <p>这是<strong>与业务终端不同的路径</strong>：PVE 管理流量走 OpenWrt，可能用于代理表/策略分流（ROS 上有 <code>routing-table=proxy gateway=&lt;LAN-3&gt;</code>）。</p>
 <h3 id="iptv">IPTV / 电信相关</h3>
 <ul>
-<li>OpenWrt <code>eth2</code> 在 <code>10.227.104.0/21</code>，hostname/clientid 像机顶盒侧</li>
+<li>OpenWrt <code>eth2</code> 在 <code>&lt;LAN&gt;/21</code>，hostname/clientid 像机顶盒侧</li>
 <li>多条静态路由指向电信网段（<code>&lt;PUBLIC-IP&gt;/16</code> 等）</li>
 <li>ROS 有静态路由：<code>&lt;PUBLIC-IP&gt;/32 → &lt;LAN-3&gt;</code>（注释：Route-Telecom-Auth-to-iStoreOS）</li>
 </ul>

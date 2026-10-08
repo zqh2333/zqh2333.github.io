@@ -13,7 +13,7 @@
 | Home Assistant | <LAN-7> | 智能家居 | 0.26ms | OK root* | 8123 ✅ | 见备注 | 见备注 |
 | 宝塔 (bt) | <LAN-8> | 应用/CPA | 0.28ms | OK root | 8080 ✅ | **<LAN-2>** | <LAN-6> / .2 / <PUBLIC-IP> |
 
-\* HA 的 SSH 进入的是 `core-ssh` 插件网络（`172.30.33.1/23`），不是宿主机网卡视角；对外管理口 `<LAN-7>:8123` 正常。
+\* HA 的 SSH 进入的是 `core-ssh` 插件网络（`<LAN>/23`），不是宿主机网卡视角；对外管理口 `<LAN-7>:8123` 正常。
 
 **结果：8/8 在线，SSH 密钥认证全部成功。**
 
@@ -24,7 +24,7 @@
 ```text
                         ┌─────────────────────────┐
                         │  运营商 / 光猫            │
-                        │  192.168.1.0/24 (modem)  │
+                        │  <LAN>/24 (modem)  │
                         └───────────┬─────────────┘
                                     │ WAN
                         ┌───────────▼─────────────┐
@@ -42,7 +42,7 @@
             │               │                                  │
             │        ┌──────▼──────────┐                       │
             │        │ OpenWrt/iStore  │ <LAN-3>            │
-            │        │ 旁路+IPTV+Clash │ eth2: 10.227.104.79/21 │
+            │        │ 旁路+IPTV+Clash │ eth2: <LAN>/21 │
             │        │ GW→ROS(.2)      │ IPTV 专用路由           │
             │        └─────────────────┘                       │
             │                                                  │
@@ -116,7 +116,7 @@ PVE 节点资源：20 vCPU，内存约 62G（已用约 44G），根盘 40%。
 这是**与业务终端不同的路径**：PVE 管理流量走 OpenWrt，可能用于代理表/策略分流（ROS 上有 `routing-table=proxy gateway=<LAN-3>`）。
 
 ### IPTV / 电信相关
-- OpenWrt `eth2` 在 `10.227.104.0/21`，hostname/clientid 像机顶盒侧
+- OpenWrt `eth2` 在 `<LAN>/21`，hostname/clientid 像机顶盒侧
 - 多条静态路由指向电信网段（`<PUBLIC-IP>/16` 等）
 - ROS 有静态路由：`<PUBLIC-IP>/32 → <LAN-3>`（注释：Route-Telecom-Auth-to-iStoreOS）
 
