@@ -1,7 +1,7 @@
 # 运维知识库索引
 
 > 在处理运维、网络、服务部署或故障问题前先检索本索引及相关页面。
-> 最近更新：2026-09-12
+> 最近更新：2026-10-08
 
 ## 基础设施
 - [[infrastructure/nas-project-artifact-archive-2026-09-12]] — 项目正式发布产物统一归档 Synology NAS，含目录规范、发布脚本与哈希清单。
@@ -99,3 +99,4 @@
 - [[infrastructure/anki-ops-workbench-dedupe-2026-07-27]] — 网页配置工作台去重（唯一配置表单）。
 - [[incidents/abrdns-hcaptcha-checkin-2026-07-28]] — ABRDNS 福利站 hCaptcha 导致 cron NEED_CHECKIN。
 - [[incidents/<TOKEN>]] — 全站公告 Word 式颜色/字体与画布保存修复。
+- [[decisions/kb-auto-publish-2026-10-08]] — 运维知识库自动沉淀发布：脱敏 → 复检 → 变化检测 → 推送 → 线上实测的无人值守链路（cron 每 6 小时）。

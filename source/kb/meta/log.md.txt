@@ -649,3 +649,10 @@
 - 误扫保护：主机数默认上限 4096（超出退出码 3）；单点探测异常不中断整轮。
 - 真实回归：本机真实监听回扫精确命中（含 banner 抓取与 UDP echo）；真实内网 <LAN-1>-10 用 1.5s 命中 42 个开放端口，与已知拓扑一致。
 - 边界：UDP 仅 open / open|filtered；仅限自有或已授权资产，禁止对 CPA 上游等第三方探测。
+
+## 2026-10-08 | 知识库自动沉淀发布上线
+- 新增 `~/.hermes/scripts/kb_auto_publish.sh` + cron `0 */6 * * *`（no_agent）：源 `~/.hermes/knowledge-base/` 自动脱敏发布到 GitHub Pages `/kb/`。
+- 修复真实缺陷：`root:root 600` 文件导致 `cp` **静默少复制**（101→99 篇）→ 改 `sudo cp -a` + `chown`，并加"篇数必须相等"硬校验。
+- 修复 Jekyll 忽略 `_` 目录导致 `_meta/` 整个 404 → 输出层映射为 `meta/`。
+- 脱敏兜底补 `<LAN>` 字面量（字母 x 原正则漏网）；线上泄漏复检 0；全站 200。
+- 排查记录：Pages 构建卡 `building` 8 分钟（正常 45 秒）→ 手动 `POST /pages/builds` 触发重建，42 秒完成。
