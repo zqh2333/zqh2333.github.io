@@ -100,3 +100,12 @@
 - [[incidents/abrdns-hcaptcha-checkin-2026-07-28]] — ABRDNS 福利站 hCaptcha 导致 cron NEED_CHECKIN。
 - [[incidents/<TOKEN>]] — 全站公告 Word 式颜色/字体与画布保存修复。
 - [[decisions/kb-auto-publish-2026-10-08]] — 运维知识库自动沉淀发布：脱敏 → 复检 → 变化检测 → 推送 → 线上实测的无人值守链路（cron 每 6 小时）。
+- [[incidents/cpa-temp3-providers-lost-2026-07-17]] — 用户反馈：管理面板里新增的 临时3 以及后续几个上游不见了。
+- [[incidents/<TOKEN>]] — 日志：leak protection blocked request: matched gitleaks rule generic-api-key
+- [[infrastructure/authorized-verification-assistant-v1.2.13-test.2]] — 日期：2026-09-16
+- [[infrastructure/authorized-verification-assistant-v1.2.9-test.5]] — 真实 Chrome 扩展 ID：mgpembebkeoiciopndiciehcokojeldf
+- [[infrastructure/verification-challenge-lab-v1.0.1]] — 本地产物：/home/user/artifacts/verification-challenge-lab-v1.0.1.zip
+- [[infrastructure/verification-extension-docker-v1.2.9]] — 日期：2026-09-15
+- [[runbooks/cron-auto-repair-sharedchat-hermes-menu]] — 弹窗领取后 claim API/toast 捕获不稳
+- [[runbooks/nas-mtu-1492-rollback-2026-10-08]] — 排查 NAS 16MB 上传 HTTP 405 时，怀疑是 MTU 问题。未经询问就把 NAS eth0 MTU 从 1500 改成 1492，并写了开机脚本 /usr/local
+- [[runbooks/sharedchat-codex-claim]] — cron: bcff58ebbb8d / 5 0   
