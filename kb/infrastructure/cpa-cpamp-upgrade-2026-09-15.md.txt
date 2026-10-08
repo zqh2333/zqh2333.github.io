@@ -1,0 +1,44 @@
+# CPA / CPAMP 升级记录
+
+- 日期：2026-09-15
+- 目标：升级 CPA `cli-proxy` 与 CPAMP `cpa-manager-plus`
+- 范围：仅重建两个容器；未修改 CPA `config.yaml`、auth 目录、插件目录或 CPAMP 数据。
+
+## 升级前
+
+- CPA 镜像容器：`cli-proxy`，旧镜像 ID `sha256:<HASH>`
+- CPAMP 旧镜像 ID `sha256:<HASH>`
+- CPA 宿主端口：`8318 -> 8317`
+- CPAMP 宿主端口：`18317 -> 18317`
+
+## 备份
+
+- 目录：`/root/cpa_update_backups/20260915_145822`
+- 包含：`config.yaml`、auth-dir、plugins、CPAMP SQLite 在线一致性备份、容器 inspect、镜像 inspect。
+- CPAMP 备份校验：`PRAGMA integrity_check = ok`
+- CPAMP 备份归档 SHA-256：`<HASH>`
+
+## 升级后
+
+- CPA：`eceasy/cli-proxy-api:latest`
+  - upstream digest：`sha256:<HASH>`
+  - runtime：`v7.3.3`，commit `7bbfeaf`
+- CPAMP：`seakee/cpa-manager-plus:latest`
+  - upstream digest：`sha256:<HASH>`
+- CPA Billing：`cpa-key-billing v1.3.3` 仍加载并注册。
+- Keeper 插件：`v0.1.0` 仍加载并注册。
+
+## 验证
+
+- `cli-proxy`：running，重启次数 0；本地根路径 HTTP 200。
+- `cpa-manager-plus`：running，重启次数 0；管理页面 HTTP 307（登录重定向，符合预期）。
+- `cpa-usage-keeper`：running healthy，keeper health HTTP 200。
+- 端口 `8318`、`18317`、`18080` 均已监听/可访问。
+- 当前 CPA `config.yaml` SHA-256 与升级前备份一致，确认 `CONFIG_UNCHANGED=1`。
+- 当前 CPAMP SQLite `PRAGMA integrity_check = ok`。
+- 三个容器的持久化挂载保持不变。
+- 未访问 CPA 上游站点、未执行上游测活或业务探测。
+
+## 回滚
+
+如需回滚，停止并删除当前两个容器后，用备份的容器参数重新运行旧镜像；配置、auth、plugins 和 CPAMP 数据均保留在原宿主路径。旧镜像未删除。

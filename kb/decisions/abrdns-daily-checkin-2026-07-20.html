@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ABRDNS 福利站每日签到（2026-07-20） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="abrdns-2026-07-20">ABRDNS 福利站每日签到（2026-07-20）</h1>
+<h2 id="_1">站点</h2>
+<ul>
+<li>签到：<code>https://checkin.new-api.abrdns.com/checkin</code></li>
+<li>登录：仅 Linux DO OAuth（主站用户名密码不能直接签到）</li>
+</ul>
+<h2 id="_2">实现</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>路径</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>脚本</td>
+<td><code>~/.hermes/scripts/abrdns_daily_checkin.py</code></td>
+</tr>
+<tr>
+<td>wrapper</td>
+<td><code>~/.hermes/scripts/abrdns_checkin_random.sh</code></td>
+</tr>
+<tr>
+<td>会话</td>
+<td><code>~/.hermes/secrets/abrdns_session_cookies.json</code></td>
+</tr>
+<tr>
+<td>Linux DO cookie</td>
+<td><code>~/.hermes/secrets/linuxdo_cookies.json</code></td>
+</tr>
+<tr>
+<td>cron</td>
+<td>08:00 起随机 0–30min，<code>no_agent=true</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">流程</h2>
+<ol>
+<li>有 <code>checkin_session</code> → GET <code>/checkin</code> 判断是否已签到  </li>
+<li>失效 → 从本机 Chrome 解密 <code>linux.do</code> cookie（用户已手动过 CF/登录）  </li>
+<li>Playwright 打开 OAuth，点「允许」，刷新福利站 session  </li>
+<li><strong>不</strong>自动过 Cloudflare；CF 挡下时输出 <code>CF_BLOCKED</code></li>
+</ol>
+<h2 id="2026-07-20">验证（2026-07-20）</h2>
+<ul>
+<li>本机 Chrome 已登录 Linux DO <code>@user</code></li>
+<li>OAuth 授权成功 → 签到页显示 <strong>今日已签到 · $5.19 x3</strong></li>
+<li>脚本 dry-run：<code>[abrdns] ALREADY_CHECKED_IN: reward=$5.19 x3</code> exit 0</li>
+</ul>
+<h2 id="_4">维护</h2>
+<ul>
+<li>若 cron 报 <code>NO_LINUXDO_SESSION</code>：本机 Chrome 打开 https://linux.do 保持登录后再跑  </li>
+<li>若 <code>CF_BLOCKED</code>：本机浏览器过一次 Cloudflare 后重试  </li>
+<li>密码不进知识库/memory，只在用户浏览器会话里</li>
+</ul>
+<h2 id="2026-07-28">更新 2026-07-28</h2>
+<ul>
+<li>福利站加 hCaptcha；空 POST 无效。</li>
+<li>正确诊断码：<code>HCAPTCHA_REQUIRED</code>。</li>
+<li>交互：<code>ABRDNS_INTERACTIVE=1</code> + 本机 Chrome。</li>
+<li>主站 API 签到未启用；UID=9732。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

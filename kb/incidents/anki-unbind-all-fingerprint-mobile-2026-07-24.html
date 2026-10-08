@@ -1,0 +1,21 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>一键解绑无响应 + 指纹碰撞 + 手机按钮过大（2026-07-24） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="2026-07-24">一键解绑无响应 + 指纹碰撞 + 手机按钮过大（2026-07-24）</h1>
+<h2 id="_1">一键解绑无响应</h2>
+<ul>
+<li>按钮调用 <code>unbindAllDevices(code)</code>，但前端函数缺失。</li>
+<li>新增 <code>function unbindAllDevices</code> + <code>POST /api/admin/unbind_devices_by_code</code>。</li>
+<li>用 jQuery <code>.on('click.unbindAll')</code> 绑定，避免 inline onclick 转义问题。</li>
+</ul>
+<h2 id="_2">手机按钮过大</h2>
+<ul>
+<li><code>#devicesModal</code> 移动端缩小「解绑此设备 / 一键解绑 / 关闭」尺寸与 padding。</li>
+</ul>
+<h2 id="_3">指纹碰撞</h2>
+<ul>
+<li>同一 <code>device_id</code> 可挂在多个激活码下；无码静默时 <code>.first()</code> 会命中外码历史。</li>
+<li>现：多候选时优先按牌组名匹配；无法消歧则 <strong>不静默匹配</strong>，避免外码 RISK_LOCKED。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

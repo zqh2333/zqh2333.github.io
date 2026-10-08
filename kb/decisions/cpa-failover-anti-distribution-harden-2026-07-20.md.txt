@@ -1,0 +1,42 @@
+# CPA 抗「反分发/额度/并发」间歇拒流加固（2026-07-20）
+
+## 目标
+在上游禁止 CPA/sub/new-api 分发、限流/额度窗口拒流的情况下，提高本地 8317 多上游 failover 成功率。**不**做上游定时探活。
+
+## 根因回顾
+- 403 余额/全站额度/反滥用 HTML
+- 429 并发
+- 冷却 180s 后 `auth_unavailable`
+- temp2 `grok-4.5` 曾设 alias=`Grok 4.5` → 拆出 failover 组
+
+## 配置变更（config.yaml）
+| 项 | 值 |
+|---|---|
+| request-retry | 4 |
+| max-retry-credentials | 8 |
+| max-retry-interval | 2 |
+| transient-error-cooldown-seconds | 90 |
+| routing | RR，session-affinity=false |
+| force-model-prefix | false |
+| 全站 openai-compat models | alias 清空 |
+| temp2 | 去掉 `Grok 4.5` alias |
+| 手动 priority | RawChat90 byd80 super75 snow70 temp1/2 65/60 mimo55 … **斑马5（降权）** |
+
+edge：chat 超时 300s（此前已设）。Hermes fallback 已对齐菜单。
+
+## 验证（8317 最小业务句，加固后）
+| 模型 | 结果 |
+|---|---|
+| grok-4.5 chat ×5 | **5/5 200** |
+| deepseek-v4-pro ×3 | **3/3** |
+| gpt-5.5 / terra / mimo-pro ×2 | **全 200** |
+| glm-5.2 ×3 | **2/3**（1 次喵喵 EOF，其余 failover 成功） |
+| /responses grok + gpt-5.5 | **200** |
+
+## 不能完全消灭的
+- 单上游模型（claude、mimo-v2.5-pro 仅 1 站；gpt-5.4 仅 codex）
+- 全站额度窗口用完时所有相关上游同时 403
+- 上游明确封分发 IP/UA 时
+
+## 纪律
+禁止定时探活；仅客户端真实请求触发 failover。

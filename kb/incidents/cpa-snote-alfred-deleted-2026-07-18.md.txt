@@ -1,0 +1,46 @@
+# 删除 snote-temp / alfred-temp（2026-07-18）
+
+## 用户反馈
+上游质量告警里还有 `snote-temp`、`alfred-temp`，用户认为已经删掉了。
+
+## 核查结论
+**当时并没有删掉。**  
+磁盘 `config.yaml` 里仍在：
+
+| 名称 | base-url | priority | models |
+|---|---|---:|---:|
+| snote-temp | `https://cpa.snote.cc.cd/v1` | 20 | 9 |
+| alfred-temp | `https://api.alfredng.example.org/v1` | 10 | 1 |
+
+容易误判的原因：
+1. 曾从「临时/临时2」**改名**为 snote-temp/alfred-temp（不是删除）
+2. Hermes/8317 固定菜单**不显示站名**，只显示裸模型名
+3. 两站长期 401/502，质量脚本一直报警，看起来像“坏站还在”
+
+## 已执行（用户意图：删掉）
+在共享锁内显式删除并写审计：
+
+- source: `user_delete_snote_alfred`
+- removed: `snote-temp`, `alfred-temp`
+- backup: `config.yaml.<TOKEN>`
+- 从 `codex-fingerprint.providers` 去掉两站名
+- 清理 `upstream_alerts.json` / `upstream_priority_state.json` 残留
+- `docker restart cli-proxy` 使运行态与磁盘一致
+
+## quality 修复
+`cpa_upstream_quality.py` 增加：
+
+`IGNORE_DELETED_PROVIDERS`
+
+只对**当前 config 中仍存在的站**报 errors/alerts；历史 sync 日志里的已删站不再报警。
+
+## 验证
+- 当前 providers：`RawChat, 薄荷, mimo, 魔方, 喵喵, 简直了, 烁`
+- `live_has_snote=False` / `live_has_alfred=False`
+- quality：`NO_PRIORITY_CHANGE {'errors': {}}`
+- alerts：`[]`
+
+## 说明
+- 这是用户明确要求的站点删除，不是脚本误删
+- 之后若面板再加同名站，guard 会按面板 membership 保留
+- 自动 priority 仍禁用，不会因删站再写 priority

@@ -1,0 +1,44 @@
+# Anki 卡牌文案配置全量验收（2026-07-21）
+
+## 目标
+核查 Anki 后台「卡牌文案配置」全部可见功能、保存链路及卡牌端读取；发现并修复传播缺口。
+
+## 健康基线
+- compose 6 服务均运行；db/redis healthy
+- `/api/status`: `ok=true`，配置/协议 `v136.7`
+- 修复 `verify_all.py` schema drift 在宿主机执行的问题：改为 `docker exec anki_server-web-1 python3 /app/data/verify_schema_drift.py`
+- 最终 `verify_all.py`: `success=true`, `ready=true`
+
+## 发现与修复
+### `/api/protocol` 未携带卡牌文案
+管理页保存提示称 protocol/validate 都下发文案，但 `_protocol_payload()` 原来没有 `cardText/cardTexts`；只有 validate 等路径有。
+
+修复 `app/routes/api.py`：协议 payload 加入：
+```python
+"cardText": _card_text_config(),
+"cardTexts": _card_text_config(),
+```
+重启 web/worker 后生效。这样新卡读取 protocol 时也会收到最新后台文案。
+
+## 端到端验收（容器内，不保留测试改动）
+脚本：`/www/anki_server/data/card_config_e2e.py`（web 容器 `/tmp/card_config_e2e.py`）
+
+| 功能 | 结果 |
+|---|---|
+| 配置 GET / 10 组完整 | PASS |
+| 合成探针（6 场景） | PASS |
+| Preview 不写库 | PASS |
+| 导入预览 | PASS |
+| 保存 + 回读 | PASS |
+| 只关下载按钮时其余 reactionEffects 保持原值 | PASS |
+| protocol 获取临时测试文案 `cardText/cardTexts` | PASS |
+| 导出配置 | PASS |
+| 测试配置精确回滚 | PASS |
+
+## 现有功能范围
+- 基础显示、首次加载、运行提示、状态/弱网、全屏弹窗、反应效果、错误动作、FAQ、高级导出/导入预览、合成探针、保存发布。
+- 下载按钮当前 `downloadConfigured=false`；开关行为已隔离，修改下载按钮不会影响其它 reactionEffects。
+
+## 注意
+- 管理页保存后：新卡下次联网验证与现在的 `/api/protocol` 都会读取新文案；旧卡保留兼容字段。
+- web 为 bind mount；修改 Python 后需重启 `anki_server-web-1` / `worker` 才加载新模块。

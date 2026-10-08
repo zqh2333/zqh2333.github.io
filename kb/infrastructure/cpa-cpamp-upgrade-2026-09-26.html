@@ -1,0 +1,66 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA / CPAMP 升级记录（2026-09-26） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="cpa-cpamp-2026-09-26">CPA / CPAMP 升级记录（2026-09-26）</h1>
+<ul>
+<li>日期：2026-09-26</li>
+<li>目标：升级 CPA <code>cli-proxy</code> 与 CPAMP <code>cpa-manager-plus</code>，并同步 Hermes 模型菜单</li>
+<li>范围：仅重建两个容器；未改动 CPA <code>config.yaml</code> 内容、auth 目录、插件目录或 CPAMP 数据；未触碰 <code>cpa-usage-keeper</code>。</li>
+</ul>
+<h2 id="_1">升级前</h2>
+<ul>
+<li>CPA <code>cli-proxy</code>：<code>eceasy/cli-proxy-api:latest</code></li>
+<li>镜像 ID <code>sha256:&lt;HASH&gt;</code></li>
+<li>runtime <code>v7.3.3</code>，commit <code>7bbfeaf</code></li>
+<li>CPAMP <code>cpa-manager-plus</code>：<code>seakee/cpa-manager-plus:latest</code></li>
+<li>镜像 ID <code>sha256:&lt;HASH&gt;</code></li>
+<li>端口：CPA <code>8318 -&gt; 8317</code>；CPAMP <code>18317 -&gt; 18317</code>；Keeper <code>18080 -&gt; 8080</code></li>
+</ul>
+<h2 id="_2">备份</h2>
+<ul>
+<li>目录：<code>/root/cpa_update_backups/20260926_081236</code></li>
+<li>内容：<code>config.yaml</code>、<code>auth-dir.tgz</code>、<code>plugins.tgz</code>、<code>cpamp-data-consistent.tgz</code>（SQLite 在线 <code>.backup</code>）、<code>container-inspect.json</code>、<code>image-inspect.json</code></li>
+<li>校验：<code>BACKUP_DB_INTEGRITY=ok</code></li>
+<li>回滚标签：<code>eceasy/cli-proxy-api:rollback-20260926</code>、<code>seakee/cpa-manager-plus:rollback-20260926</code></li>
+<li>已知脚本缺陷：<code>/tmp/cpa_cpamp_backup.sh</code> 末尾的 Python 校验按 <code>usage.sqlite</code> 取 tar 成员，实际成员名为 <code>./usage.sqlite</code>，因此校验步骤必然报 <code>KeyError</code>；备份文件本身是完整的，需按 <code>endswith("usage.sqlite")</code> 修正后再校验。</li>
+</ul>
+<h2 id="_3">升级后</h2>
+<ul>
+<li>CPA：<code>v7.3.17</code>，commit <code>9bdde54</code>，BuiltAt <code>2026-09-24T19:07:19Z</code></li>
+<li>upstream digest <code>sha256:&lt;HASH&gt;</code></li>
+<li>新镜像 ID <code>sha256:&lt;HASH&gt;</code></li>
+<li>CPAMP：upstream digest <code>sha256:&lt;HASH&gt;</code></li>
+<li>新镜像 ID <code>sha256:&lt;HASH&gt;</code></li>
+<li>插件：<code>cpa-key-billing v1.3.3</code> 与 <code>keeper v0.1.0</code> 均加载并注册。</li>
+</ul>
+<h2 id="_4">重建参数（与原配置一致）</h2>
+<ul>
+<li><code>cli-proxy</code>：<code>-e TZ=Asia/Shanghai</code>、<code>-p 8318:8317</code>、挂载 <code>config.yaml</code>、<code>/root/.cli-proxy-api</code>、<code>/CLIProxyAPI/plugins</code>、<code>--restart unless-stopped</code></li>
+<li><code>cpa-manager-plus</code>：<code>-e HTTP_ADDR=0.0.0.0:18317 -e USAGE_DATA_DIR=/data -e USAGE_DB_PATH=/data/usage.sqlite</code>、<code>-p 18317:18317</code>、挂载 <code>/root/cpa-manager-plus-data:/data</code>、<code>--restart unless-stopped</code></li>
+</ul>
+<h2 id="_5">验证</h2>
+<ul>
+<li><code>cli-proxy</code>：running，本地根路径 HTTP 200，日志无 panic/fatal/error。</li>
+<li><code>cpa-manager-plus</code>：running，<code>/</code> HTTP 307（登录重定向）、<code>/management.html</code> HTTP 200。</li>
+<li><code>cpa-usage-keeper</code>：未被触碰，healthy；<code>/keeper/health</code> HTTP 200（<code>/</code>、<code>/healthz</code> 为 404 属正常，其 healthcheck 用的是 <code>/keeper/healthz</code>）。</li>
+<li>CPAMP SQLite：<code>PRAGMA integrity_check=ok</code>，52 张表。</li>
+<li>CPAMP 日志：派生迁移完成、后台 worker 启动、baseURL <code>http://&lt;LAN-8&gt;:8318</code>、<code>managementKeySet=true</code>。</li>
+<li>挂载与端口在重建前后逐项一致。</li>
+<li>未访问 CPA 上游站点，未做上游测活或业务探测。</li>
+</ul>
+<h2 id="hermes">Hermes 模型菜单同步</h2>
+<ul>
+<li>升级后 CPA 本地聚合 <code>/v1/models</code> 为 11 个模型，与 Hermes 菜单出现差异：</li>
+<li>仅聚合有：<code>gpt-5.6-terra</code></li>
+<li>仅菜单有：<code>gpt-image-2.5-sunburst</code></li>
+<li>处理：以本地聚合为源执行 <code>cpa_model_menu_sync.py --no-restart</code>，返回 <code>changed=true</code>。</li>
+<li>结果：菜单与聚合 <code>EQUAL=True</code>（11/11），<code>default</code> 保持 <code>global:deepseek-v4.1-flash</code>，<code>fallback_providers</code> 仍为空。</li>
+<li>配置备份：<code>/home/user/.hermes/config.yaml.bak_cpa_menu_sync</code></li>
+</ul>
+<h2 id="_6">备注</h2>
+<ul>
+<li>升级后 <code>global:deepseek-v4.1-flash</code> 已可正常调用（此前 503 <code>model_price_error</code>「尚未定价」为 Billing 缺价，非模型故障）。</li>
+<li>故障转移保持关闭，符合"所选模型即实际调用模型"的要求。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

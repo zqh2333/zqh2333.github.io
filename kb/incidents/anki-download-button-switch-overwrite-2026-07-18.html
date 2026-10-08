@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anki 下载按钮关闭后其余全关且无法再开（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="anki-2026-07-18">Anki 下载按钮关闭后其余全关且无法再开（2026-07-18）</h1>
+<h2 id="_1">现象</h2>
+<ul>
+<li>只关「下载按钮」</li>
+<li>入口动画/成功横幅/失败遮罩/弱网重试/水印等全部变关</li>
+<li>再点开启也打不开</li>
+</ul>
+<h2 id="_2">根因</h2>
+<p>卡牌文案页开关 DOM 同时有：
+1. <code>&lt;input type=hidden data-path=... value="true|false"&gt;</code>
+2. <code>&lt;button data-path=...&gt;</code>（value 为空字符串）</p>
+<p><code>syncFormToJson()</code> 遍历所有 <code>[data-path]</code>。
+按钮空值经 <code>boolOn('')</code> 被当成 <strong>false</strong>，后写覆盖先写，于是：
+- 任意一次切换/保存都会把<strong>全部开关写成 false</strong>
+- 再开也会被按钮空值盖回 false</p>
+<h2 id="_3">修复</h2>
+<p>文件：<code>app/routes/admin.py</code>（卡牌显示与反应控制页内嵌 JS）
+1. <code>syncFormToJson</code> 只读 <code>input/textarea/select[data-path]</code>，不读 button
+2. <code>toggleSwitch</code> 只改 <code>input[data-path=...]</code>
+3. 按钮改为 <code>data-switch-path</code>，避免再污染
+4. <code>boolOn</code> 空值不再默认 false
+5. 保存校验检查整组 reaction 开关一致性</p>
+<h2 id="_4">数据恢复</h2>
+<p>已把 reaction/overlay 默认功能恢复为开启，<strong>仅</strong> <code>enableDownloadButton=false</code>。</p>
+<h2 id="_5">验证</h2>
+<ul>
+<li>JS 模型：旧逻辑全 false；新逻辑仅 download false</li>
+<li>API/Admin：其余 enable* = true，download=false</li>
+<li>来回 OFF→ON→OFF：其余开关始终 true（<code>TOGGLE_ISOLATION_OK</code>）</li>
+<li><code>/api/protocol</code>：downloadAvailable/showDownload=false</li>
+</ul>
+<h2 id="_6">用户操作</h2>
+<p>强制刷新管理后台（Ctrl+F5）后再试开关。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

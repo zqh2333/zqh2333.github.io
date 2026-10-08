@@ -1,0 +1,25 @@
+# Hermes 菜单加入 gpt-5.6-sol（2026-07-18）
+
+## 用户决策
+要求把 `gpt-5.6-sol` 加入 Hermes 固定菜单（此前策略排除）。
+
+## 变更
+1. `~/.hermes/config.yaml` models 增加 `gpt-5.6-sol: gpt-5.6-sol`
+2. `~/.hermes/state/stable_models.json` 固定名单 11 个（含 sol）
+3. 宝塔 ` /root/cli-proxy-data/state/stable_models.json` 同步
+4. `cpa_stable_menu_policy.py`：exclude 仅保留 `gpt-5.6-luna`
+5. jshandler allowlist 增加 sol
+6. 重启 `cpa-stable-proxy` / `cli-proxy`
+
+## 验证
+- 8317 `/v1/models` 含 `gpt-5.6-sol`（共 11）
+- Hermes audit：`hermes_models=11`, `missing_in_cpa=[]`
+- `gpt-5.6-sol` chat 抽测 **200**
+
+## 使用
+- Hermes 菜单可选 `gpt-5.6-sol`
+- 仍走 `http://<LAN-8>:8317/v1`
+- 若 CC Switch 长会话，继续用 8317（已有 /responses name 清洗）
+
+## 当前状态
+用户取消了后续“移除 sol”操作；已恢复。sol 继续显示在 Hermes/8317 菜单。

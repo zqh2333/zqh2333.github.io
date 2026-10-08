@@ -1,0 +1,30 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>项目产物统一归档到本地 NAS - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="nas">项目产物统一归档到本地 NAS</h1>
+<ul>
+<li>日期：2026-09-12</li>
+<li>NAS：Synology <code>&lt;LAN-5&gt;</code></li>
+<li>共享入口：<code>smb://&lt;LAN-5&gt;/云/Hermes项目产物</code></li>
+<li>NAS 根目录：<code>/volume1/云/Hermes项目产物</code></li>
+<li>发布脚本：<code>~/.hermes/scripts/publish_artifacts_to_nas.py</code></li>
+</ul>
+<h2 id="_1">目录规范</h2>
+<pre><code class="language-text">/volume1/云/Hermes项目产物/&lt;project&gt;/&lt;version&gt;/
+</code></pre>
+<p>每个版本包含正式产物和 <code>SHA256SUMS.json</code>，清单记录文件名、字节数、SHA-256 与发布时间。</p>
+<h2 id="_2">默认策略</h2>
+<p>以后各项目生成的正式发布产物默认同步到 NAS，包括 ZIP、CRX、APK、EXE、MSI、DMG、DEB、RPM、tar.gz、PDF、PPTX、XLSX、DOCX 等。源码、依赖目录、缓存和临时构建文件仍保留在本机项目目录，避免占满 NAS 或同步大量小文件。密码、token、Cookie、私钥和 secrets 禁止作为项目产物上传。</p>
+<h2 id="_3">发布命令</h2>
+<pre><code class="language-bash">~/.hermes/scripts/publish_artifacts_to_nas.py PROJECT VERSION FILE [FILE ...]
+</code></pre>
+<p>Synology SCP/SFTP 对中文远程路径可能返回 255；脚本使用 <code>tar | ssh tar</code> 流式传输，并在上传后统一设置文件权限 <code>664</code>。</p>
+<h2 id="_4">已归档</h2>
+<pre><code class="language-text">/volume1/云/Hermes项目产物/verification-extension/v1.1.0/
+├── authorized-verification-assistant-v1.1.0.zip
+├── extension.crx
+└── SHA256SUMS.json
+</code></pre>
+<p>验证：NAS 端 ZIP/CRX SHA-256 与本机源文件完全一致，三个文件权限均为 <code>664</code>，可读。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

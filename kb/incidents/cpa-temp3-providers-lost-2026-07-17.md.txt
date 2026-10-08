@@ -1,0 +1,29 @@
+# CPA「临时3」等新增上游丢失（2026-07-17）
+
+## 现象
+用户反馈：管理面板里新增的 `临时3` 以及后续几个上游不见了。
+
+## 核查
+- 当前磁盘 `config.yaml` 仅 8 个 openai-compatibility：
+  RawChat / 薄荷 / mimo / 魔方 / 喵喵 / 简直了 / **snote-temp** / **alfred-temp**
+- 全量备份中**没有** `临时3` 字样，无法从 bak 恢复该站点完整 base-url/key。
+- `临时`/`临时2` **未删除**，已改名为 `snote-temp` / `alfred-temp`（十项优化改名）。
+
+## 时间线（容器日志，CST）
+- 11:21 PUT openai-compatibility → OpenAI-compat **9**
+- 11:22 PUT → **10**
+- 13:51 PUT ×2 → **11**
+- 14:37 docker restart / 配置重载 → 回到 **8**
+- 磁盘 config mtime 对应随后 model sync 写回
+
+## 根因判断
+1. 管理面板在 11:21–13:51 通过 API 增加了上游（内存/运行态一度到 11 个）。
+2. 之后进程重载/写回以**磁盘上的 8 站点配置**为准，新增站点未稳定落在 host bind-mount 的 `config.yaml` 备份链中。
+3. 模型同步脚本**只改 models，不删 provider 整项**；本次更像是「运行态新增未持久化 / 被旧磁盘配置覆盖」，不是 Hermes 菜单过滤。
+
+## 处理
+- 无法自动恢复 `临时3`（无备份凭据）。
+- 需用户重新提供：名称、base-url、API key、需要的模型名。
+- 建议：面板新增后立刻 `cat config.yaml | grep name` 确认落盘；避免在同步/重启窗口同时改面板。
+
+相关：[[decisions/cpa-local-model-sync]]、[[decisions/cpa-advanced-failover-2026-07-17]]

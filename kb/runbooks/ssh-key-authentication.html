@@ -1,0 +1,29 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SSH 公钥免密登录 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><h1 id="ssh">SSH 公钥免密登录</h1>
+<h2 id="_1">前置检查</h2>
+<ol>
+<li>检查主机网络与目标 SSH 端口连通。</li>
+<li>使用 <code>ssh-keyscan</code> 固定目标主机指纹。</li>
+<li>为每台设备生成独立密钥，保存到 <code>~/.ssh/&lt;SSH-KEY&gt;</code>，目录权限 <code>700</code>、私钥权限 <code>600</code>。</li>
+</ol>
+<h2 id="_2">标准验证</h2>
+<p>使用下列参数验证，确保测试未回退到密码认证：</p>
+<pre><code class="language-bash">ssh -F /dev/null -i &lt;private-key&gt; -p &lt;port&gt; \
+  -o BatchMode=yes -o PasswordAuthentication=no \
+  -o KbdInteractiveAuthentication=no &lt;user&gt;@&lt;host&gt; &lt;command&gt;
+</code></pre>
+<h2 id="routeros">RouterOS 导入</h2>
+<ol>
+<li>通过 SCP 上传 RSA 公钥文件。</li>
+<li>使用密码认证仅执行一次导入：<code>/user ssh-keys import user=&lt;user&gt; public-key-file=&lt;file&gt;</code>。</li>
+<li>删除上传的 <code>.pub</code> 文件。</li>
+<li>以“标准验证”方式执行 RouterOS 命令。</li>
+</ol>
+<h2 id="_3">已验证目标</h2>
+<ul>
+<li>[[infrastructure/ros]]</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

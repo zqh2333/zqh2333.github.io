@@ -1,0 +1,74 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anki 后台全功能审计（2026-07-22） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="anki-2026-07-22">Anki 后台全功能审计（2026-07-22）</h1>
+<h2 id="_1">范围</h2>
+<p>宝塔 LXC 211 的 <code>/www/anki_server</code>：容器栈、数据库/缓存、公开 API、管理后台路由/鉴权、卡牌协议、配置中心、文案、发布/备份相关只读功能、安全基线、资源与日志。</p>
+<h2 id="_2">基线</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Compose</td>
+<td>nginx/web/worker/monitor/db/redis 全部 Up；db/redis healthy</td>
+</tr>
+<tr>
+<td><code>/api/status</code></td>
+<td><code>ok=true</code>；db/redis true；v136.7</td>
+</tr>
+<tr>
+<td><code>/www</code> 磁盘</td>
+<td>34% 使用（16G/50G）</td>
+</tr>
+<tr>
+<td>资源</td>
+<td>web ~347MiB、db ~445MiB，CPU 低</td>
+</tr>
+<tr>
+<td><code>verify_all.py</code></td>
+<td><code>success=true</code>、<code>ready=true</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">路由/功能验收</h2>
+<h3 id="_4">公开端</h3>
+<p><code>/api/status</code>、<code>/api/ping</code>、<code>/api/protocol</code>、<code>/api/release_manifest</code>、<code>/api/error_catalog</code>、<code>/api/announcement.json</code> 全部 200；协议含 <code>cardText/cardTexts</code>。</p>
+<h3 id="_5">后台只读功能</h3>
+<p>容器内直接执行已移除管理装饰器的 handler（避免使用或泄露管理员凭据），以下均成功：
+- 数据/牌组、配置/配置中心/健康
+- 每日统计、错误字典/统计、失败聚合、搜索、风控
+- monitor/ops/打包预检、发布预检/发布矩阵
+- 最近失败、回收站、支持工作台/排障报告
+- validation diagnostics、验收状态、workbench
+- 卡牌文案配置/合成探针、下载检查</p>
+<h3 id="_6">鉴权</h3>
+<p>未登录浏览器请求所有抽查的破坏性后台端点均 302 到登录：生成/导入激活码、保存文案/公告/配置/密码、恢复备份、删全部激活码/牌组。\
+管理 token 端点 <code>protocol_status</code>、<code>download_config</code>、<code>support_lookup</code> 缺 token 均 401。</p>
+<h2 id="_7">修复</h2>
+<ol>
+<li><strong>弱默认管理令牌源代码残留</strong>
+   - <code>api.py</code> 原有 <code>SuperAdmin2026_ChangeMe</code>。
+   - 改为空 legacy sentinel + <code>INSECURE_DEFAULT_TOKENS</code>；未设置或弱 token 均 fail closed。</li>
+<li><strong>裸 except</strong>
+   - 当前 <code>api.py</code> / <code>admin.py</code> / <code>services.py</code> 的 bare <code>except:</code> 全部替换为 <code>except Exception:</code>，保留原业务降级语义。</li>
+<li>前一轮文案审计已修 <code>/api/protocol</code> 下发 <code>cardText/cardTexts</code>；本轮验证仍正常。</li>
+</ol>
+<p>修改后：Python 编译通过、web/worker 重启、<code>FULL_ANKI_AUDIT_OK</code>、<code>verify_all ready=true</code>。</p>
+<h2 id="_8">非问题说明</h2>
+<ul>
+<li><code>/announcement.json</code> 是不存在的旧路径，404 正常；实际公开路径为 <code>/api/announcement.json</code>，200。</li>
+<li>审计/verify 触发的空 <code>/api/validate</code> 会写 <code>BAD_JSON</code> INFO 诊断记录，这是测试请求，不是生产异常。</li>
+<li>Dashboard JS 静态检查因环境无 node 显示 warn；运行中的服务和页面/API 正常。</li>
+</ul>
+<h2 id="_9">可复用审计脚本</h2>
+<ul>
+<li>web 容器：<code>/tmp/anki_full_audit.py</code></li>
+<li>可搬到项目 <code>data/</code> 后按需复跑；只读/鉴权验证，不执行删除、恢复、发布或改业务数据。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

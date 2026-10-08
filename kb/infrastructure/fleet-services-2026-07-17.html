@@ -1,0 +1,482 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>全设备服务扫描清单（2026-07-17 13:59） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="2026-07-17-1359">全设备服务扫描清单（2026-07-17 13:59）</h1>
+<p>在 [[infrastructure/fleet-topology-2026-07-17]] 拓扑巡检之上，对 8 台设备做了<strong>监听端口 / 系统服务 / 容器 / 关键进程</strong>扫描。</p>
+<p>采集方式：各设备独立 SSH 密钥 + <code>BatchMode</code>；不写入任何密码/API Key。<br />
+原始数据：<code>/tmp/fleet_service_scan.json</code></p>
+<hr />
+<h2 id="_1">总览：谁在跑什么</h2>
+<table>
+<thead>
+<tr>
+<th>设备</th>
+<th>角色</th>
+<th>关键对外服务</th>
+<th>容器/虚拟化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PVE</strong> <code>.1</code></td>
+<td>宿主机</td>
+<td>SSH 22、PVE Web 8006、SPICE 3128</td>
+<td>无 docker；承载全部 VM/LXC</td>
+</tr>
+<tr>
+<td><strong>ROS</strong> <code>.2</code></td>
+<td>主路由</td>
+<td>SSH <strong>2333</strong>、Winbox 8291（仅内网）</td>
+<td>CHR VM；PPPoE + L2TP/IPsec 服务</td>
+</tr>
+<tr>
+<td><strong>OpenWrt</strong> <code>.3</code></td>
+<td>旁路/IPTV/代理</td>
+<td>LuCI 80/443、Clash 7890–7895/9090、Samba、NFS、WG</td>
+<td><code>wg-easy</code>、<code>gecoos-ac</code></td>
+</tr>
+<tr>
+<td><strong>Hermes</strong> <code>.4</code></td>
+<td>Agent 桌面机</td>
+<td>SSH 22、RDP 3389、gateway 本机 8420</td>
+<td>无 docker；Hermes gateway 用户服务</td>
+</tr>
+<tr>
+<td><strong>NAS</strong> <code>.5</code></td>
+<td>存储/监控</td>
+<td>DSM 5000/5001、HTTPS 443、SMB 445、NFS 2049、RTSP 554</td>
+<td>套件为主（Surveillance 等）</td>
+</tr>
+<tr>
+<td><strong>AdGuard</strong> <code>.6</code></td>
+<td>DNS</td>
+<td><strong>53/853</strong>、管理 80/443</td>
+<td>无 docker；<code>AdGuardHome.service</code></td>
+</tr>
+<tr>
+<td><strong>HA</strong> <code>.7</code></td>
+<td>智能家居</td>
+<td>UI 8123（宿主机侧）、SSH/ttyd 插件</td>
+<td>Node-RED、Mosquitto、Samba、Filebrowser、Zigbee2MQTT</td>
+</tr>
+<tr>
+<td><strong>宝塔</strong> <code>.8</code></td>
+<td>应用/CPA</td>
+<td>面板 11322、CPA 8317/18317、Vaultwarden 8080、青龙 5700 等</td>
+<td>14 个 docker + BT 全家桶</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_2">分设备服务清单</h2>
+<h3 id="1-pve-lan-1">1) PVE <code>&lt;LAN-1&gt;</code></h3>
+<p><strong>系统服务（运行中）</strong><br />
+<code>pveproxy</code> / <code>pvedaemon</code> / <code>pve-cluster</code> / <code>pvestatd</code> / <code>pve-firewall</code> / <code>spiceproxy</code> / <code>ssh</code> / <code>chrony</code> / <code>cron</code> / <code>zfs-zed</code> 等。</p>
+<p><strong>监听（摘）</strong><br />
+- <code>22</code> sshd<br />
+- <code>8006</code> PVE Web（管理）<br />
+- <code>3128</code> spiceproxy<br />
+- <code>25</code> 本机 postfix<br />
+- rpcbind/statd（NFS 相关）</p>
+<p><strong>虚拟机/容器状态</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">ID</th>
+<th>名称</th>
+<th>状态</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">100</td>
+<td>winserver2022</td>
+<td>running</td>
+<td>Win Server</td>
+</tr>
+<tr>
+<td style="text-align: right;">101</td>
+<td>centos</td>
+<td>stopped</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align: right;">102</td>
+<td>hermes</td>
+<td>running</td>
+<td>Hermes 主机</td>
+</tr>
+<tr>
+<td style="text-align: right;">200/201</td>
+<td>ROS/istore 旧盘</td>
+<td>stopped</td>
+<td>旧实例</td>
+</tr>
+<tr>
+<td style="text-align: right;">202</td>
+<td>win10</td>
+<td>running</td>
+<td>桌面</td>
+</tr>
+<tr>
+<td style="text-align: right;">203</td>
+<td>ubuntu-c</td>
+<td>stopped</td>
+<td>LXC</td>
+</tr>
+<tr>
+<td style="text-align: right;">204</td>
+<td>HA</td>
+<td>running</td>
+<td>Home Assistant</td>
+</tr>
+<tr>
+<td style="text-align: right;">205</td>
+<td>NAS</td>
+<td>running</td>
+<td>Synology</td>
+</tr>
+<tr>
+<td style="text-align: right;">206</td>
+<td>ad</td>
+<td>running</td>
+<td>AdGuard LXC</td>
+</tr>
+<tr>
+<td style="text-align: right;">207</td>
+<td>ROS</td>
+<td>running</td>
+<td>主路由</td>
+</tr>
+<tr>
+<td style="text-align: right;">208</td>
+<td>istore</td>
+<td>running</td>
+<td>OpenWrt</td>
+</tr>
+<tr>
+<td style="text-align: right;">211</td>
+<td>bt</td>
+<td>running</td>
+<td>宝塔 LXC</td>
+</tr>
+</tbody>
+</table>
+<p><strong>资源观察</strong><br />
+- 宿主机可见 <code>./CLIProxyAPI</code> 高 CPU 线程（实际跑在 bt LXC 内，宿主机 top 会显示）<br />
+- hermes / win10 KVM 进程常驻 CPU 前列（正常虚拟化开销）</p>
+<hr />
+<h3 id="2-ros-lan-22333">2) ROS <code>&lt;LAN-2&gt;:2333</code></h3>
+<p><strong>启用服务</strong><br />
+- SSH <code>2333</code><br />
+- Winbox <code>8291</code>（限制 <code>&lt;LAN-0&gt;/24</code> + <code>&lt;LAN-200&gt;/32</code>）<br />
+- <strong>禁用</strong>：telnet/ftp/www/www-ssl/api/api-ssl（安全面较好）</p>
+<p><strong>网络服务</strong><br />
+- <code>pppoe-out1</code>：<strong>Running</strong>（主出口）<br />
+- <code>pppoe-out2</code>：Disabled<br />
+- L2TP server：<strong>enabled</strong>（含 IPsec）<br />
+- DHCP server <code>dhcp1</code> on <code>lan</code><br />
+- 定时脚本：<code>5000</code>（更新 hairpin address-list）、<code>pcc-failover</code>（当前 schedule 禁用）</p>
+<p><strong>安全提醒（重要）</strong><br />
+巡检输出中出现 <strong>PPPoE/IPsec 明文敏感字段</strong>。知识库不保存明文。建议：<br />
+1. 轮换相关口令/预共享密钥<br />
+2. 限制导出脚本权限，避免配置明文落盘到日志  </p>
+<hr />
+<h3 id="3-openwrt-istoreos-lan-3">3) OpenWrt / iStoreOS <code>&lt;LAN-3&gt;</code></h3>
+<p><strong>核心服务/进程</strong><br />
+| 服务 | 端口/特征 | 用途 |
+|---|---|---|
+| uhttpd | 80/443 | LuCI |
+| dropbear | 22 | SSH |
+| dnsmasq | 53 | 本地 DNS（含 docker/IPTV 侧） |
+| <strong>OpenClash (clash)</strong> | 7890–7895、9090、7874 | 代理 |
+| Samba (smbd) | 139/445 | 文件共享 |
+| NFS | 2049 + mountd | 网络文件系统 |
+| ttyd | 7681 | Web 终端 |
+| sunpanel | 3002 | 导航面板 |
+| lucky | 16601 | 工具面板 |
+| rtp2httpd | 2222 | 流媒体相关 |
+| adb | 5037 | Android 调试桥 |
+| dockerd | - | 容器引擎 |</p>
+<p><strong>Docker</strong><br />
+- <code>wg-easy</code>：WireGuard UI <code>51821/tcp</code> + <code>51820/udp</code><br />
+- <code>gecoos-ac</code>：AC 控制器镜像  </p>
+<p><strong>开机启用（节选）</strong><br />
+<code>openclash</code>、<code>passwall_server</code>、<code>dockerd</code>、<code>samba4</code>、<code>nfsd</code>、<code>lucky</code>、<code>uhttpd</code>、<code>firewall</code>、<code>dnsmasq</code> 等。</p>
+<hr />
+<h3 id="4-hermes-lan-4">4) Hermes <code>&lt;LAN-4&gt;</code></h3>
+<p><strong>关键服务</strong><br />
+| 服务 | 状态 | 说明 |
+|---|---|---|
+| <code>hermes-gateway.service</code>（user） | running | 消息网关 |
+| <code>node ... gateway/server.ts</code> | running | 网关前端/桥 |
+| <code>python -m hermes_cli.main gateway run</code> | running | Hermes Agent |
+| SSH | 22 | 已支持 user 密钥 |
+| GNOME Remote Desktop | <strong>3389</strong> | RDP |
+| CUPS | 631 本机 | 打印 |
+| rygel | 1900/DLNA | 媒体发现 |</p>
+<p><strong>无 Docker。</strong> 本质是 Ubuntu 桌面 + Hermes 控制面。</p>
+<hr />
+<h3 id="5-nas-lan-5synology">5) NAS <code>&lt;LAN-5&gt;</code>（Synology）</h3>
+<p><strong>对外服务</strong><br />
+| 端口 | 服务 |
+|---:|---|
+| 80/443 | nginx / DSM Web |
+| 5000/5001 | DSM |
+| 445/139 | SMB |
+| 2049/111/892 | NFS |
+| 554 | RTSP（Surveillance） |
+| 2333 | nginx（Web，不是 SSH） |</p>
+<p><strong>高占用进程（套件）</strong><br />
+- Surveillance Station（<code>sscamerad</code> / <code>ssrtmpserverd</code> / <code>ssrtspserverd</code>）<br />
+- CloudSync<br />
+- 本地 Python uvicorn <code>:12345</code>（自定义服务）<br />
+- redis / snmpd  </p>
+<p><strong>根分区 70%</strong> 仍是容量风险点。</p>
+<hr />
+<h3 id="6-adguard-lan-6">6) AdGuard <code>&lt;LAN-6&gt;</code></h3>
+<table>
+<thead>
+<tr>
+<th>服务</th>
+<th>端口</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AdGuardHome</td>
+<td><strong>53/tcp+udp</strong>、<strong>853</strong>、80、443</td>
+</tr>
+<tr>
+<td>SSH</td>
+<td>22</td>
+</tr>
+<tr>
+<td>postfix</td>
+<td>25 本机</td>
+</tr>
+</tbody>
+</table>
+<p>进程：<code>/opt/AdGuardHome/AdGuardHome -s run</code><br />
+无业务 docker。DNS 中枢角色清晰。</p>
+<hr />
+<h3 id="7-home-assistant-lan-7">7) Home Assistant <code>&lt;LAN-7&gt;</code></h3>
+<p><strong>Core</strong><br />
+- HAOS 镜像 <code>qemux86-64-homeassistant</code><br />
+- 版本 <strong>2025.5.1</strong>（有更新到 2026.7.x 可用）<br />
+- UI 端口 <strong>8123</strong>（宿主机侧；SSH 插件网络为 <code>172.30.32.0/23</code>）</p>
+<p><strong>已启动插件</strong><br />
+| 插件 | 状态 | 备注 |
+|---|---|---|
+| Node-RED | started | 有更新 |
+| Mosquitto broker | started | MQTT |
+| Samba share | started | 文件共享 |
+| Filebrowser | started | 文件管理 |
+| Zigbee2MQTT | started | Zigbee |</p>
+<p>SSH 插件侧监听：<code>22</code>、<code>ttyd 8099</code>。</p>
+<hr />
+<h3 id="8-lan-8">8) 宝塔 <code>&lt;LAN-8&gt;</code>（服务最密集）</h3>
+<h4 id="_3">系统 / 面板</h4>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">端口</th>
+<th>服务</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">11322</td>
+<td>BT-Panel</td>
+</tr>
+<tr>
+<td style="text-align: right;">21</td>
+<td>pure-ftpd</td>
+</tr>
+<tr>
+<td style="text-align: right;">3306/33060</td>
+<td>MySQL</td>
+</tr>
+<tr>
+<td style="text-align: right;">22</td>
+<td>SSH</td>
+</tr>
+<tr>
+<td style="text-align: right;">25/587</td>
+<td>sendmail 本机</td>
+</tr>
+</tbody>
+</table>
+<p>PHP-FPM：74/80/81/82/83 均在跑。</p>
+<h4 id="cpa-systemd-active">CPA 栈（systemd 全 active）</h4>
+<table>
+<thead>
+<tr>
+<th>服务</th>
+<th style="text-align: right;">端口</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cpa-stable-proxy</code></td>
+<td style="text-align: right;"><strong>8317</strong></td>
+<td>对外稳定 10 模型菜单</td>
+</tr>
+<tr>
+<td><code>cli-proxy</code> docker</td>
+<td style="text-align: right;"><strong>18317→8317</strong></td>
+<td>CPA 核心</td>
+</tr>
+<tr>
+<td><code>rawchat-codex-proxy</code></td>
+<td style="text-align: right;">18417</td>
+<td>RawChat Codex</td>
+</tr>
+<tr>
+<td><code>rawchat-openai-bridge</code></td>
+<td style="text-align: right;">18418</td>
+<td>OpenAI 兼容桥</td>
+</tr>
+<tr>
+<td><code>muyuan-openai-bridge</code></td>
+<td style="text-align: right;">18420</td>
+<td>君の/muyuan 桥</td>
+</tr>
+<tr>
+<td><code>cpa-provider-watch</code></td>
+<td style="text-align: right;">-</td>
+<td>新增上游立刻同步</td>
+</tr>
+</tbody>
+</table>
+<p>健康检查：<strong>HEALTH_OK</strong>（CLIProxyAPI CPU warn ~44%，业务负载）</p>
+<h4 id="docker">Docker 业务容器</h4>
+<table>
+<thead>
+<tr>
+<th>容器</th>
+<th>端口</th>
+<th>用途（推断）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cli-proxy</td>
+<td>18317</td>
+<td>模型聚合</td>
+</tr>
+<tr>
+<td>vaultwarden</td>
+<td>8080</td>
+<td>密码库</td>
+</tr>
+<tr>
+<td>qinglong</td>
+<td>5700</td>
+<td>青龙面板</td>
+</tr>
+<tr>
+<td>anki_server-*</td>
+<td>5778 等</td>
+<td>Anki 服务栈</td>
+</tr>
+<tr>
+<td>localscan-docker</td>
+<td>38127</td>
+<td>本地扫描</td>
+</tr>
+<tr>
+<td>allinone</td>
+<td>35455</td>
+<td>聚合/影视相关</td>
+</tr>
+<tr>
+<td>php-epg</td>
+<td>5678</td>
+<td>EPG</td>
+</tr>
+<tr>
+<td>iptv</td>
+<td>-</td>
+<td>IPTV 频道</td>
+</tr>
+<tr>
+<td>powercontrol</td>
+<td>-</td>
+<td>电源控制</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_4">按功能域汇总（跨设备）</h2>
+<h3 id="_5">网络出口与接入</h3>
+<ul>
+<li>PPPoE 主出口：ROS  </li>
+<li>旁路代理：OpenWrt OpenClash  </li>
+<li>VPN：ROS L2TP/IPsec；OpenWrt WireGuard（wg-easy）  </li>
+<li>IPTV：OpenWrt eth2 + 静态路由；宝塔 iptv/php-epg  </li>
+</ul>
+<h3 id="dns">DNS</h3>
+<ul>
+<li>权威过滤：AdGuard <code>.6</code>（DHCP 下发）  </li>
+<li>备份：ROS DNS / 公共 DNS  </li>
+</ul>
+<h3 id="_6">存储与文件</h3>
+<ul>
+<li>NAS：SMB/NFS/DSM/监控录像  </li>
+<li>OpenWrt：Samba/NFS  </li>
+<li>HA：Samba share / Filebrowser  </li>
+</ul>
+<h3 id="ai">AI / 自动化</h3>
+<ul>
+<li>Hermes：gateway + agent  </li>
+<li>宝塔 CPA：模型代理与桥接  </li>
+<li>HA：Node-RED + Zigbee2MQTT + MQTT  </li>
+<li>青龙：定时任务  </li>
+</ul>
+<h3 id="_7">远程管理</h3>
+<ul>
+<li>PVE 8006  </li>
+<li>ROS Winbox 8291（内网）  </li>
+<li>Hermes RDP 3389  </li>
+<li>OpenWrt ttyd 7681  </li>
+<li>宝塔面板 11322  </li>
+</ul>
+<hr />
+<h2 id="_8">风险与建议</h2>
+<ol>
+<li>
+<p><strong>ROS 配置中的明文凭据</strong><br />
+   巡检命令输出含敏感字段 → 建议轮换，并避免把完整 <code>/interface print detail</code> 落到不可信日志。</p>
+</li>
+<li>
+<p><strong>暴露面梳理</strong><br />
+   - OpenWrt：Clash/WG/ttyd/sunpanel 等端口多，确认仅内网或有 ACL<br />
+   - 宝塔：FTP 21、面板 11322、多个 Web 端口<br />
+   - Hermes：RDP 3389 是否需要长期开着  </p>
+</li>
+<li>
+<p><strong>HA 有多项插件更新</strong><br />
+   Core 与 Node-RED/Mosquitto/Samba/Filebrowser 均可升级（非紧急）。</p>
+</li>
+<li>
+<p><strong>NAS 根分区 70% + 监控套件常驻 CPU</strong><br />
+   容量与录像策略建议复查。</p>
+</li>
+<li>
+<p><strong>PVE 单点</strong><br />
+   路由/DNS/存储/应用几乎全虚拟化在一台 PVE → 备份与 UPS 优先级最高。</p>
+</li>
+</ol>
+<hr />
+<h2 id="_9">与拓扑文档的关系</h2>
+<ul>
+<li>拓扑与连通性：[[infrastructure/fleet-topology-2026-07-17]]  </li>
+<li>前次健康巡检：[[infrastructure/fleet-inspect-2026-07-17]]  </li>
+<li>本文：服务/端口/容器<strong>清单</strong>（回答“跑了哪些服务”）</li>
+</ul>
+<p>相关：[[infrastructure/ros]]、[[decisions/cpa-local-model-sync]]</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

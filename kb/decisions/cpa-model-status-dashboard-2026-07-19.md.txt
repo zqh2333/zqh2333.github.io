@@ -1,0 +1,45 @@
+# CPA 本地模型状态面板（简直了风格）（2026-07-19）
+
+## 目标
+仿「简直了」模型状态页，对本地 CPA `http://<LAN-8>:8317/v1` 做真实 chat 探测，展示成功率/延迟/近24小时柱状图。
+
+## 实现
+| 组件 | 路径 |
+|---|---|
+| 探针+HTTP 服务 | `~/.hermes/scripts/cpa_model_status.py` |
+| 探针 wrapper | `~/.hermes/scripts/cpa_model_status_probe.sh` |
+| 服务 wrapper | `~/.hermes/scripts/cpa_model_status_serve.sh` |
+| 状态数据 | `~/.hermes/state/cpa_model_status.json` |
+| systemd user | `~/.config/systemd/user/cpa-model-status.service` |
+
+## 行为
+- 探测：`POST /v1/chat/completions`，`max_tokens=8`，业务短句 `Reply with exactly: OK`（非 Hello 测活词）
+- 模型名单：优先 `stable_models.json`，否则 Hermes `custom_providers` 的 11 个固定名
+- API 兼容简直了：
+  - `GET /api/model_probe/status`
+  - `POST /api/model_probe/trigger`
+- 页面：`http://<LAN-4>:8787/`（本机也可 `127.0.0.1:8787`）
+- 默认每 600s 自动探测一轮；页面可「立即探测 / 自动刷新」
+
+## 运维
+```bash
+systemctl --user status cpa-model-status
+systemctl --user restart cpa-model-status
+# 单轮探针
+~/.hermes/scripts/cpa_model_status_probe.sh
+```
+
+## 首次验证（2026-07-19）
+- service: active + enabled
+- 端口: `0.0.0.0:8787`
+- summary 示例：available 6 / unavailable 5（429 额度/cooldown 等上游原因）
+- html 200，API 200
+
+## 关于「简直了」自带页
+- 接口：`/api/model_probe/status`（可读）、`/api/model_probe/trigger`（需管理员）
+- 当前 `github_10641` role=1，**无权限开启/触发**官方探测
+- 需管理员在「监控设置」里打开模型探测
+
+## 说明
+- 不改 CPA config，不依赖已删除的 CPA 运维脚本
+- 上游 429/cooldown 会显示为异常，属真实可用性，不是面板 bug

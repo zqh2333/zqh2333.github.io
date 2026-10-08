@@ -1,0 +1,60 @@
+# CPA/Hermes 模型调用失败诊断
+
+## 日期
+2026-07-15
+
+## 症状
+Telegram Gateway 可能只显示通用错误：
+
+```text
+The model provider failed after retries.
+```
+
+其原始上游细节不会回显到聊天，必须检查 Hermes CLI 输出、Gateway 日志与 CPA `cli-proxy` 日志。
+
+另一个确定性错误：
+
+```text
+HTTP 502: unknown provider for model <model-alias>
+```
+
+## 已确认的错误分类
+
+| 外部表现 | 实际含义 | 处理原则 |
+|---|---|---|
+| `503` | 某上游暂时不可用、认证池无可用凭据、限流或上游服务故障 | 不删除模型；保留并让 CPA 路由/重试处理。 |
+| `500` | CPA/上游适配或请求处理失败 | 检查 CPA 主日志和容器日志；不以一次失败删除模型。 |
+| `502 unknown provider for model <alias>` | CPA 无法解析请求的客户端模型别名到已配置上游 | 检查 CPA `config.yaml` 的模型 `alias`、Hermes `CPA Local Config` 列表，以及模型名是否含前缀。 |
+| Telegram 通用 provider failure | Gateway 对用户隐藏原始 provider 响应 | 从 `~/.hermes/logs/`、`journalctl --user -u hermes-gateway.service` 及 CPA `main.log` 关联时间戳诊断。 |
+
+## 关联发现
+- `君の的公益` 已配置于 CPA，端点为 `https://muyuan.do/v1`，模型同步后有 7 个登记模型。
+- 标准模型名与上游专属别名不同：若 Hermes 菜单没有某个专属别名，却直接请求它，会导致 `unknown provider for model`。
+- CPA `cli-proxy` 对模型调用可返回 `200`、`500`、`503`；`500/503` 属于不可判定的暂时性失败，不能作为自动剔除依据。
+- CPA 内 RawChat 的 Codex 适配链已验证可以被 Hermes 调用；模型菜单仍应只暴露标准模型名，内部路由处理多上游。
+
+## 诊断步骤
+1. 记录失败时间、模型名、Hermes CLI/Gateway 的完整错误类别。
+2. 检查 CPA 主日志：`/root/CLIProxyAPI/root/.cli-proxy-api/logs/main.log`。
+3. 检查容器日志：`docker logs --tail 200 cli-proxy`。
+4. 对 `unknown provider`，读取 CPA 本地配置中对应模型的 `name` 和 `alias`，以及 Hermes 命名 provider 的 `models`。
+5. 对 `500/503`，保留模型并记录上游状态；只有明确的 `model not found`、`unsupported model` 或 `unknown provider` 才作为菜单剔除候选。
+6. 完成修复后，使用真实正常业务请求验证，并在本页追加验证结论。
+
+## 安全
+- 不在本文档保存 API Key、Token、Cookie 或请求正文。
+- 当用户禁止主动测试时，不发起额外模型请求；只读取本地日志和配置进行诊断。
+
+## SharedChat Codex 领取状态（2026-07-17）
+- "RawChat领取权益" = sharedchat codex 任务（cron `bcff58ebbb8d`，venv python + playwright）。
+- 脚本已改为：点击"领取 Codex 权益"后若 `.el-dialog` 不出现（公益套餐 isActive=false / 已过期），返回 `NO_ACTION` 而非超时报错。
+- API 端点：`POST /frontend-api/vibe-code/codex/claim`（需 cookie + reason≥10字 + 浏览器验证）；`GET /frontend-api/vibe-code/quota` 查状态。
+- 当前状态（2026-07-17）：codex 公益 每日50刀，remainingAmount=50.0，isActive=false，expireTime=2026-07-17T00:00:00。今日无可用领取项 → NO_ACTION。
+- 纯 API claim 返回"当前浏览器无法完成验证"——需 playwright 浏览器环境（指纹校验），故保留 playwright 路径。
+
+## SharedChat Codex 领取已验证成功（2026-07-17 修正）
+- 领取弹窗是 `.el-message-box`（不是 `.el-dialog`），确认按钮是 `.el-button--primary`（或 name="领取"）。
+- claim API：`POST /frontend-api/vibe-code/codex/claim`，body 需 `{eventId, reason(>=10字且不重复), fingerprintCollectFailed, fingerprintCollectError, collectedAt}`。fingerprint 由前端静默收集并存入 localStorage `rawchat:fingerprint:visitor`。
+- 领取成功后 `subscriptions.isActive` 变 true、按钮消失（当日不可再领）；`periodResetTime` 次日 00:00 重置。
+- 验证：2026-07-17 多次 playwright 测试后 quota 显示 `isActive=true, remainingAmount=50.0`——当日已成功领取。脚本修复后逻辑正确，次日按钮重现即自动领取。
+- 纯 curl claim 会返回"当前浏览器无法完成验证"（缺 fingerprint/eventId），故保留 playwright 路径。

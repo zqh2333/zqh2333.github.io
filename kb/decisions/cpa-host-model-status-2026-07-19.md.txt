@@ -1,0 +1,14 @@
+# CPA 主机模型状态页（2026-07-19）
+
+> **状态：已删除（用户 2026-07-19 明确不需要）**
+
+## 曾实现
+- 宝塔 `<LAN-8>:8787` + `cpa-model-status.service`
+- 脚本 `/root/cli-proxy-data/scripts/cpa_model_status.py`
+- 状态 `/root/cli-proxy-data/state/cpa_model_status.json`
+
+## 删除内容
+- systemd 服务 stop/disable/rm unit
+- 脚本与状态文件删除
+- Hermes 本机对应 user 服务与脚本一并清理
+- 端口 8787 关闭

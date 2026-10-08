@@ -1,0 +1,46 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hermes “model provider failed after retries” 自动检测与修复（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="hermes-model-provider-failed-after-retries-2026-07-18">Hermes “model provider failed after retries” 自动检测与修复（2026-07-18）</h1>
+<h2 id="_1">症状</h2>
+<p>Telegram 只显示：</p>
+<pre><code class="language-text">The model provider failed after retries. I kept raw provider details out of chat; check gateway logs for diagnostics.
+</code></pre>
+<p>真实原因在 <code>~/.hermes/logs/errors.log</code>。</p>
+<h2 id="errorslog">日志统计（errors.log）</h2>
+<p>高频：
+- <code>gpt-5.6-terra</code>：<code>auth_unavailable</code> / <code>503</code> / <code>timeout_502</code>
+- <code>mimo-v2.5-pro</code>：<code>auth_unavailable</code> / <code>429</code>
+- <code>grok-4.5</code>：<code>timeout_502</code> / <code>401</code> / <code>429</code></p>
+<p>含义：
+- <code>auth_unavailable: no auth available (providers=openai-compatible-xxx)</code> = CPA 该模型对应上游凭据池暂时不可用
+- <code>HTTP 502 timed out</code> = 上游/边缘代理超时（长上下文更易触发）
+- Hermes 原先 <strong>无 fallback_providers</strong>，单模型重试 3 次失败后直接报通用错误</p>
+<h2 id="_2">已自动修复</h2>
+<h3 id="hermes">Hermes</h3>
+<ol>
+<li>配置 <code>fallback_providers</code>（同 CPA <code>8317</code> 跨模型）：
+   <code>gpt-5.5 → gpt-5.6-terra → deepseek-v4-flash → mimo-v2.5 → glm-5.2</code></li>
+<li><code>.env</code> 增加 <code>CPA_LOCAL_API_KEY</code>（供 fallback <code>key_env</code>）</li>
+<li>新增日志 watchdog：<code>provider_fail_watch.py</code> + cron <code>682099dad6f0</code>（09:20/13:20/18:20/22:20）
+   - 有新 hard fail 才推送；健康时静默</li>
+</ol>
+<h3 id="cpa">CPA</h3>
+<ol>
+<li><code>cpa-stable-proxy</code> chat timeout：90s → <strong>180s</strong></li>
+<li><code>request-retry</code> → 3；<code>transient-error-cooldown-seconds</code> → 180</li>
+<li>跑 <code>cpa_upstream_quality</code>：snote-temp/alfred-temp 仍 401 保持低优先级</li>
+</ol>
+<h2 id="8317">当前探针（8317）</h2>
+<ul>
+<li>grok-4.5 / gpt-5.5 / gpt-5.6-terra / mimo-v2.5 / deepseek-v4-flash → <strong>200</strong></li>
+<li>glm-5.2 可能仍 cooldown/429（在 fallback 末位）</li>
+</ul>
+<h2 id="_3">说明</h2>
+<ul>
+<li>故障转移主责仍在 CPA 同名多上游；Hermes fallback 是<strong>跨模型</strong>兜底，避免整轮对话直接挂死。</li>
+<li>新 fallback 对<strong>新会话/下一轮 agent create</strong> 生效；长会话缓存可能需新开对话或等 idle 回收。</li>
+<li>上游 401/额度问题需修 key 或等冷却，脚本不会做 “Hello” 测活。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

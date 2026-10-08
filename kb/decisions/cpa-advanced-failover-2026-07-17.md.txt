@@ -1,0 +1,47 @@
+# CPA 进阶故障转移：快失败 + 冷却 + 慢上游剔除（2026-07-17）
+
+## 背景
+`gpt-5.5` / `glm-5.2` 故障时，fill-first 会打到慢上游（薄荷/喵喵 ~40s 超时）或连续 503 上游（魔方），拖死整次请求。
+
+## 落地项
+
+### 1. 瞬态错误冷却
+- `transient-error-cooldown-seconds: 300`（408/500/502/503/504 冷却 5 分钟）
+- `disable-cooling: false`
+- `save-cooldown-status: true`（冷却状态落盘，短重启不丢）
+- `max-retry-interval: 3`（不等待长时间冷却凭据）
+
+### 2. 限制重试抖动
+- `request-retry: 2`
+- `max-retry-credentials: 3`
+
+### 3. 慢上游模型 deny（同步脚本）
+`MODEL_PROVIDER_DENY`：
+- `glm-5.2` **禁止**落在 `薄荷` / `喵喵`（只保留 mimo 等快路径）
+- 同步脚本 `provider_allows_model` + `strip_denied_models` 固化，自动同步不会再加回
+
+### 4. 优先级
+- mimo=4（glm/gpt 共享模型优先）
+- 薄荷/喵喵=6
+- 魔方=8（当前易 503，降权）
+
+### 5. 边缘代理
+- `cpa_stable_models_proxy.py`：chat/responses 超时 **90s**（避免客户端卡 600s）
+
+## 验证
+- 同步脚本 `py_compile` + 实跑 exit 0
+- 放置：`glm-5.2 → 仅 mimo`；`gpt-5.5 → mimo + 魔方`
+- 烟测：`glm-5.2` / `gpt-5.5` / `deepseek-v4-flash` 经 8317 返回 200（上游恢复窗口内）
+- `cpa_health_check` HEALTH_OK
+
+## 效果
+- 慢失败上游不再拖 40s+ 才切
+- 502/503 后 5 分钟内优先跳过坏凭据
+- 自动同步不会把 glm-5.2 塞回薄荷/喵喵
+
+## 回滚
+- 配置备份：`config.yaml.bak_adv_failover_*`
+- 恢复冷却默认：`transient-error-cooldown-seconds: 0`（即 legacy 60s 语义见官方注释）
+- 去掉 `MODEL_PROVIDER_DENY` 相关补丁可恢复全量放置
+
+相关：[[incidents/gpt55-403-glm52-timeout-2026-07-17]]、[[decisions/cpa-local-model-sync]]

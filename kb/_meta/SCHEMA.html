@@ -1,0 +1,29 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>运维知识库规范 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · _meta</nav><article><h1 id="_1">运维知识库规范</h1>
+<h2 id="_2">范围</h2>
+<p>本知识库记录家庭实验室、网络设备、服务部署、故障排查、配置决策与验证结果。</p>
+<h2 id="_3">安全边界</h2>
+<ul>
+<li>不记录明文密码、API Key、Token、私钥、会话 Cookie 或恢复码。</li>
+<li>可记录设备别名、内网地址、端口、账号名、认证方式、SSH 公钥指纹和密钥路径；私钥路径不包含内容。</li>
+<li>需要凭据时使用 SSH 密钥或外部密钥库，不把凭据复制到文档。</li>
+</ul>
+<h2 id="_4">结构</h2>
+<ul>
+<li><code>infrastructure/</code>：设备、服务和网络拓扑。</li>
+<li><code>runbooks/</code>：可重复执行的操作步骤。</li>
+<li><code>incidents/</code>：故障症状、根因、修复和验证。</li>
+<li><code>decisions/</code>：架构与配置决策。</li>
+</ul>
+<h2 id="_5">记录规则</h2>
+<ul>
+<li>处理问题前，先读取 <code>index.md</code>，并按关键词搜索相关页面。</li>
+<li>已有主题更新原页面；新故障或可复用方案创建页面。</li>
+<li>每条结论必须包含日期、验证方式和实际结果。</li>
+<li>新增/更新页面后，同步更新 <code>index.md</code> 和 <code>log.md</code>。</li>
+<li>涉及 10 个以上页面的批量重构需先征求用户同意。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

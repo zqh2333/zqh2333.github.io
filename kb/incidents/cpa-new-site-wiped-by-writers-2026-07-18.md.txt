@@ -1,0 +1,52 @@
+# CPA 新增站点被脚本写回旧列表（2026-07-18）
+
+## 用户反馈
+在 CPA 新增站点后，被脚本删除/恢复成之前的站点列表。
+
+## 日志证据
+- `provider_watch.log` 10:27:25：`providers changed +[] -['temp1']`
+- 说明 watcher 看到**磁盘上已经没有 temp1**，不是它主动删站。
+- 随后 auto-priority / sync 基于当时 live 列表写回，固化 9 站状态。
+- Docker 管理面日志也有面板真实操作：
+  - `PUT /v0/management/openai-compatibility`（新增）
+  - `DELETE /v0/management/openai-compatibility?index=...`（删除）
+  - 20:25 一度回到 10 OpenAI-compat，当前磁盘 9 站。
+
+## 根因类别
+多脚本并发整文件写 `config.yaml`，且部分写盘路径：
+1. 无共享 flock（`cpa_auto_priority` / `cpa_upstream_quality` / `cpa_safe_model_audit`）
+2. 可能用启动时的旧 provider 列表覆盖面板刚新增的站
+3. `cpa_safe_model_audit.py` 会 `write_text` 整份 config，原先无 membership 保护
+
+高风险脚本：
+- `cpa_auto_priority.py`（写 priority/alias/plugins）
+- `cpa_upstream_quality.py`（写 priority）
+- `sync_cpa_models.py`（写 models；已有 partial authority）
+- `cpa_safe_model_audit.py`（写 models 整文件）
+
+## 修复
+新增共享守卫：`/root/cli-proxy-data/scripts/cpa_config_guard.py`
+
+规则：
+1. 所有写配置走 `cpa_config_write.lock` 共享锁
+2. 锁内二次读取 live config
+3. **站点 membership 以面板 live 为准**：脚本只能改仍存在站的 `models/priority/disable-cooling`
+4. 默认拒绝脚本造成的站点增删（面板才是站点编辑器）
+5. 每次写盘审计到 `provider_write_audit.jsonl`（+[]/-[]）
+
+已接入：
+- `cpa_auto_priority.py`
+- `cpa_upstream_quality.py`
+- `sync_cpa_models.py`
+- `cpa_safe_model_audit.py`
+
+## 验证
+- 旧快照缺新站 → merge 后仍保留 panel-new
+- 旧快照含已删站 → merge 后不会复活
+- 旧快照试图缩站 → 不删 live 站
+- auto-priority --dry-run / sync --dry-run：真实 config 站点数不变
+- `ALL_GUARD_TESTS_OK`
+
+## 说明
+若用户在面板主动 DELETE 站点，脚本会跟随删除，不会复活。
+若用户在面板 PUT 新站，脚本不得覆盖掉。

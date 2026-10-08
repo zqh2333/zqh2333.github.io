@@ -1,0 +1,59 @@
+# 取消 CPA 自动设置站点优先级（2026-07-18）
+
+## 目标
+用户要求：**不要再有脚本自动设置 CPA 站点 priority**。
+
+## 原先会改 priority 的路径
+1. `cpa_auto_priority.py`
+   - 被 `sync_cpa_models_notify.sh` 调用（定时同步）
+   - 被 `cpa_provider_watch.py` 在拓扑变更前后调用
+2. `cpa_upstream_quality.py`
+   - cron / notify 后置：对 401/慢上游 demote priority 并可能 `docker restart`
+
+## 已落地
+### 1) 同步 wrapper
+`/root/cli-proxy-data/scripts/sync_cpa_models_notify.sh`
+- 删除所有 `cpa_auto_priority.py` 调用
+- 仍跑：sync + provider_audit + upstream_quality + stable_menu_policy
+
+### 2) provider watch
+`/root/cli-proxy-data/scripts/cpa_provider_watch.py`
+- `run_auto_priority()` 改为 **no-op 日志**：`auto-priority disabled (skip)`
+- 拓扑变更只触发 model sync，不再前后写 priority
+- 已 `systemctl restart cpa-provider-watch`，active
+
+### 3) auto_priority 硬开关
+`/root/cli-proxy-data/scripts/cpa_auto_priority.py`
+- 默认直接退出：
+  `DISABLED: auto priority assignment is off ...`
+- 仅在以下情况才会真正写 priority：
+  - `--force`
+  - 或环境变量 `CPA_AUTO_PRIORITY_ENABLED=1`
+
+### 4) quality 只告警不写 priority
+`/root/cli-proxy-data/scripts/cpa_upstream_quality.py`
+- 仍读日志、写 `upstream_alerts.json` / 计划变更
+- **不再** `save_cfg` / 改磁盘 priority / restart 容器
+- 有计划变更时打印 `PRIORITY_WRITE_DISABLED`
+
+## 验证
+- `python3 cpa_auto_priority.py` → DISABLED, exit 0
+- `sync_cpa_models_notify.sh` 无 auto_priority
+- watch active，函数为 disabled skip
+- quality 实跑：`NO_PRIORITY_CHANGE` / alerts only
+- 当前 priority 快照（未被动改）：
+  - RawChat 90, 薄荷 40, mimo 70, 魔方 20, 喵喵 40, 简直了 10, snote-temp 20, alfred-temp 10, 烁 79
+
+## 备份
+- `*.bak_disable_auto_prio_20260718_220001`
+- `cpa_upstream_quality.py.bak_disable_prio_write_20260718_220829`
+
+## 回滚
+1. 从上述 bak 恢复脚本
+2. 或对 auto_priority 用 `--force` / `CPA_AUTO_PRIORITY_ENABLED=1` 临时手动一次
+3. restart `cpa-provider-watch`
+
+## 说明
+- **面板手动改 priority 不受影响**
+- 模型同步、稳定菜单、故障转移（空 alias + RR）仍在
+- 只是不再由脚本自动分配/降权 priority

@@ -1,0 +1,81 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>删除 CPA 自动化脚本并恢复原状（保留 RawChat）（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="cpa-rawchat2026-07-18">删除 CPA 自动化脚本并恢复原状（保留 RawChat）（2026-07-18）</h1>
+<h2 id="_1">用户要求</h2>
+<p>删除所有有关 CPA 的脚本，恢复原状；<strong>仅保留已攻克的 RawChat 设置</strong>。</p>
+<h2 id="_2">范围解释（已执行）</h2>
+<h3 id="_3">删除 / 停用</h3>
+<p><strong>宝塔 CPA 主机：</strong>
+- 归档全部 CPA 运维脚本到<br />
+<code>/root/cli-proxy-data/scripts_archive_restore_20260718_233926/</code>
+  （含 <code>sync_cpa_models*</code>、<code>cpa_*</code>、<code>muyuan_*</code>、<code>restore_*</code> 等 66 项）
+- 清除 root crontab 中全部 CPA 相关任务（9 条）
+- 停用并移走 unit：
+  - <code>cpa-stable-proxy</code>
+  - <code>cpa-provider-watch</code>
+  - <code>muyuan-openai-bridge</code>
+- 容器从 <code>18317-&gt;8317</code> 恢复为 <strong><code>8317:8317</code> 直连</strong></p>
+<p><strong>Hermes 本机：</strong>
+- 归档 <code>~/.hermes/scripts</code> 下 CPA 自动化脚本到<br />
+<code>~/.hermes/scripts_archive_cpa_restore_*</code>
+- 删除 cron：
+  - Hermes固定常用模型菜单维护
+  - CPA运维告警推送
+  - Hermes模型失败检测</p>
+<h3 id="rawchat">保留（RawChat 攻克成果）</h3>
+<ul>
+<li>脚本：<code>rawchat_codex_proxy.py</code>、<code>rawchat_openai_bridge.py</code>（及 rawchat 备份）</li>
+<li>systemd：</li>
+<li><code>rawchat-codex-proxy</code> (18417) <strong>active/enabled</strong></li>
+<li><code>rawchat-openai-bridge</code> (18418) <strong>active/enabled</strong></li>
+<li>CPA config 中 <code>RawChat</code>：</li>
+<li><code>base-url: http://127.0.0.1:18418/v1</code></li>
+<li>priority 90</li>
+</ul>
+<h2 id="_4">恢复后运行态</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>docker <code>cli-proxy</code></td>
+<td><code>0.0.0.0:8317-&gt;8317</code></td>
+</tr>
+<tr>
+<td>18317 / 8317 边缘代理</td>
+<td>已取消</td>
+</tr>
+<tr>
+<td><code>/v1/models</code></td>
+<td>200（上游全量，约 71）</td>
+</tr>
+<tr>
+<td>chat 探针 <code>mimo-v2.5</code></td>
+<td>200</td>
+</tr>
+<tr>
+<td>RawChat 桥</td>
+<td>18417/18418 监听</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_5">影响说明</h2>
+<ul>
+<li>不再有自动同步 / 自动 priority / 质量降权 / 稳定菜单过滤 / provider watch</li>
+<li>8317 再次暴露 CPA <strong>全量模型列表</strong>（不是 10/11 固定菜单）</li>
+<li>Hermes 菜单仍是本地 <code>config.yaml</code> 固定列表（不会再被审计脚本改写）</li>
+<li>面板站点增删由 CPA 面板自己负责，无脚本侧写盘守卫</li>
+</ul>
+<h2 id="_6">回滚（如需）</h2>
+<ol>
+<li>从 <code>scripts_archive_restore_20260718_233926</code> 移回脚本  </li>
+<li>恢复 <code>.disabled_20260718_233926</code> 的 systemd unit  </li>
+<li>视需要把 docker 再改回 <code>18317</code> + <code>cpa-stable-proxy:8317</code></li>
+</ol></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

@@ -1,0 +1,153 @@
+# Authorized Verification Assistant v1.2.11 + 靶场 v1.0.2
+
+- 日期：2026-09-26
+- 项目：`/home/user/projects/verification-extension`
+- 扩展：`authorized-verification-assistant` `1.2.10 → 1.2.11`
+- 靶场：`verification-challenge-lab` `1.0.1 → 1.0.2`
+- 固定扩展 ID：`mgpembebkeoiciopndiciehcokojeldf`
+
+## 本轮目标
+
+在**真实系统 Chrome** 中对本地授权靶场做端到端验证，并让「通过」这件事本身可信——
+先确认测试套件没有假绿，再谈插件是否通过。
+
+## 关键发现：测试套件此前是假绿的
+
+三条独立的收集/断言缺陷，使真实 E2E **从未真正运行过**：
+
+1. `tests/direct_chrome_extension_e2e.py` 类名 `DirectChromeExtensionE2E` 不以 `Test`
+   开头 → pytest 不收集。
+2. `*_e2e.py` 文件名不匹配 pytest 默认的 `python_files = test_*.py` → 4 个真实 E2E
+   全部游离在套件之外（`direct_chrome_extension_e2e`、`real_chrome_lab_e2e`、
+   `admin_license_ui_e2e`、`hassbian_fixture_e2e`）。
+3. 契约测试断言的符号 `detectLocalChallenge` **在实现里根本不存在**（实际是
+   `localSimulation`/`localKind`/`localChallenge`），且硬编码版本号已过期。
+
+处置：重命名为 `test_*.py`、类名改 `Test*`、靶场 E2E 包成 TestCase（`main(argv=None)`
+以便从 pytest 调用）、无 Chrome/DISPLAY 时 `skipTest`；契约测试改为断言真实符号，
+版本断言改为**自洽校验**（源 `manifest.json` 必须与打包 CRX 内一致）。
+
+## 三个真实缺陷（非测试问题）
+
+### 1. Chrome 153 已彻底禁用 `--load-extension`（致命）
+
+实测结论：`--load-extension` / `--disable-extensions-except` 在 Chrome 153 上完全无效，
+扩展**根本没有注册进 profile**——即此前任何「加载成功」的说法都不成立。
+
+改用 CDP `Extensions.loadUnpacked`。因 manifest 含固定 `key`，扩展 ID 稳定为
+`mgpembebkeoiciopndiciehcokojeldf`，无需 pipe。
+
+### 2. 自研 Canvas OCR 链路无限挂起（致命）
+
+`gifHoldFrameFromBlob` 用 `new ImageDecoder({type:'image/svg+xml'})` 构造**不抛错**，
+但 **`decoder.completed` 对不支持的类型永不 settle**（`tracks.ready` 会 reject，
+`completed` 不会）。旧代码 `await decoder.completed.catch(()=>{})` 因此无限挂起，
+整条 OCR 链路卡死。
+
+定位证据：靶场访问日志（`LAB_REQ`）证明 `POST /api/ocr/solve` **从未发出**，状态在
+`OCR_STARTED` 卡了整整 48s。
+
+修复：MIME 白名单（仅 `gif/png/webp/avif/apng`）+ 新增 `withTimeout(promise, ms, fallback)`
+对所有 `ImageDecoder` await 做有界兜底 + 超时上报
+`IMAGE_READ_TIMEOUT` / `CAPTCHA_IMAGE_UNREADABLE`，不再静默挂起。
+
+### 3. 靶场页面被误判成真实 provider
+
+`detectProvider()` 按 URL 子串匹配，且在 `localChallenge()` **之前**执行，
+`/challenge/recaptcha`、`/challenge/yidun` 被抢先判成真实站点 → 直接 `HUMAN_REQUIRED`。
+
+修复：显式授权的本地模拟（回环 host + `data-authorized-simulation` 标记）**优先于**
+子串猜测。真实站点无该标记，仍走检测 + 审计 + `HUMAN_REQUIRED`，**安全语义未削弱**。
+
+### 附带修复
+
+- 靶场 `ThreadingTCPServer` 默认 `allow_reuse_address=False` → TIME_WAIT 下重跑即
+  `EADDRINUSE`；改用 `LabServer` 子类 + `daemon_threads`。
+- 靶场 `/api/learning/report` 审计记录补 `state`/`detail`；`/health` 增加
+  `version`/`pages`；新增 `LAB_REQ` 访问日志。
+
+## 验收证据（第一手）
+
+真实 Chrome 153 + 真实未打包 MV3 扩展 + 本地授权靶场，`pytest tests -q`：
+
+```text
+24 passed in 43.37s
+```
+
+靶场 E2E 报告 `artifacts/real-chrome-lab-e2e-report.json`：`pass=true`、
+`all_kinds_pass=true`、**17/17 checks 全 true**。
+
+```text
+recaptcha    LOCAL_WIDGET_CONFIRMED    RECAPTCHA_TEST_PASS
+turnstile    LOCAL_WIDGET_CONFIRMED    RECAPTCHA_TEST_PASS
+hcaptcha     LOCAL_WIDGET_CONFIRMED    RECAPTCHA_TEST_PASS
+yidun        LOCAL_PUZZLE_DONE         YIDUN_TEST_PASS        滑块=100
+image        SUBMITTED                 IMAGE_TEST_PASS        答案=A7K9
+image-select LOCAL_IMAGE_SELECT_DONE   IMAGE_SELECT_TEST_PASS 选中=[0,4,8]
+jigsaw       LOCAL_PUZZLE_DONE         PUZZLE_TEST_PASS       滑块=100
+risk         LOCAL_RISK_CONFIRMED      RISK_TEST_CONFIRMED
+对照页        HUMAN_REQUIRED / RECAPTCHA_DETECTED  未自动求解 ✓
+```
+
+基础设施检查含：固定 ID、真实 MV3 service worker、版本回读、激活、64 位设备指纹、
+指纹非 device_id、靶场侧记录、validate 通过、审计覆盖全部 8 类挑战、靶场版本自洽。
+
+## 产物与 NAS 归档
+
+分开交付（插件包 / 靶场包互不包含）：
+
+| 产物 | 字节 | SHA-256 |
+| --- | --- | --- |
+| `authorized-verification-assistant-v1.2.11.zip` | 19496 | `<HASH>` |
+| `verification-challenge-lab-v1.0.2.zip` | 7061 | `<HASH>` |
+
+NAS（回读校验：哈希与本机一致，权限 664）：
+
+```text
+/volume1/云/Hermes项目产物/verification-extension/1.2.11/
+/volume1/云/Hermes项目产物/verification-challenge-lab/1.0.2/
+```
+
+包内均无 `.pem` / `.crx` / `.key`；扩展包 9 文件，靶场包 4 文件
+（`server.py`/`smoke.py`/`start-windows.cmd`/`README.md`）。靶场包已实测**独立解压可运行**
+（`/health` → `version 1.0.2`、`pages 8`；8 类页面全 200）。
+
+## 未验证 / 边界
+
+- 全部验证在 **Linux 本地授权靶场**完成；**Windows Chrome/Edge 实机未验证**。
+- 真实 Geetest / reCAPTCHA / 易盾仍只做识别、分类、审计，`HUMAN_REQUIRED`，不自动求解。
+- `tests/api_e2e.py`、`tests/device_limit_ui_e2e.py` 仍是脚本式（无 `TestCase`），
+  未纳入 pytest 套件；需授权服务在跑才能执行。
+
+## 真实站点识别验证（授权公开测试页）
+
+靶场通过只证明「能过自己造的题」。另跑 `tests/live_provider_detection_probe.py`
+（真实系统 Chrome + 真实未打包扩展 + 本地许可服务激活），访问两个授权公开测试页：
+
+| 目标 | 结果 | 状态 | 自动求解 |
+| --- | --- | --- | --- |
+| `google.com/recaptcha/api2/demo` | `RECAPTCHA_DETECTED` | `HUMAN_REQUIRED` | 否 |
+| `dun.163.com/trial/jigsaw` | `YIDUN_DETECTED` | `HUMAN_REQUIRED` | 否 |
+
+`CHECKS` 全 true：`all_targets_human_required`、`no_target_auto_solved`、
+`all_targets_audited`（本地服务审计链收到 `provider_challenge`/`detect` 记录且带真实 host）。
+报告：`artifacts/live-provider-detection-report.json`。
+
+**该探针刻意不进默认 pytest 套件**（依赖公网，不能让它卡住离线套件）。
+
+## 能过 / 不能过（一句话边界）
+
+- **能自动完成**：本地授权靶场 8 类全通过；站点自有 Canvas 图片验证码走自有 OCR 填写。
+- **按设计不自动完成**：真实 Geetest / 易盾 / reCAPTCHA / Turnstile / hCaptcha ——
+  只识别、分类、审计，终止于 `HUMAN_REQUIRED`。这是安全边界，不是缺陷。
+
+## 可复用教训
+
+1. **测试"通过"之前先证明测试在跑**：pytest 静默不收集是假绿的头号来源——
+   `--collect-only` 数一遍，比对文件清单。
+2. **浏览器自动化的加载方式会随版本失效**：Chrome 137+ 弃用 `--load-extension`，
+   以 CDP `Extensions.loadUnpacked` 为准；固定 `key` 可让 ID 稳定。
+3. **Web API 的 promise 可能永不 settle**：`ImageDecoder.completed` 对不支持类型如此；
+   凡 await 第三方/平台 promise，一律加有界超时，别只加 `try/catch`。
+4. **判定顺序即安全语义**：显式授权的本地模拟必须优先于启发式 provider 猜测，
+   否则靶场页会被当成真实挑战，掩盖真实行为。

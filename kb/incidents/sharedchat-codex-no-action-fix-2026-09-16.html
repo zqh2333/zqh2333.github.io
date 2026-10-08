@@ -1,0 +1,15 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SharedChat Codex 领取任务提示修复 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="sharedchat-codex">SharedChat Codex 领取任务提示修复</h1>
+<ul>
+<li>日期：2026-09-16</li>
+<li>任务：<code>bcff58ebbb8d</code></li>
+<li>症状：偶发 <code>NO_ACTION: claim button not present and subscription inactive.</code>。</li>
+<li>根因：SPA 页面/额度接口存在加载竞态；旧逻辑在首次读取未激活且按钮尚未渲染时直接返回 0，并将未确认状态错误标成 <code>NO_ACTION</code>。</li>
+<li>修复：新增 <code>retry_claim_state()</code>，对 quota 和领取按钮执行最多 3 次有限刷新/重读；仍无法确认时返回 <code>FAILED: state_unconfirmed after 3 page/quota refreshes</code> 和非零退出码。</li>
+<li>保留：真正 <code>ALREADY_ACTIVE</code>、<code>CLAIMED</code> 分支仍返回成功；未输出凭据。</li>
+<li>验证：红测先确认旧误报分支存在并失败；修复后 <code>SHAREDCHAT_RETRY_GATE_CONTRACT_PASS</code>；wrapper 实跑输出 <code>✅ SharedChat Codex：$50 可用｜到期 2026-09-17T00:00</code>；cron 手动运行 <code>execution_success=true</code>，日志回读同样成功。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

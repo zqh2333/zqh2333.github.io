@@ -1,0 +1,29 @@
+# Verification Challenge Lab v1.0.0
+
+- 用途：本地、可重复的授权验证码/安全盾测试靶场。
+- 本地包：`/home/user/artifacts/verification-challenge-lab-v1.0.0.zip`
+- NAS：`/volume1/云/Hermes项目产物/verification-challenge-lab/v1.0.0/`
+- 大小：6668 bytes
+- SHA-256：`<HASH>`
+
+## 页面
+
+`recaptcha`、`turnstile`、`hcaptcha`、`yidun`、`image`、`image-select`、`jigsaw`、`risk` 八类本地模拟页面，首页为 `/`，健康接口为 `/health`。
+
+启动：
+
+- Linux：`python3 lab/server.py --host 127.0.0.1 --port 18765`
+- Windows：双击 `lab/start-windows.cmd` 或运行 `py -3 lab\\server.py --host 127.0.0.1 --port 18765`
+
+## 验证
+
+- `python3 -m py_compile lab/server.py lab/smoke.py`：通过
+- `/health`：HTTP 200
+- 8 个页面：全部可访问
+- 系统 Google Chrome 交互冒烟：`LAB_FINAL_SMOKE_PASS`
+- 图片验证码、图片点选、易盾模拟、拼图/滑块、风险确认状态：通过
+- ZIP 完整性和 NAS 回读：通过
+
+## 边界
+
+靶场不连接 Google、Cloudflare、hCaptcha 或网易易盾，不生成 provider token。模拟页面成功不等同于真实第三方安全盾通过。

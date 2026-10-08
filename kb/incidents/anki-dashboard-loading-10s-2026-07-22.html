@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anki 后台卡在“正在加载数据，最多等待 10 秒”（2026-07-22） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="anki-10-2026-07-22">Anki 后台卡在“正在加载数据，最多等待 10 秒”（2026-07-22）</h1>
+<h2 id="_1">症状</h2>
+<p>Dashboard 一直显示：<code>正在加载数据，最多等待 10 秒...</code></p>
+<h2 id="_2">根因</h2>
+<p>不是后端慢。<code>/api/admin/data</code> 持续 200，约 80KB。
+真正原因：前一轮给「牌组密钥回收站清空」加的前端函数里，<code>prompt('...多行...')</code> 用了<strong>未转义的单引号多行字符串</strong>，导致整个 <code>dashboard.html</code> 主脚本语法错误；<code>refreshData()</code> 根本不执行，页面永远停在初始 skeleton。</p>
+<h2 id="_3">修复</h2>
+<ul>
+<li>将 <code>clearDeckKeyRecycleBin()</code> 的 prompt 改为 <code>\\n</code> 合法单行字符串。</li>
+<li>给 <code>refreshData</code> 成功回调加 <code>try/catch</code>，渲染异常时显示“页面渲染失败”而不是永久骨架屏。</li>
+</ul>
+<h2 id="_4">验证</h2>
+<ul>
+<li>源码断言：非法多行 prompt 已消失。</li>
+<li>内部 <code>/api/admin/data</code> 20 条 / total 1469。</li>
+<li><code>verify_all.py</code>: success=true, ready=true。</li>
+</ul>
+<h2 id="_5">使用</h2>
+<p>强制刷新浏览器（Ctrl+F5）即可看到主数据表恢复。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

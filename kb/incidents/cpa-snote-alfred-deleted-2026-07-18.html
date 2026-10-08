@@ -1,0 +1,66 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>删除 snote-temp / alfred-temp（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="snote-temp-alfred-temp2026-07-18">删除 snote-temp / alfred-temp（2026-07-18）</h1>
+<h2 id="_1">用户反馈</h2>
+<p>上游质量告警里还有 <code>snote-temp</code>、<code>alfred-temp</code>，用户认为已经删掉了。</p>
+<h2 id="_2">核查结论</h2>
+<p><strong>当时并没有删掉。</strong><br />
+磁盘 <code>config.yaml</code> 里仍在：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>base-url</th>
+<th style="text-align: right;">priority</th>
+<th style="text-align: right;">models</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>snote-temp</td>
+<td><code>https://cpa.snote.cc.cd/v1</code></td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">9</td>
+</tr>
+<tr>
+<td>alfred-temp</td>
+<td><code>https://api.alfredng.example.org/v1</code></td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<p>容易误判的原因：
+1. 曾从「临时/临时2」<strong>改名</strong>为 snote-temp/alfred-temp（不是删除）
+2. Hermes/8317 固定菜单<strong>不显示站名</strong>，只显示裸模型名
+3. 两站长期 401/502，质量脚本一直报警，看起来像“坏站还在”</p>
+<h2 id="_3">已执行（用户意图：删掉）</h2>
+<p>在共享锁内显式删除并写审计：</p>
+<ul>
+<li>source: <code>user_delete_snote_alfred</code></li>
+<li>removed: <code>snote-temp</code>, <code>alfred-temp</code></li>
+<li>backup: <code>config.yaml.&lt;TOKEN&gt;</code></li>
+<li>从 <code>codex-fingerprint.providers</code> 去掉两站名</li>
+<li>清理 <code>upstream_alerts.json</code> / <code>upstream_priority_state.json</code> 残留</li>
+<li><code>docker restart cli-proxy</code> 使运行态与磁盘一致</li>
+</ul>
+<h2 id="quality">quality 修复</h2>
+<p><code>cpa_upstream_quality.py</code> 增加：</p>
+<p><code>IGNORE_DELETED_PROVIDERS</code></p>
+<p>只对<strong>当前 config 中仍存在的站</strong>报 errors/alerts；历史 sync 日志里的已删站不再报警。</p>
+<h2 id="_4">验证</h2>
+<ul>
+<li>当前 providers：<code>RawChat, 薄荷, mimo, 魔方, 喵喵, 简直了, 烁</code></li>
+<li><code>live_has_snote=False</code> / <code>live_has_alfred=False</code></li>
+<li>quality：<code>NO_PRIORITY_CHANGE {'errors': {}}</code></li>
+<li>alerts：<code>[]</code></li>
+</ul>
+<h2 id="_5">说明</h2>
+<ul>
+<li>这是用户明确要求的站点删除，不是脚本误删</li>
+<li>之后若面板再加同名站，guard 会按面板 membership 保留</li>
+<li>自动 priority 仍禁用，不会因删站再写 priority</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

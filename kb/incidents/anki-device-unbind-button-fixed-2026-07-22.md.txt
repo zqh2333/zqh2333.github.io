@@ -1,0 +1,31 @@
+# Anki 单设备解绑按钮失效修复（2026-07-22）
+
+## 症状
+后台激活码设备列表点击「解绑此设备」无效。
+
+## 根因
+设备卡片渲染的是：
+```html
+onclick="deleteDevice(${device.id}, ...)"
+```
+但 `templates/dashboard.html` 中对应 `function deleteDevice(...)` 被此前前端改动遗漏/删除；浏览器点击发生 `ReferenceError`，没有请求到后端。
+
+后端 `/api/admin/delete_device/<id>` 原本存在且可用。
+
+## 修复
+1. 恢复前端 `deleteDevice(deviceId, deviceIdentifier)`：确认 → `DELETE /api/admin/delete_device/<id>` → 成功后刷新设备弹窗与数据列表；失败显示具体 HTTP/后端信息。
+2. 后端单设备解绑：
+   - 成功提示改为「设备已解绑，名额已释放」
+   - 添加 `AdminOperationLog` 审计（device id、code/device/raw id 摘要）
+   - 404 明确为「设备不存在或已解绑」
+   - 异常写日志且返回安全提示。
+
+## 验证
+容器内临时 code/device：
+- 成功解绑 → Device 删除、ActivationCode 保留
+- 重复解绑 → 404
+- 未登录 → 302
+- 临时数据清理完成
+- `verify_all.py`: `success=true`, `ready=true`
+
+备份：`admin.py.bak_device_unbind_20260722`、`dashboard.html.bak_device_unbind_20260722`。

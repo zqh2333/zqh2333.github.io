@@ -1,0 +1,30 @@
+# 授权验证 Docker 发布包 v1.2.9
+
+- 日期：2026-09-15
+- 项目目录：`/home/user/projects/verification-extension`
+- Docker 源码包：`/tmp/authorized-verification-docker-v1.2.9.tar.gz`
+- Docker 镜像归档：`/tmp/verification-license-v1.2.9-image.tar.gz`
+- NAS：`/volume1/云/Hermes项目产物/verification-extension-docker/v1.2.9/`
+
+## 产物哈希
+
+- `authorized-verification-docker-v1.2.9.tar.gz`：`<HASH>`
+- `verification-license-v1.2.9-image.tar.gz`：`<HASH>`
+
+## 内容边界
+
+Docker 源码包包含授权服务、SQLite schema、后台 UI、OCR 依赖、部署文件和 `.env.example`；不包含生产 `.env`、数据库、Cookie、token、密码、私钥或扩展 PEM。
+
+源码扩展 manifest 当前为 `1.2.9`，但可迁移包内的已签名 CRX 为 `1.1.6`。原扩展私钥不在项目中，因此没有伪造新版 CRX；需要新版签名 CRX 时必须使用原私钥重新打包，或发布 ZIP 供 Chrome 开发者模式加载。
+
+## 验证
+
+隔离 Docker 容器使用 `verification-license:package-v1.2.9` 镜像启动成功：
+
+- `/health` HTTP 200；
+- 管理首页 HTTP 200；
+- 管理员登录 HTTP 200；
+- `/extension/update.xml` HTTP 200；
+- CRX 下载 HTTP 200；
+- update XML integrity 与实际 CRX SHA-256 一致；
+- 设备指纹和地理位置字段存在。

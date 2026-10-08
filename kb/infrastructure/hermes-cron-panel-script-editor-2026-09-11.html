@@ -1,0 +1,37 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hermes Cron 青龙式脚本管理面板 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="hermes-cron">Hermes Cron 青龙式脚本管理面板</h1>
+<ul>
+<li>日期：2026-09-11</li>
+<li>目标：在不替换 Hermes 原生 cron 调度器的前提下，提供接近青龙面板的任务与脚本操作界面。</li>
+<li>面板文件：<code>~/.hermes/scripts/hermes_cron_panel.py</code></li>
+<li>服务：<code>hermes-cron-panel.service</code>，监听 <code>0.0.0.0:8421</code>。</li>
+</ul>
+<h2 id="_1">功能</h2>
+<ul>
+<li>定时任务：列表、搜索、按成功/失败/暂停筛选、后台运行、日志、编辑、暂停/恢复、删除。</li>
+<li>脚本管理：脚本列表、大小/更新时间/权限/绑定任务、查看、新建、编辑、保存、删除。</li>
+<li>保存脚本前执行 <code>python3 -m py_compile</code> 或 <code>bash -n</code> 语法检查。</li>
+<li>保存已有脚本前自动备份到 <code>~/.hermes/scripts/.panel_backups/</code>。</li>
+<li>删除脚本采用移动到备份目录；启用任务仍引用该脚本时拒绝删除。</li>
+</ul>
+<h2 id="_2">安全边界</h2>
+<ul>
+<li>脚本路径限制为 <code>~/.hermes/scripts/</code> 根目录下的 <code>.py</code>、<code>.sh</code>、<code>.bash</code> 文件名，拒绝路径穿越和 shell 字符。</li>
+<li>脚本编辑上限 300KB。</li>
+<li>面板继续使用账号密码登录，密码为 PBKDF2 哈希，session token 仅存内存。</li>
+<li>移除旧版 systemd <code>EnvironmentFile</code> token URL 配置及旧 token 文件；当前只使用账号密码登录。</li>
+</ul>
+<h2 id="_3">验证</h2>
+<ul>
+<li><code>py_compile</code> 通过。</li>
+<li>systemd 服务 active。</li>
+<li>未登录 <code>/api/jobs</code> 返回 HTTP 401。</li>
+<li>错误密码返回 401；正确登录返回 200。</li>
+<li><code>/api/jobs</code> 返回真实任务 12 条；<code>/api/scripts</code> 返回真实脚本 32 条。</li>
+<li>脚本新建、读取、更新、语法检查、删除闭环通过；烟测脚本已移入备份目录，无残留活动脚本。</li>
+<li>浏览器验证面板标题为“Hermes Cron 青龙面板”；登录后任务统计加载；切换“脚本管理”成功，真实脚本内容加载，控制台无错误。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

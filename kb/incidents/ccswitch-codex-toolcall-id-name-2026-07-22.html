@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CC Switch Codex `/responses` tool-call 格式修复（2026-07-22） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="cc-switch-codex-responses-tool-call-2026-07-22">CC Switch Codex <code>/responses</code> tool-call 格式修复（2026-07-22）</h1>
+<h2 id="_1">报错</h2>
+<pre><code class="language-text">CC Switch local proxy failed while handling Codex endpoint /responses
+Provider: cpa; model: gpt-5.6-sol; upstream_status: HTTP 400
+assistant.tool_calls 缺少有效 id 或 name
+</code></pre>
+<h2 id="_2">根因</h2>
+<p>8317 <code>cpa_stable_models_proxy.py</code> 以前只清洗 Responses 顶层 <code>input</code> 的 <code>function_call</code> 缺 name；CC Switch 会在后续 <code>/responses</code> 请求中把历史 assistant message 的 <code>tool_calls[]</code> 一并带回。若某 call 缺：
+- <code>tool_calls[].id</code>
+- <code>tool_calls[].function.name</code>
+- （少见）<code>type</code></p>
+<p>CPA 后端会在 OpenAI Chat↔Responses 转换处返回 400。由于这只发生在有工具调用历史的会话，所以体感为“有时可用、有时不可用”。与上游额度/模型健康无关。</p>
+<h2 id="_3">修复</h2>
+<p>8317 边缘新增<strong>浅层、类型限定</strong>修复：
+- assistant <code>input[].tool_calls[]</code> 仅缺失时补 <code>id=call_&lt;sha1&gt;</code>、<code>type=function</code>、<code>function.name</code>
+- Responses 顶层 call 项仅缺失时补 <code>call_id</code>、<code>name</code>
+- 工具输出 <code>function_call_output</code>、Chat <code>role=tool</code>、普通 content 绝不修改（避免历史 422 ModelInput）
+- 不做上游请求/探活；只在真实 CC Switch 请求经过 8317 时生效。</p>
+<h2 id="_4">验证</h2>
+<p>纯本地 sanitizer 回归（无 HTTP/上游调用）：
+1. CC Switch assistant <code>tool_calls</code> 缺 id/name → 自动补齐
+2. Responses <code>function_call</code> 缺 call_id/name → 自动补齐
+3. 合法已带 id/name call 不变
+4. <code>role=tool</code> 输出不变</p>
+<p>输出：<code>CPA_TOOL_CALL_SANITIZER_REGRESSION_OK</code></p>
+<p>服务：<code>cpa-stable-proxy active</code>，重启后 MainPID=1962446。</p>
+<h2 id="_5">使用</h2>
+<p>CC Switch 仍走 <code>http://&lt;LAN-8&gt;:8317/v1</code>。出现此类旧会话 tool-call 错误时，重新发送即可；若客户端持有已损坏的历史 tool-call 结构，新开会话也可消除旧历史。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

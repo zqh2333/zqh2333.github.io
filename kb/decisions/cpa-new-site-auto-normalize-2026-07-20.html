@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>新站自动规范化（2026-07-20） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="2026-07-20">新站自动规范化（2026-07-20）</h1>
+<h2 id="_1">用户意图</h2>
+<p>「可以」——以后面板新增公共站自动补稳定模板，无需每次手工设模型相关加固。</p>
+<h2 id="config">做什么（仅本地 config）</h2>
+<p><code>cpa-new-site-normalize.service</code> 监听 <code>/root/CLIProxyAPI/config.yaml</code>：
+1. <strong>公共站</strong>（非 RawChat）：<code>headers.User-Agent=OpenAI/Python 1.59.0</code> + <code>Accept: application/json</code>
+2. <strong>所有 models.alias 强制空</strong>（同名 failover）
+3. <strong>RawChat</strong> 保持 Codex 桥 headers</p>
+<h2 id="_2">明确不做</h2>
+<ul>
+<li>不改 base-url / api-key / 模型列表增删 / <strong>priority</strong></li>
+<li>不增删站点（membership 校验）</li>
+<li><strong>不探活</strong>上游（无 /models、chat、health）</li>
+<li>不改 Hermes 菜单 / stable_models.json</li>
+</ul>
+<h2 id="_3">路径</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>路径</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>脚本</td>
+<td><code>/root/cli-proxy-data/scripts/cpa_new_site_normalize.py</code></td>
+</tr>
+<tr>
+<td>watch</td>
+<td><code>cpa_new_site_normalize_watch.sh</code></td>
+</tr>
+<tr>
+<td>unit</td>
+<td><code>cpa-new-site-normalize.service</code></td>
+</tr>
+<tr>
+<td>日志</td>
+<td><code>/root/cli-proxy-data/state/cpa_new_site_normalize.log</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_4">验证</h2>
+<ul>
+<li>首次运行：<code>temp4:headers=openai-python</code></li>
+<li>服务 <code>active/enabled</code></li>
+<li>全公共站 UA 均为 OpenAI/Python；alias 全空</li>
+</ul>
+<h2 id="_5">用户加站仍需</h2>
+<ul>
+<li>模型名用<strong>裸名</strong>且与现网一致（如 <code>grok-4.5</code>）才会进 failover 组</li>
+<li>新模型名要进客户端菜单时，才需改 <code>stable_models.json</code> / Hermes 菜单</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

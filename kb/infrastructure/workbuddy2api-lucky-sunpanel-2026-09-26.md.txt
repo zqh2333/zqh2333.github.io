@@ -1,0 +1,32 @@
+# WorkBuddy2API Lucky + Sun Panel 接入记录
+
+日期：2026-09-26
+
+## Lucky 反向代理
+
+- 规则名称：`WorkBuddy2API`
+- 前端域名：`wb.example.com`
+- Lucky 监听端口：`2333`
+- 前端访问：`https://wb.example.com:2333/panel/`
+- 后端：`http://<LAN-8>:7863`
+- 规则状态：启用
+
+## Sun Panel
+
+- 标题：`WorkBuddy2API`
+- 公网/外部地址：`https://wb.example.com:2333/panel/`
+- 内网地址：`http://<LAN-8>:7863/panel/`
+- 分组：`APP`
+
+## 验证
+
+- 后端 `/panel/`：HTTP 200
+- Lucky Host 路由（内网 Host 验证）：HTTP 200
+- `wb.example.com` DNS：解析到 <LAN-3>
+- Sun Panel 应用通过管理界面保存
+
+## 注意
+
+- 域名当前解析到内网 Lucky 地址；外网访问还取决于公网 DNS/端口转发和证书。
+- 当前 WorkBuddy2API 尚未添加 CodeBuddy OAuth 账号，因此 `/healthz` 仍可能为 503；面板访问不受影响。
+- 凭据未写入本记录。

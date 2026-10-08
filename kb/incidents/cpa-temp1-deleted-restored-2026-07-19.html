@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>temp1（用户称 temp 1234）被删与恢复（2026-07-19） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="temp1-temp-12342026-07-19">temp1（用户称 temp 1234）被删与恢复（2026-07-19）</h1>
+<h2 id="_1">用户反馈</h2>
+<p>「temp 1234 怎么给我删了」</p>
+<h2 id="_2">核查</h2>
+<ul>
+<li>现网/历史<strong>没有</strong>名为 <code>temp 1234</code> 的站点</li>
+<li>最接近、且曾在面板存在的是 <strong><code>temp1</code></strong></li>
+<li>base: <code>https://sub.yxxb.eu.cc/v1</code></li>
+<li>models: gpt-5.6-sol / gpt-5.5 / gpt-5.4 / gpt-5.4-mini / grok-4.5</li>
+<li>删除时间线（watch 日志）：</li>
+<li>2026-07-17 20:17：<code>+['temp1']</code> 面板新增并同步</li>
+<li><strong>2026-07-18 10:27</strong>：<code>providers changed +[] -['temp1']</code><ul>
+<li>watcher 看到磁盘上已无 temp1（更像面板 DELETE 或写回竞态后的结果）</li>
+<li>随后 auto-priority/sync 按当时列表固化，<strong>没有再加回</strong></li>
+</ul>
+</li>
+<li>今晚操作：</li>
+<li>23:24 按用户意图删除的是 <strong>snote-temp / alfred-temp</strong>，<strong>不是 temp1</strong></li>
+<li>temp1 在那之前就已经不在 9 站列表里了</li>
+</ul>
+<h2 id="_3">已恢复</h2>
+<ul>
+<li>从备份 <code>config.yaml.bak_sol_codex_isolate_20260718_090119</code> 恢复完整 <code>temp1</code>（含 key-entries）</li>
+<li>写回 live config，插在 <code>烁</code> 前</li>
+<li><code>docker restart cli-proxy</code></li>
+<li>探针：<code>gpt-5.5</code> / <code>grok-4.5</code> / <code>gpt-5.4</code> → <strong>200</strong></li>
+</ul>
+<h2 id="providers">当前 providers</h2>
+<p>RawChat / 薄荷 / mimo / 魔方 / 喵喵 / 简直了 / <strong>temp1</strong> / 烁</p>
+<h2 id="_4">说明</h2>
+<p>若你说的 <code>temp 1234</code> 不是 <code>temp1</code>（例如别的 base-url/key），把名称或地址发来，我再对一下。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

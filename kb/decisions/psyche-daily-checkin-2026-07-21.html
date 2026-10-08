@@ -1,0 +1,73 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>0xPsyche Welfare 每日签到（2026-07-21） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="0xpsyche-welfare-2026-07-21">0xPsyche Welfare 每日签到（2026-07-21）</h1>
+<h2 id="_1">站点</h2>
+<ul>
+<li>个人页：<code>https://welfare.0xpsyche.me/profile</code></li>
+<li>API base：<code>https://welfare.0xpsyche.me</code></li>
+<li>账号：id=22120 / display_name=Zqh2333</li>
+</ul>
+<h2 id="_2">认证</h2>
+<p>New API 风格：</p>
+<pre><code class="language-text">Authorization: &lt;access token&gt;
+New-Api-User: 22120
+</code></pre>
+<p>凭据仅在 <code>~/.hermes/secrets/psyche.env</code>（600），不记入本文档。</p>
+<h2 id="_3">接口</h2>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/user/self</code></td>
+<td>验证令牌、读取 quota</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/user/checkin</code></td>
+<td>读取 <code>checked_in_today</code></td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/user/checkin</code></td>
+<td>执行签到</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_4">自动化</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>路径</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>脚本</td>
+<td><code>~/.hermes/scripts/psyche_daily_checkin.py</code></td>
+</tr>
+<tr>
+<td>wrapper</td>
+<td><code>psyche_checkin_random.sh</code>（08:00 起随机 0–30 分钟）</td>
+</tr>
+<tr>
+<td>cron</td>
+<td><code>0xPsyche福利站每日签到（08:00-08:30随机）</code>，<code>no_agent=true</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_5">验证</h2>
+<ul>
+<li>2026-07-21：已签到，奖励 <code>12500000</code> quota</li>
+<li>脚本 dry-run：<code>ALREADY_CHECKED_IN</code>，exit 0</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

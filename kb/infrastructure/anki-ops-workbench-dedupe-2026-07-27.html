@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>网页配置工作台去重（2026-07-27） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="2026-07-27">网页配置工作台去重（2026-07-27）</h1>
+<h2 id="_1">问题</h2>
+<p><code>opsWorkbenchModal</code> 内「网页配置」表单重复两套：
+1. 主面板 <code>opsDownloadUrl / opsTutorialUrl / opsLatestVersion</code>（原「网页配置快捷修改」）
+2. FullOps 面板 <code>opsDownloadUrlFull / ...</code>（原「网页配置」完整表单）</p>
+<p>两套字段 + 两套保存函数，UI 看起来功能重复。</p>
+<h2 id="_2">处理</h2>
+<ul>
+<li>主面板保留<strong>唯一可见</strong>配置表单（<code>#opsConfigPrimaryCard</code>）</li>
+<li>FullOps 仅保留运维工具入口；<code>*Full</code> 输入改为 hidden 镜像</li>
+<li><code>saveOpsConfigFromFull()</code> 转调 <code>saveOpsConfig()</code></li>
+<li><code>bindOpsConfigPrimarySync()</code> 主表单变更同步到 hidden</li>
+<li>配置概览展示短 URL + 提示「修改请用右侧唯一表单」</li>
+<li><code>ops29Result</code> 只保留一处</li>
+</ul>
+<h2 id="_3">验证</h2>
+<ul>
+<li><code>id="opsDownloadUrl"</code> 仅 1 处</li>
+<li>无「网页配置快捷修改」标题</li>
+<li>node --check 通过</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

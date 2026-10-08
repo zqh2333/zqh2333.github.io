@@ -1,0 +1,36 @@
+# CC Switch Codex /responses: input[N].name is required（2026-07-18）
+
+## 报错
+```
+CC Switch local proxy failed while handling Codex endpoint /responses.
+Provider: cpa; model: gpt-5.6-sol; upstream_status: HTTP 400;
+cause: input[43].name is required
+```
+用户侧感知：新增 CPA 站点后、使用 Grok4.5 时出现。
+
+## 关键澄清
+1. **实际请求模型是 `gpt-5.6-sol`，不是 `grok-4.5`**（错误体写明 model=gpt-5.6-sol）。
+2. 根因 A：Codex 长会话 `input[]` 中 `function_call` 等项缺 `name` → 上游 400。
+3. 根因 B（当前叠加）：`gpt-5.6-sol` 上游额度/鉴权不稳（429/503），清洗后不再 400 name，但可能仍失败。
+
+## 修复
+- `cpa_stable_models_proxy.py`（8317）：**深度递归**清洗 `/responses` body，补全 name。
+- `codex_fingerprint.js`：请求前同样 deep walk 清洗。
+- 清洗日志：`/root/cli-proxy-data/state/responses_sanitize.log`
+- 复测日志样例：`fixes` 含 `root.input[43]` → 证明缺 name 已被补。
+
+## CC Switch 必配
+- Base URL: `http://<LAN-8>:8317/v1`（**不要** `18317`）
+- 若要用 Grok：模型显式选 **`grok-4.5`**
+- 若界面显示 Grok 却打到 sol：检查 CC Switch 模型映射/默认模型
+
+## gpt-5.6-sol 提供方（当时）
+- mimo / 魔方 / 简直了 / temp1 / codex(RawChat 桥)
+- 清洗后失败形态变为 429 额度用尽 或 503 无可用 auth（上游状态问题）
+
+## 验证
+- unit：嵌套 function_call / tools 缺 name → 0 missing
+- 8317 收到缺 name 请求会写 sanitize log，不再以 name is required 为第一失败原因
+
+## 后续（同日）
+深度清洗曾导致 422 ModelInput，已改为安全 top-level 清洗。见 [[incidents/<TOKEN>]]。

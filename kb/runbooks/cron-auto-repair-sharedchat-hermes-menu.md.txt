@@ -1,0 +1,30 @@
+# Cron 自动修复：SharedChat + Hermes 菜单
+
+## SharedChat Codex 领取 ()
+### 症状
+ exit 1
+
+### 根因
+- 弹窗领取后 claim API/toast 捕获不稳
+- Vue textarea 未正确触发 v-model
+- 成功判定过窄（忽略 quota.isActive / rolling-limit）
+
+### 修复
+-  重写：secrets、指纹等待、Vue 输入、扩展成功源
+- 实跑： exit 0
+
+## Hermes 固定菜单 ()
+### 症状
+
+
+### 根因
+宝塔 SSH 偶发拒绝；脚本无跳板/无本地降级。
+
+### 修复
+- 直连 baota → 失败则 PVE 
+- remote python 走 base64 临时脚本，避免 heredoc 转义炸裂
+- 远程不可用时仍写固定菜单并 exit 0（不因 SSH 误报失败）
+
+## 验证
+- SharedChat wrapper exit 0
+- Hermes menu wrapper exit 0

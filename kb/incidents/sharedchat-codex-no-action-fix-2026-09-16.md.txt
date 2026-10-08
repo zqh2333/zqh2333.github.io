@@ -1,0 +1,9 @@
+# SharedChat Codex 领取任务提示修复
+
+- 日期：2026-09-16
+- 任务：`bcff58ebbb8d`
+- 症状：偶发 `NO_ACTION: claim button not present and subscription inactive.`。
+- 根因：SPA 页面/额度接口存在加载竞态；旧逻辑在首次读取未激活且按钮尚未渲染时直接返回 0，并将未确认状态错误标成 `NO_ACTION`。
+- 修复：新增 `retry_claim_state()`，对 quota 和领取按钮执行最多 3 次有限刷新/重读；仍无法确认时返回 `FAILED: state_unconfirmed after 3 page/quota refreshes` 和非零退出码。
+- 保留：真正 `ALREADY_ACTIVE`、`CLAIMED` 分支仍返回成功；未输出凭据。
+- 验证：红测先确认旧误报分支存在并失败；修复后 `SHAREDCHAT_RETRY_GATE_CONTRACT_PASS`；wrapper 实跑输出 `✅ SharedChat Codex：$50 可用｜到期 2026-09-17T00:00`；cron 手动运行 `execution_success=true`，日志回读同样成功。

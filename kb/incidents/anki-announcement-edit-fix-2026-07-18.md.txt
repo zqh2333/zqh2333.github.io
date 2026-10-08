@@ -1,0 +1,50 @@
+# Anki 全站公告编辑功能修复（2026-07-18）
+
+## 用户反馈
+- 修改/编辑功能不完善
+- **字体颜色改不了**
+- 其他修改项也不完善/不能用
+
+## 根因
+1. **颜色只改了外层 CSS，没有改 HTML 内联 `style="color:..."``**
+   - 现网公告正文大量内联颜色（如 `#fff` / `#ff4d4f`）
+   - 颜色选择器只设置预览容器 `css({color})`，被内联样式覆盖 → 看起来“改不了”
+2. **画布改色要求先选中文字**
+   - `applyVisualStyle` 无选区直接 `return`，点取色器无反应
+3. **画布编辑后发布可能丢改动**
+   - 发布时只读 textarea，未强制把 contenteditable 画布 HTML 写回
+4. **草稿不回载**
+   - API 有 draft，打开弹窗只加载已发布数据
+5. **到期动作字段缺失**
+   - 数据里有 `expire_action`，UI/collect 不完整
+
+## 修复
+文件：
+- `templates/dashboard.html`
+- `app/utils.py`（sanitize 保留更多安全 style）
+- `app/routes/admin.py`（expire_action 归一化）
+
+改动要点：
+1. 新增 `applyGlobalAnnouncementColor`：改颜色时重写 HTML 内所有 `color:`
+2. 全局颜色/字号/对齐绑定 `input/change`，同步进 HTML
+3. 画布工具：无选区时应用到整块内容
+4. `collectAnnouncementData` 发布前同步画布 → textarea
+5. 打开弹窗优先加载草稿，并提示
+6. 增加“到期后动作”选择器
+
+## 验证
+- `/api/status` 200
+- sanitize 保留 `#112233` 等颜色
+- normalize：color/font/version/expire 均正确
+- 草稿写读正常
+- 前端关键标记齐全
+
+## 使用说明
+1. 打开「编辑全站公告」
+2. 改「文字颜色」→ 预览正文颜色应立刻变（含原 HTML 内联色）
+3. 画布模式：不选文字也可改色/字号
+4. 可先「保存草稿」，再「安全检查后发布」
+5. 发布后客户端拉 `/api/announcement.json` 生效
+
+## 备份
+`*.bak_ann_edit_20260718_060019`

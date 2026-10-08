@@ -1,0 +1,26 @@
+# 简直了 user 登录失败（2026-07-19）
+
+## 现象
+cron 输出：
+- `[github_10641] CHECKIN_SUCCESS`
+- `[user] LOGIN_FAILED: Username or password is incorrect, or user has been banned`
+- 整体 exit 1
+
+## 核查
+- secrets `~/.hermes/secrets/jianzhile.env`（600）中已有 `user`，且与用户本次提供密码一致
+- 直接调 `POST https://jianzhile.vip/api/user/login`：
+  - `user` + 该密码 → **success=false**，message 同上
+  - 用户名大小写/邮箱变体同样失败
+  - `github_10641` 同接口 → **success=true**
+- 结论：**不是脚本/OCR/cron 问题，是站点侧拒绝该账号密码（错密或封禁）**
+
+## 处理
+- 无需改脚本逻辑即可定位
+- 密码不写入知识库明文；仅保存在 secrets（600）
+- 待用户在网页确认账号可登录，或提供正确密码/解封后再跑
+
+## 验证命令（成功后）
+```bash
+~/.hermes/hermes-agent/venv/bin/python ~/.hermes/scripts/jianzhile_daily_checkin.py user
+```
+期望：`CHECKIN_SUCCESS` 或 `ALREADY_CHECKED_IN`

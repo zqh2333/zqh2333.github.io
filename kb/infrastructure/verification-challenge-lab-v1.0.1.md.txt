@@ -1,0 +1,22 @@
+# Verification Challenge Lab v1.0.1
+
+- 本地产物：`/home/user/artifacts/verification-challenge-lab-v1.0.1.zip`
+- SHA-256：`<HASH>`
+- 大小：6566 bytes
+- NAS：`/volume1/云/Hermes项目产物/verification-challenge-lab/v1.0.1/`
+
+## 覆盖
+
+本地回环靶场包含模拟 reCAPTCHA、Turnstile、hCaptcha、易盾、站点图片验证码、图片点选、拼图/滑块和风险人机验证。
+
+## 验证
+
+- `/health`：HTTP 200
+- 8 类页面：全部访问成功
+- 系统 Google Chrome `/usr/bin/google-chrome` 交互冒烟：`LAB_FINAL_VERIFIED`
+- 图片验证码填写、图片点选、易盾模拟滑块、拼图/滑块、风险确认：通过
+- ZIP 和 NAS 回读：大小、SHA-256、完整性一致
+
+## 边界
+
+仅监听 `127.0.0.1`，不连接真实 Google/Cloudflare/hCaptcha/网易易盾，不生成 provider token。页面成功状态只用于测试扩展的识别、填写、事件和状态链路。

@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>未激活/打开卡片却提示「网络环境变化需要重新验证」（2026-07-24） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="2026-07-24">未激活/打开卡片却提示「网络环境变化需要重新验证」（2026-07-24）</h1>
+<h2 id="ocr">截图 OCR</h2>
+<ul>
+<li>标题：网络环境变化，需要重新验证</li>
+<li>正文：检测到设备网络/IP变化频繁…</li>
+<li>错误码：<code>IP_CHANGE_REAUTH_REQUIRED</code></li>
+<li>动作：<code>REENTER_CODE</code></li>
+<li>按钮：重新输入激活码</li>
+</ul>
+<h2 id="_1">结论</h2>
+<p><strong>不是首次未激活的 AUTH_REQUIRED 文案问题。</strong>
+真正命中的是已绑定设备在无激活码静默校验时的 IP 风控：</p>
+<ol>
+<li>旧逻辑把最近 8 条历史 IP（不限时间）当“近期变化”</li>
+<li>运营商 NAT 长期换 IP 很容易 score≥5 → 强制重输码</li>
+<li>用户体感像“还没激活就提示异常/要重输”</li>
+</ol>
+<p>真正未激活设备后端本来就是：
+- <code>error_code=AUTH_REQUIRED</code>
+- 标题「请输入激活码」
+- 按钮「输入激活码」
+- <code>showDownload=false</code></p>
+<h2 id="_2">修复</h2>
+<ul>
+<li><code>_ip_change_risk_score</code> 改为只统计 <strong>24 小时内</strong> IP 变化</li>
+<li>历史 IP 阈值抬高（30/40）</li>
+<li>拦截阈值 5 → <strong>6</strong></li>
+<li>24h 内 12+ IP 才强拦截；8–11 仅加分</li>
+<li><code>risk_locked</code> 仍可触发重验，输原码可自愈</li>
+</ul>
+<h2 id="_3">验证</h2>
+<ul>
+<li>新设备无码：<code>AUTH_REQUIRED</code> / 输入激活码</li>
+<li>30 天内 16 个历史 IP：score=0，不拦截</li>
+<li>2 小时内 12 个 IP：score=6，仍拦截</li>
+<li>24h 内 8 个 IP：score=3，不拦截</li>
+<li><code>verify_all</code> ready=true</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

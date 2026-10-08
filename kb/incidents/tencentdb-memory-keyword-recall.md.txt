@@ -1,0 +1,31 @@
+# TencentDB Memory 未配置 Embedding 时无法 Hybrid 召回
+
+## 症状
+`POST /recall` 返回：`Recall strategy "hybrid" requires EmbeddingService but it is not available.`
+
+## 根因
+独立部署默认采用 `hybrid` 召回，但没有配置远程 embedding 服务。
+
+## 修复
+在 `~/.memory-tencentdb/memory-tdai/tdai-gateway.json` 设置：
+
+```json
+{
+  "memory": {
+    "recall": {
+      "strategy": "keyword"
+    }
+  }
+}
+```
+
+随后重启：
+
+```bash
+systemctl --user restart tencentdb-memory-gateway.service
+```
+
+## 验证
+2026-07-15：健康检查返回 `ok`；关键词召回返回 `code: 0`；真实 Hermes 对话可被自动捕获并通过对话搜索检出。
+
+相关：[[infrastructure/hermes-memory]]

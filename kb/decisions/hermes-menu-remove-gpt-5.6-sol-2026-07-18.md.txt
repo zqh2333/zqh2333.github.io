@@ -1,0 +1,22 @@
+# Hermes 菜单移除 gpt-5.6-sol（2026-07-18）
+
+## 用户要求
+从 Hermes 菜单移除 `gpt-5.6-sol`。
+
+## 范围
+- ✅ 从 Hermes custom provider models 删除
+- ✅ 从 Hermes 本地稳定名单删除
+- ✅ 从 CPA 8317 稳定目录删除
+- ✅ 菜单策略改回排除 sol/luna
+- ✅ jshandler `/models` allowlist 删除 sol
+- ❌ **不删除 CPA 上游站点中的 sol 模型**（mimo/魔方/简直了保留）
+
+## 当前固定菜单（10）
+`gpt-5.6-terra`, `gpt-5.5`, `gpt-5.4`, `grok-4.5`, `glm-5.2`,
+`deepseek-v4-flash`, `deepseek-v4-pro`, `deepseek-chat`, `mimo-v2.5-pro`, `mimo-v2.5`。
+
+## 目的
+避免 CC Switch 误选/映射到不稳定的 sol；Grok 应显式使用 `grok-4.5`。
+
+## 已撤销（同日）
+用户随后要求「取消移除」。已从 `*.bak_remove_sol_*` 精确恢复；当前 Hermes/8317 再次包含 sol（11 模型）。本页仅保留历史审计，**不代表当前状态**。

@@ -1,0 +1,38 @@
+# 项目产物统一归档到本地 NAS
+
+- 日期：2026-09-12
+- NAS：Synology `<LAN-5>`
+- 共享入口：`smb://<LAN-5>/云/Hermes项目产物`
+- NAS 根目录：`/volume1/云/Hermes项目产物`
+- 发布脚本：`~/.hermes/scripts/publish_artifacts_to_nas.py`
+
+## 目录规范
+
+```text
+/volume1/云/Hermes项目产物/<project>/<version>/
+```
+
+每个版本包含正式产物和 `SHA256SUMS.json`，清单记录文件名、字节数、SHA-256 与发布时间。
+
+## 默认策略
+
+以后各项目生成的正式发布产物默认同步到 NAS，包括 ZIP、CRX、APK、EXE、MSI、DMG、DEB、RPM、tar.gz、PDF、PPTX、XLSX、DOCX 等。源码、依赖目录、缓存和临时构建文件仍保留在本机项目目录，避免占满 NAS 或同步大量小文件。密码、token、Cookie、私钥和 secrets 禁止作为项目产物上传。
+
+## 发布命令
+
+```bash
+~/.hermes/scripts/publish_artifacts_to_nas.py PROJECT VERSION FILE [FILE ...]
+```
+
+Synology SCP/SFTP 对中文远程路径可能返回 255；脚本使用 `tar | ssh tar` 流式传输，并在上传后统一设置文件权限 `664`。
+
+## 已归档
+
+```text
+/volume1/云/Hermes项目产物/verification-extension/v1.1.0/
+├── authorized-verification-assistant-v1.1.0.zip
+├── extension.crx
+└── SHA256SUMS.json
+```
+
+验证：NAS 端 ZIP/CRX SHA-256 与本机源文件完全一致，三个文件权限均为 `664`，可读。

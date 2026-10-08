@@ -1,0 +1,17 @@
+# Authorized Verification Assistant v1.2.9-test.3
+
+- 本地 ZIP：`/home/user/artifacts/authorized-verification-assistant-v1.2.9-test.3.zip`
+- NAS：`/volume1/云/Hermes项目产物/authorized-verification-assistant/v1.2.9-test.3/`
+- SHA-256：`<HASH>`
+- 大小：25238 bytes
+
+## 本次闭环
+
+- Chrome 官方 CDP `Extensions.loadUnpacked` 成功加载固定 ID：`mgpembebkeoiciopndiciehcokojeldf`。
+- 真实 Worker `chrome-extension://.../background.js` 已出现。
+- `DEVICE_INFO` 返回 deviceId、64 位 SHA-256 deviceFingerprint、扩展 ID和版本。
+- 本地靶场 `/api/license/activate` 收到并记录 device_fingerprint；validate 返回 valid=true。
+- 本地真实插件五类测试通过：reCAPTCHA 模拟 `RECAPTCHA_TEST_PASS`、易盾 `YIDUN_TEST_PASS`、拼图/滑块 `PUZZLE_TEST_PASS`、图片选择 `IMAGE_SELECT_TEST_PASS`、风险挑战 `RISK_TEST_CONFIRMED`。
+- 源码检查：JavaScript/Python 语法通过；既有回归 `28 passed`。
+- 靶场仅限 loopback 和显式 `data-authorized-simulation=true`，不连接第三方 provider，不伪造或重放真实 token。
+- ZIP 内不含 secrets、数据库、私钥、缓存和临时测试文件；版本为 1.2.9。

@@ -1,0 +1,21 @@
+# 网页配置工作台去重（2026-07-27）
+
+## 问题
+`opsWorkbenchModal` 内「网页配置」表单重复两套：
+1. 主面板 `opsDownloadUrl / opsTutorialUrl / opsLatestVersion`（原「网页配置快捷修改」）
+2. FullOps 面板 `opsDownloadUrlFull / ...`（原「网页配置」完整表单）
+
+两套字段 + 两套保存函数，UI 看起来功能重复。
+
+## 处理
+- 主面板保留**唯一可见**配置表单（`#opsConfigPrimaryCard`）
+- FullOps 仅保留运维工具入口；`*Full` 输入改为 hidden 镜像
+- `saveOpsConfigFromFull()` 转调 `saveOpsConfig()`
+- `bindOpsConfigPrimarySync()` 主表单变更同步到 hidden
+- 配置概览展示短 URL + 提示「修改请用右侧唯一表单」
+- `ops29Result` 只保留一处
+
+## 验证
+- `id="opsDownloadUrl"` 仅 1 处
+- 无「网页配置快捷修改」标题
+- node --check 通过

@@ -1,0 +1,77 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anki 全功能深度审计（2026-07-22） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="anki-2026-07-22">Anki 全功能深度审计（2026-07-22）</h1>
+<blockquote>
+<p>本轮按用户要求复审“全部功能”。破坏性接口仅验证未授权拒绝，不执行删除、恢复、发布、修改密码或备份恢复。</p>
+</blockquote>
+<h2 id="_1">基线</h2>
+<ul>
+<li>6 容器全 Up；MySQL/Redis healthy；Redis AOF enabled；RQ <code>default</code> 队列可用。</li>
+<li><code>/api/status</code>: <code>ok=true</code>，DB/Redis=true，协议/配置 <code>v136.7</code>。</li>
+<li>数据库：MySQL 8.0.46；<code>foreign_key_checks=ON</code>；迁移 <code>0099206037c0</code>；schema drift=0。</li>
+<li>资源：web ~363MiB、worker ~82MiB、db ~454MiB，CPU 低；根盘 34%。</li>
+<li>现行 Python compileall 与 <code>verify_all.py</code>：<code>success=true</code>, <code>ready=true</code>。</li>
+</ul>
+<h2 id="_2">路由审计</h2>
+<h3 id="_3">未认证矩阵</h3>
+<ul>
+<li>枚举并实际请求路由：后台 session 保护 <strong>99</strong> 个、token 保护 <strong>4</strong> 个、后台页面 <strong>6</strong> 个、公开端 <strong>9</strong> 个。</li>
+<li>Session 保护端均 302/401；token 端缺 token 均 401/503；无越权。</li>
+<li>全部公开端实际 200：status/ping/protocol/release_manifest/error_catalog/announcement。</li>
+</ul>
+<h3 id="handler">内部后台只读 handler</h3>
+<p>在 web 容器中调用解除装饰器后的 handler（无管理员凭据），<strong>51 个无参数 GET 后台接口全部 200</strong>：数据/牌组/配置中心、统计、监控、发布、回收站、备份只读、支持/排障、卡牌文案、下载配置等。</p>
+<h2 id="_4">卡牌/配置</h2>
+<ul>
+<li>protocol 含 <code>cardText</code>/<code>cardTexts</code>，与 validate 兼容字段一致。</li>
+<li>文案配置、合成探针、预览、导入预览、导出、开关隔离上一轮均已端到端通过。</li>
+<li>配置库键：<code>admin_password_hash</code>、<code>admin_session_epoch</code>、<code>ANKI_CARD_TEXT_CONFIG</code>、<code>ANKI_PACKAGE_DOWNLOAD_URL</code>；未记录明文。</li>
+</ul>
+<h2 id="_5">数据完整性判定</h2>
+<ul>
+<li><code>deck_key_meta</code> 与 <code>decks</code> 不设外键，存在 1473 个历史 meta（active/idle/superseded）。样本均为清理/重建牌组后的 release metadata，<strong>设计性保留</strong>，不可当“孤儿”直接删除。</li>
+<li><code>activation_events</code> 是审计日志，旧激活码删后仍保留事件；未匹配记录属历史审计/测试验证，<strong>设计性保留</strong>。</li>
+<li>devices 对 code 的实际缺失关联 = 0。</li>
+</ul>
+<h2 id="_6">安全/代码卫生</h2>
+<ul>
+<li><code>DEFAULT_ADMIN_TOKEN</code> 为空 sentinel；<code>INSECURE_DEFAULT_TOKENS</code> 失败关闭；旧可用默认值不再赋值。</li>
+<li><code>api.py/admin.py/services.py</code> active source bare <code>except:</code> = 0。</li>
+<li>active source 无 <code>eval</code>/<code>pickle.loads</code>；<code>shell=True</code> 只在恢复后的重启辅助，且先判断 <code>ANKI_RESTART_COMMAND</code>。当前 env 未配置该命令，常规路径走 Gunicorn SIGHUP/失败关闭。</li>
+<li>Nginx 公开端有 <code>X-Frame-Options: SAMEORIGIN</code>、<code>X-Content-Type-Options: nosniff</code>、no-store；CORS 与 Anki 客户端兼容。</li>
+</ul>
+<h2 id="_7">非问题</h2>
+<ul>
+<li>本轮无 body 的 <code>/api/validate</code> 会记录 BAD_JSON 测试日志，属于审计探针，不是生产错误。</li>
+<li>Dashboard JS 静态检查因未安装 node 仅 warn；运行、编译和 API 验收均通过。</li>
+</ul>
+<h2 id="_8">可复用审计脚本</h2>
+<table>
+<thead>
+<tr>
+<th>脚本</th>
+<th>范围</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/tmp/anki_route_integrity_audit.py</code></td>
+<td>路由授权矩阵 + DB 关联诊断</td>
+</tr>
+<tr>
+<td><code>/tmp/anki_all_admin_get_audit.py</code></td>
+<td>全部无参数后台 GET handler</td>
+</tr>
+<tr>
+<td><code>/tmp/anki_orphan_diagnose.py</code></td>
+<td>历史 meta/event 只读判定</td>
+</tr>
+<tr>
+<td><code>/tmp/anki_final_static_db_audit.py</code></td>
+<td>token/裸 except/DB/迁移静态收口</td>
+</tr>
+</tbody>
+</table></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

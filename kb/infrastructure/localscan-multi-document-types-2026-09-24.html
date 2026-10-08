@@ -1,0 +1,92 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LocalScan 多证件类型选择与专用策略部署记录 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="localscan">LocalScan 多证件类型选择与专用策略部署记录</h1>
+<p>日期：2026-09-24</p>
+<h2 id="_1">目标</h2>
+<p>将 <code>&lt;LAN-8&gt;:38127</code> 的身份证专用上传流程升级为多证件类型选择，并将类型参数传入本地 Worker 的边缘检测/透视矫正流程。</p>
+<h2 id="_2">已部署类型</h2>
+<ul>
+<li>身份证</li>
+<li>银行卡</li>
+<li>驾驶证</li>
+<li>社保卡</li>
+<li>护照</li>
+<li>其他证明文件</li>
+</ul>
+<h2 id="_3">类型策略</h2>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th style="text-align: right;">目标比例</th>
+<th style="text-align: right;">输出尺寸</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>身份证</td>
+<td style="text-align: right;">1.586</td>
+<td style="text-align: right;">2048×1292</td>
+</tr>
+<tr>
+<td>银行卡</td>
+<td style="text-align: right;">1.586</td>
+<td style="text-align: right;">2048×1292</td>
+</tr>
+<tr>
+<td>驾驶证</td>
+<td style="text-align: right;">1.586</td>
+<td style="text-align: right;">2048×1292</td>
+</tr>
+<tr>
+<td>社保卡</td>
+<td style="text-align: right;">1.586</td>
+<td style="text-align: right;">2048×1292</td>
+</tr>
+<tr>
+<td>护照</td>
+<td style="text-align: right;">1.420</td>
+<td style="text-align: right;">2048×1440</td>
+</tr>
+<tr>
+<td>其他证明文件</td>
+<td style="text-align: right;">1.586（宽容边缘策略）</td>
+<td style="text-align: right;">2048×1292</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2026-09-24">源码版本追加验证（2026-09-24）</h2>
+<ul>
+<li>已确认源码位于 <code>/www/localscan-docker</code>，不是只有 bundle。</li>
+<li>在源码中实现类型 profiles、Store documentType、上传类型选择器、按类型上传比例提示、Worker documentType/targetRatio/output 尺寸传递，以及按类型 edgeTolerance 的四边形质量/裁边处理。</li>
+<li>Docker compose 构建通过：<code>vue-tsc --noEmit &amp;&amp; vite build</code>，生产容器重建成功。</li>
+<li>真实页面验证：上传页显示六个类型选项；生产主 bundle/Worker 语法检查通过；页面 HTTP 200、容器 healthz=ok。</li>
+<li>
+<p>之前直接改 bundle 的临时版本已被源码构建覆盖；旧容器静态资源仍在备份目录，可回退。</p>
+</li>
+<li>
+<p>服务：<code>localscan-docker</code></p>
+</li>
+<li>地址：<code>http://&lt;LAN-8&gt;:38127</code></li>
+<li>端口映射：<code>38127 -&gt; 18081</code></li>
+<li>主 bundle：<code>index-localscan-types-v1.js</code></li>
+<li>Worker：<code>inference-worker-localscan-types-v1.js</code></li>
+<li>原部署备份：<code>/root/localscan-backups/20260924_151552/</code></li>
+</ul>
+<h2 id="_4">验证</h2>
+<ul>
+<li>主 bundle <code>node --check</code>：通过</li>
+<li>Worker <code>node --check</code>：通过</li>
+<li>Nginx 配置检查：通过</li>
+<li>容器健康检查：<code>healthz = ok</code></li>
+<li>主页：HTTP 200</li>
+<li>上传页：真实浏览器显示六种类型选择器</li>
+<li>类型选择值：写入 <code>localStorage.localscan-document-type</code></li>
+<li>Worker 请求：包含 <code>documentType</code>、<code>targetRatio</code>、类型输出尺寸</li>
+<li>默认身份证流程：保留</li>
+</ul>
+<h2 id="_5">边界</h2>
+<p>当前部署没有原始前端源码，只有编译 bundle，因此本次采用最小侵入式 bundle 升级。尚未使用真实银行卡、驾驶证、社保卡、护照样本做端到端图像质量验收；这些样本应使用脱敏/测试样本。身份证反面边缘质量仍建议用原图回归，若仍有边缘残留，需要重新获取源码后优化 Worker 的裁边参数与四边形外扩逻辑。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

@@ -1,0 +1,21 @@
+# 指纹碰撞防护优化落地（2026-07-24）
+
+## 已实现
+### 服务端匹配
+- 无激活码时禁止 `device_id.first()` 跨码静默。
+- 多码同指纹：仅当牌组名可唯一对应时才静默；否则要求输码。
+- 有激活码时：在该码下按 deviceId / rawDeviceId / scopedDeviceId 别名匹配。
+
+### 牌组域指纹
+- `ValidatePayload` 支持 `scopedDeviceId`（`scoped_device_id`）。
+- `/api/protocol` optionalFields 含 `scopedDeviceId`。
+- `clientHints.fingerprintPolicy` 声明推荐公式与静默策略。
+
+### 运营工具
+- `GET /api/admin/fingerprint_lookup?q=`
+- 后台「网页配置工作台」→「同指纹多码查询」
+- 设备列表弹窗「查同指纹多码」
+
+## 卡牌侧后续（打包器）
+建议上报：
+`scopedDeviceId = "HW-S-" + sha256(deviceId + "|" + deckId + "|" + salt).hexdigest()[:32]`

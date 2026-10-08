@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>授权验证 Docker 发布包 v1.2.9 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="docker-v129">授权验证 Docker 发布包 v1.2.9</h1>
+<ul>
+<li>日期：2026-09-15</li>
+<li>项目目录：<code>/home/user/projects/verification-extension</code></li>
+<li>Docker 源码包：<code>/tmp/authorized-verification-docker-v1.2.9.tar.gz</code></li>
+<li>Docker 镜像归档：<code>/tmp/verification-license-v1.2.9-image.tar.gz</code></li>
+<li>NAS：<code>/volume1/云/Hermes项目产物/verification-extension-docker/v1.2.9/</code></li>
+</ul>
+<h2 id="_1">产物哈希</h2>
+<ul>
+<li><code>authorized-verification-docker-v1.2.9.tar.gz</code>：<code>&lt;HASH&gt;</code></li>
+<li><code>verification-license-v1.2.9-image.tar.gz</code>：<code>&lt;HASH&gt;</code></li>
+</ul>
+<h2 id="_2">内容边界</h2>
+<p>Docker 源码包包含授权服务、SQLite schema、后台 UI、OCR 依赖、部署文件和 <code>.env.example</code>；不包含生产 <code>.env</code>、数据库、Cookie、token、密码、私钥或扩展 PEM。</p>
+<p>源码扩展 manifest 当前为 <code>1.2.9</code>，但可迁移包内的已签名 CRX 为 <code>1.1.6</code>。原扩展私钥不在项目中，因此没有伪造新版 CRX；需要新版签名 CRX 时必须使用原私钥重新打包，或发布 ZIP 供 Chrome 开发者模式加载。</p>
+<h2 id="_3">验证</h2>
+<p>隔离 Docker 容器使用 <code>verification-license:package-v1.2.9</code> 镜像启动成功：</p>
+<ul>
+<li><code>/health</code> HTTP 200；</li>
+<li>管理首页 HTTP 200；</li>
+<li>管理员登录 HTTP 200；</li>
+<li><code>/extension/update.xml</code> HTTP 200；</li>
+<li>CRX 下载 HTTP 200；</li>
+<li>update XML integrity 与实际 CRX SHA-256 一致；</li>
+<li>设备指纹和地理位置字段存在。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

@@ -1,0 +1,65 @@
+# CPA 设置选项与优先级说明（2026-07-18）
+
+## 1. 时区
+- 宝塔 LXC 已改为 `Asia/Shanghai`（CST +0800）
+- cron 增加 `TZ=Asia/Shanghai`
+- 相关 systemd 服务 Environment=TZ=Asia/Shanghai
+- 之后日志/定时按北京时间理解
+
+## 2. 路由策略（CPA 设置）
+官方 `routing.strategy`：
+- `round-robin`（默认）：多凭据/多可用后端之间轮询负载均衡
+- `fill-first`：优先填满先匹配到的可用后端
+
+已改为：
+```yaml
+routing:
+  strategy: round-robin
+  session-affinity: false
+  session-affinity-ttl: 1h
+```
+
+### 不配置 priority 会怎样？
+- **可以工作**，主要靠 `round-robin` 在可用凭据间轮询
+- 同模型多上游时，缺少明确先后偏好，故障转移顺序不稳定
+- **不是“不配置更好”**：有多个上游时，建议给 priority，方便把稳的放前、差的放后
+
+### priority 数字含义（本机约定，贴合常见 CPA/NewAPI 面板习惯）
+**数字越大越优先使用**
+
+当前：
+| 站点 | priority |
+|---|---:|
+| RawChat | 90 |
+| temp1 | 80 |
+| mimo | 70 |
+| snote-temp | 60 |
+| alfred-temp | 50 |
+| 薄荷/喵喵 | 40 |
+| 魔方 | 20 |
+| 简直了 | 10 |
+
+说明：官方 example 对 openai-compatibility 的 priority 排序文档不充分；插件体系里 “higher-priority” 表示更高优先。我们按“越大越优先”与面板直觉对齐。
+
+## 3. 已配置的 CPA 设置项（全局）
+- request-retry: 2
+- max-retry-credentials: 5
+- max-retry-interval: 3
+- transient-error-cooldown-seconds: 300
+- disable-cooling: false
+- save-cooldown-status: true
+- commercial-mode: true
+- logging-to-file: false
+- usage-statistics-enabled: false
+- debug: false
+- ws-auth: false
+- quota-exceeded.switch-project/preview/credits: true
+- privacyfilter: false
+- codex.identity-confuse: true
+- remote-management.allow-remote: true
+- 8317 稳定 10 模型边缘代理 + 认证自动清理 cron
+
+## 4. 验证
+- 时区：Local time CST +0800
+- chat：grok-4.5 / gpt-5.5 200
+- health：HEALTH_OK

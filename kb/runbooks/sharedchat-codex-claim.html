@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SharedChat Codex 每日权益领取 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><h1 id="sharedchat-codex">SharedChat Codex 每日权益领取</h1>
+<h2 id="_1">任务</h2>
+<ul>
+<li>cron: <code>bcff58ebbb8d</code> / <code>5 0 * * *</code></li>
+<li>wrapper: <code>~/.hermes/scripts/sharedchat_claim_wrap.sh</code></li>
+<li>script: <code>~/.hermes/scripts/sharedchat_codex_claim.py</code></li>
+<li>secrets: <code>~/.hermes/secrets/sharedchat.env</code> (600)</li>
+</ul>
+<h2 id="_2">失败特征</h2>
+<ul>
+<li><code>FAILED: no confirmation</code>：弹窗点了领取，但 claim API/toast/quota 都没被旧逻辑判成功。</li>
+</ul>
+<h2 id="_3">根因</h2>
+<ol>
+<li>确认按钮点击后有时不触发/捕获不到 <code>vibe-code/codex/claim</code> 响应。</li>
+<li>Vue textarea 仅 <code>fill()</code> 可能未触发 v-model，导致按钮看似点了但未真正提交。</li>
+<li>成功判定过窄：只认 claim API <code>claimed=true</code> 或 toast；未把 <strong>quota.isActive</strong> / <strong>rolling-limit enabled</strong> 当作成功源。</li>
+<li>套餐 UI 可能短暂显示「已过期/领取按钮仍在」，而 API 已是 active。</li>
+</ol>
+<h2 id="2026-07-18">修复（2026-07-18）</h2>
+<ul>
+<li>凭据迁到 secrets，不再依赖脚本内硬编码为主路径。</li>
+<li>等待 fingerprint localStorage。</li>
+<li>Vue textarea 用 native value setter + input/change 事件。</li>
+<li>确认按钮优先 <code>get_by_role(领取)</code>，并解除 disabled。</li>
+<li>成功判定扩展：</li>
+<li>claim API claimed</li>
+<li>toast 领取成功</li>
+<li>quota <code>isActive</code></li>
+<li>rolling-limit <code>enabled</code> / 有 subscribeId</li>
+<li>无领取按钮且已 active → <code>ALREADY_ACTIVE</code> exit 0（避免误报失败）。</li>
+</ul>
+<h2 id="_4">验证</h2>
+<ul>
+<li>实跑：<code>ALREADY_ACTIVE ... remainingAmount: 50</code> exit 0</li>
+<li>wrapper 同步 exit 0</li>
+</ul>
+<h2 id="_5">运维</h2>
+<ul>
+<li>手动：<code>~/.hermes/scripts/sharedchat_claim_wrap.sh</code></li>
+<li>仅当真正领取失败（未 active 且无 claim 证据）才 exit 1 告警</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

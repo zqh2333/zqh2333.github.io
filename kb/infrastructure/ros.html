@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ROS（MikroTik） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="rosmikrotik">ROS（MikroTik）</h1>
+<ul>
+<li>地址：<code>&lt;LAN-2&gt;</code></li>
+<li>SSH 端口：<code>2333</code></li>
+<li>登录用户：<code>admin</code></li>
+<li>认证方式：SSH RSA 4096 公钥</li>
+<li>私钥路径：<code>~/.ssh/&lt;SSH-KEY&gt;&lt;LAN-2&gt;</code></li>
+<li>公钥指纹：<code>SHA256:ZLiig0BmHC45Kl40cLot15KZ3llrzkKa/kR8P2Uid9E</code></li>
+</ul>
+<h2 id="_1">验证</h2>
+<p>2026-07-15：以 <code>BatchMode=yes</code>、禁用密码认证的方式连接成功，并执行 <code>/system resource print</code>。</p>
+<h2 id="_2">注意</h2>
+<ul>
+<li>使用隔离 SSH 配置以绕过宿主机 <code>/etc/ssh/ssh_config</code> 的无效项：<code>ssh -F /dev/null ...</code>。</li>
+<li>不记录设备密码；后续操作优先使用上述专用私钥。</li>
+</ul>
+<p>相关：[[runbooks/ssh-key-authentication]]</p>
+<h2 id="2026-07-17">拓扑角色（2026-07-17）</h2>
+<ul>
+<li>作为 <code>&lt;LAN-0&gt;/24</code> <strong>主路由</strong>：PPPoE 出口、DHCP（gateway=本机，dns=<LAN-6>）。</li>
+<li>终端默认网关为 <code>&lt;LAN-2&gt;</code>；PVE 主机自身网关为 <code>&lt;LAN-3&gt;</code>（OpenWrt 旁路）。</li>
+<li>详见 [[infrastructure/fleet-topology-2026-07-17]]。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

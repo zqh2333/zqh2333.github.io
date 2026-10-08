@@ -1,0 +1,84 @@
+# Chrome 验证自动化插件与宝塔授权服务
+
+- 日期：2026-09-12
+- 项目：`/home/user/projects/verification-extension`
+- 插件：Manifest V3，固定 ID `mgpembebkeoiciopndiciehcokojeldf`，当前版本 `1.1.6`。
+- 服务：宝塔 Docker `verification-license`，`0.0.0.0:18766`，数据持久化到 `/root/verification-extension/data`。
+- 部署暂存：v1.1.6 ZIP/CRX 已上传宝塔 `/root/verification-extension/deploy-staging-v1.1.6/`；线上已重建 `verification-license`，`/health`=200，更新清单=`1.1.6`，静态 CRX SHA-256 `<HASH>`。
+
+## 功能
+
+- 授权码激活、设备绑定、设备上限、过期、暂停/恢复、撤销设备。
+- 插件未激活时不运行自动化。
+- 目标域名白名单和 `authorized_simulation` 页面标记。
+- OCR API 只允许激活设备调用；输入 data URL 只解码一次，限制 2MB。
+- 自学习：按域名记录 kind/selector/action 成功与失败次数；插件按成功率优先复用策略；不上传密码、Cookie、challenge token。
+- 模拟生产验证能力：OAuth、Turnstile/hCaptcha 控件、图片 OCR、算术、Canvas、动态 DOM、Shadow DOM、滑块、拼图、顺序点选、旋转。
+- Hassbian/Discuz 兼容：识别 `input[name="seccodeverify"]`、`id^="seccodeverify_"` 和同一验证码行内无 `alt` 的 `misc.php?mod=seccode` 动图；GIF 优先走 HTTP 缓存 + `ImageDecoder` 取最长停留帧，缓存未命中则截当前页可见帧，**禁止二次 fetch**（Discuz `no-cache` 会换码）；同一签名只提交一次；动态登录弹窗与验证码 `src` 刷新由 MutationObserver 触发处理；用户名/密码为空时只填验证码不自动提交；账号密码后填时由 input/change 监听继续提交。
+
+## 部署
+
+- 宝塔项目：`/root/verification-extension`
+- 管理后台：`http://<LAN-8>:18766/`
+- 健康：`GET /health`
+- 更新清单：`GET /extension/update.xml`
+- CRX：`GET /extension/assistant.crx`
+- 管理员凭据仅在本机 `~/.hermes/secrets/verification_extension.env` 和宝塔项目 `.env`，权限 600。
+
+## 验证证据
+
+- 本地契约测试：7/7 PASS。
+- API E2E：激活、校验、自学习读取、设备上限、暂停失效、撤销设备 PASS。
+- 插件 JS 语法、Python 编译、ZIP 完整性 PASS。
+- 基础验证回归：9/9 PASS。
+- 扩展验证回归：6/6 PASS。
+- 总自动化回归：15/15 PASS。
+- Google Chrome 企业策略安装：固定 ID 已安装；线上更新清单已切换到 `1.1.6`。本机 headless 真实加载受策略 `ExtensionInstallForcelist` 与 `chrome-extension://` 拦截限制，Discuz 选择器回归用 content script 注入夹具验证。
+- Chrome 设置页真实激活：`✅ 激活成功`。
+- Chrome popup 真实校验：`✅ 已激活`。
+- Chrome 本地 HTTP 模拟生产页面：算术验证码自动填写 42、提交后 `VERIFIED`。
+- Chrome 插件真实页面 E2E（独立页面）：算术、滑块、顺序点选、Shadow DOM 全部 `PASS`。
+- Chrome 插件 OCR E2E：Canvas 生成 `2468` → 服务端 OCR → 自动填写 → 提交，`PASS`。
+- 本次回归修复：本地 Discuz/Hassbian 结构夹具与 `tests/content_script_behavior.py` 验证传统 `seccodeverify` 输入框 + 无语义属性 seccode 图片可被发现、OCR 回传、自动填写；空凭据不提交；动态弹窗可提交；预览模式不填写；先填验证码后输入账号密码会继续提交。
+- 新版本 `v1.1.4` 产物：`artifacts/authorized-verification-assistant-v1.1.4.zip`，SHA-256 `<HASH>`；CRX SHA-256 `<HASH>`。
+- 独立 Chrome 本地扩展冒烟：解压目录加载 + 本地 Discuz 页面 + OCR mock + 填写，结果 `REAL_CHROME_EXTENSION_SMOKE_PASS`。
+- 宝塔 Docker `verification-license` 持续 `Up`，`/health` 200；线上更新清单 `1.1.4`，CRX integrity `<HASH>`。
+- Chrome service worker 已运行：`chrome-extension://mgpembebkeoiciopndiciehcokojeldf/background.js`。
+- 服务端学习记录已经产生并可回读（当前记录数 9）。
+## Chrome 稳定版安装规则
+
+- Chrome 稳定版会自动关闭未上架 Chrome Web Store 的 CRX 侧载扩展，表现为红色“未列在应用商店”警告、灰色关闭开关和“没有正在运行的视图”。
+- 用户安装必须使用 ZIP 解压版：先移除旧 CRX → 解压 ZIP 到固定目录 → `chrome://extensions/` 开启开发者模式 → “加载已解压的扩展程序” → 选择直接包含 `manifest.json` 的目录。
+- v1.1.6 manifest 已嵌入与 `extension.pem` 对应的公开 `key`，解压加载仍保持固定 ID `mgpembebkeoiciopndiciehcokojeldf`。
+- NAS：`/volume1/云/Hermes项目产物/verification-extension/v1.1.6/authorized-verification-assistant-v1.1.6.zip`。
+- ZIP SHA-256：`<HASH>`。
+- CRX SHA-256：`<HASH>`。
+
+## 授权列表完整显示与删除
+
+- 用户要求后台完整显示授权码，并提供删除。此前设计只在创建卡片显示一次明文，列表只存 SHA-256 + hint，因此无法回读旧码。
+- 授权码展示对齐 Anki 后台：浅蓝渐变胶囊，点击授权码本身写入剪贴板，页面不出现「复制」二字按钮。
+- 授权列表操作新增「删除」：`DELETE /api/admin/licenses/{id}`，同时删除绑定设备。旧「解绑设备」仍保留。
+- 升级后现有旧授权 `license_key` 为空，只能继续显示脱敏 hint，无法还原历史明文；新建授权可完整显示。
+- 验证：契约含完整显示/删除断言且页面无「复制」文案；API E2E 创建后列表回读明文并删除；本地管理页 Playwright `ADMIN_LICENSE_UI_E2E_PASS`。
+
+## 管理 UI 创建授权修复
+
+- 修复创建授权时报 `Cannot read properties of undefined (reading 'trim')`：根因是表单 `id="name"` 依赖元素全局变量，与浏览器内置 `window.name` 冲突；现改为全部使用显式 `document.getElementById` 引用。
+- 新增“永久授权”复选框；勾选后有效天数输入框禁用，创建请求发送 `permanent: true`，后端把 `expires_at` 保存为 `NULL`，列表和创建结果显示“永久”。
+- 真实浏览器 E2E：登录 → 创建 7 天授权 → 创建永久授权 → 回读列表到期值；控制台无 `trim` 错误，截图布局正常。测试后按 `PERM-E2E-*` 精确删除 2 条测试记录，现有授权未改。
+
+## 新授权码展示与复制
+
+- 新创建的完整授权码仅在创建结果卡片中显示；服务端继续只保存 SHA-256 与脱敏 hint，授权列表不恢复明文，这是安全设计。
+- 创建结果卡片完整显示并自动换行授权码，提供“复制”和“×”关闭按钮；双击授权码或键盘 Enter/Space 也可复制。
+- Clipboard API 不可用时自动回退 `document.execCommand('copy')`，兼容当前 HTTP 管理地址。
+- 每次创建会重置 30 秒隐藏计时器；关闭按钮立即清空页面内授权码变量与 DOM 文本。
+- 真实浏览器 E2E：完整授权码与创建 API 返回逐字符一致；复制按钮、双击复制、关闭、重新显示和计时器均 PASS，控制台无错误。测试记录已精准删除。
+
+## 重要安装说明
+
+- Chrome 通过企业策略安装，策略文件：`/etc/opt/chrome/policies/managed/verification-assistant.json`。
+- 不要删除 `extension.pem`，否则重新打包会改变扩展 ID并无法覆盖更新。
+- 测试 Chrome 专用 profile：`~/.hermes/browser-profiles/verification-extension-policy-e2e`。
+- 日常 Chrome 不被本次测试关闭；首次使用插件需在设置页输入授权码。

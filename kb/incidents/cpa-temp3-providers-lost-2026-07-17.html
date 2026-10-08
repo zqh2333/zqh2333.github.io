@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA「临时3」等新增上游丢失（2026-07-17） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="cpa32026-07-17">CPA「临时3」等新增上游丢失（2026-07-17）</h1>
+<h2 id="_1">现象</h2>
+<p>用户反馈：管理面板里新增的 <code>临时3</code> 以及后续几个上游不见了。</p>
+<h2 id="_2">核查</h2>
+<ul>
+<li>当前磁盘 <code>config.yaml</code> 仅 8 个 openai-compatibility：
+  RawChat / 薄荷 / mimo / 魔方 / 喵喵 / 简直了 / <strong>snote-temp</strong> / <strong>alfred-temp</strong></li>
+<li>全量备份中<strong>没有</strong> <code>临时3</code> 字样，无法从 bak 恢复该站点完整 base-url/key。</li>
+<li><code>临时</code>/<code>临时2</code> <strong>未删除</strong>，已改名为 <code>snote-temp</code> / <code>alfred-temp</code>（十项优化改名）。</li>
+</ul>
+<h2 id="cst">时间线（容器日志，CST）</h2>
+<ul>
+<li>11:21 PUT openai-compatibility → OpenAI-compat <strong>9</strong></li>
+<li>11:22 PUT → <strong>10</strong></li>
+<li>13:51 PUT ×2 → <strong>11</strong></li>
+<li>14:37 docker restart / 配置重载 → 回到 <strong>8</strong></li>
+<li>磁盘 config mtime 对应随后 model sync 写回</li>
+</ul>
+<h2 id="_3">根因判断</h2>
+<ol>
+<li>管理面板在 11:21–13:51 通过 API 增加了上游（内存/运行态一度到 11 个）。</li>
+<li>之后进程重载/写回以<strong>磁盘上的 8 站点配置</strong>为准，新增站点未稳定落在 host bind-mount 的 <code>config.yaml</code> 备份链中。</li>
+<li>模型同步脚本<strong>只改 models，不删 provider 整项</strong>；本次更像是「运行态新增未持久化 / 被旧磁盘配置覆盖」，不是 Hermes 菜单过滤。</li>
+</ol>
+<h2 id="_4">处理</h2>
+<ul>
+<li>无法自动恢复 <code>临时3</code>（无备份凭据）。</li>
+<li>需用户重新提供：名称、base-url、API key、需要的模型名。</li>
+<li>建议：面板新增后立刻 <code>cat config.yaml | grep name</code> 确认落盘；避免在同步/重启窗口同时改面板。</li>
+</ul>
+<p>相关：[[decisions/cpa-local-model-sync]]、[[decisions/cpa-advanced-failover-2026-07-17]]</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

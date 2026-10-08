@@ -1,0 +1,57 @@
+# LocalScan 多证件类型选择与专用策略部署记录
+
+日期：2026-09-24
+
+## 目标
+
+将 `<LAN-8>:38127` 的身份证专用上传流程升级为多证件类型选择，并将类型参数传入本地 Worker 的边缘检测/透视矫正流程。
+
+## 已部署类型
+
+- 身份证
+- 银行卡
+- 驾驶证
+- 社保卡
+- 护照
+- 其他证明文件
+
+## 类型策略
+
+| 类型 | 目标比例 | 输出尺寸 |
+|---|---:|---:|
+| 身份证 | 1.586 | 2048×1292 |
+| 银行卡 | 1.586 | 2048×1292 |
+| 驾驶证 | 1.586 | 2048×1292 |
+| 社保卡 | 1.586 | 2048×1292 |
+| 护照 | 1.420 | 2048×1440 |
+| 其他证明文件 | 1.586（宽容边缘策略） | 2048×1292 |
+
+## 源码版本追加验证（2026-09-24）
+- 已确认源码位于 `/www/localscan-docker`，不是只有 bundle。
+- 在源码中实现类型 profiles、Store documentType、上传类型选择器、按类型上传比例提示、Worker documentType/targetRatio/output 尺寸传递，以及按类型 edgeTolerance 的四边形质量/裁边处理。
+- Docker compose 构建通过：`vue-tsc --noEmit && vite build`，生产容器重建成功。
+- 真实页面验证：上传页显示六个类型选项；生产主 bundle/Worker 语法检查通过；页面 HTTP 200、容器 healthz=ok。
+- 之前直接改 bundle 的临时版本已被源码构建覆盖；旧容器静态资源仍在备份目录，可回退。
+
+- 服务：`localscan-docker`
+- 地址：`http://<LAN-8>:38127`
+- 端口映射：`38127 -> 18081`
+- 主 bundle：`index-localscan-types-v1.js`
+- Worker：`inference-worker-localscan-types-v1.js`
+- 原部署备份：`/root/localscan-backups/20260924_151552/`
+
+## 验证
+
+- 主 bundle `node --check`：通过
+- Worker `node --check`：通过
+- Nginx 配置检查：通过
+- 容器健康检查：`healthz = ok`
+- 主页：HTTP 200
+- 上传页：真实浏览器显示六种类型选择器
+- 类型选择值：写入 `localStorage.localscan-document-type`
+- Worker 请求：包含 `documentType`、`targetRatio`、类型输出尺寸
+- 默认身份证流程：保留
+
+## 边界
+
+当前部署没有原始前端源码，只有编译 bundle，因此本次采用最小侵入式 bundle 升级。尚未使用真实银行卡、驾驶证、社保卡、护照样本做端到端图像质量验收；这些样本应使用脱敏/测试样本。身份证反面边缘质量仍建议用原图回归，若仍有边缘残留，需要重新获取源码后优化 Worker 的裁边参数与四边形外扩逻辑。

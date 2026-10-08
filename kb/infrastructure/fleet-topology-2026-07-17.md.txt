@@ -1,0 +1,182 @@
+# 全设备巡检与网络拓扑（2026-07-17 13:55）
+
+## 巡检总览
+
+| 设备 | IP | 角色 | Ping | SSH | 管理口 | 默认网关 | DNS |
+|---|---:|---|---|---|---|---|---|
+| PVE | <LAN-1> | 虚拟化宿主机 | 0.47ms | OK root | 8006 ✅ | **<LAN-3>** | <LAN-6> / .2 / <PUBLIC-IP> |
+| ROS | <LAN-2>:2333 | 主路由/PPPoE/DHCP | 0.29ms | OK admin | RouterOS 7.15.2 | **pppoe-out1** | <PUBLIC-IP>, <PUBLIC-IP> |
+| OpenWrt (iStoreOS) | <LAN-3> | 旁路/IPTV/代理辅助 | 0.31ms | OK root | 80 ✅ | **<LAN-2>** | 本机 stub + <PUBLIC-IP> |
+| Hermes | <LAN-4> | Agent 主机 | 0.03ms | OK **user** | gateway 运行 | **<LAN-2>** | systemd-resolved |
+| NAS | <LAN-5> | 存储 | 0.51ms | OK root | 80/443 ✅ | **<LAN-2>** | **<LAN-6>** |
+| AdGuard | <LAN-6> | DNS | 0.12ms | OK root | 80/443 ✅ | **<LAN-2>** | 自用 |
+| Home Assistant | <LAN-7> | 智能家居 | 0.26ms | OK root* | 8123 ✅ | 见备注 | 见备注 |
+| 宝塔 (bt) | <LAN-8> | 应用/CPA | 0.28ms | OK root | 8080 ✅ | **<LAN-2>** | <LAN-6> / .2 / <PUBLIC-IP> |
+
+\* HA 的 SSH 进入的是 `core-ssh` 插件网络（`172.30.33.1/23`），不是宿主机网卡视角；对外管理口 `<LAN-7>:8123` 正常。
+
+**结果：8/8 在线，SSH 密钥认证全部成功。**
+
+---
+
+## 网络拓扑（逻辑）
+
+```text
+                        ┌─────────────────────────┐
+                        │  运营商 / 光猫            │
+                        │  192.168.1.0/24 (modem)  │
+                        └───────────┬─────────────┘
+                                    │ WAN
+                        ┌───────────▼─────────────┐
+                        │  ROS CHR  <LAN-2>     │
+                        │  PPPoE: 公网 x.x.x.x     │
+                        │  DHCP: <LAN-0>/24     │
+                        │  GW 下发: <LAN-2>     │
+                        │  DNS 下发: <LAN-6>    │
+                        │  LAN bridge: lan         │
+                        └───┬───────────────┬─────┘
+                            │               │
+              <LAN-0>/24 │               │ 部分电信认证/代理表
+                            │               ▼
+            ┌───────────────┼──────────────────────────────────┐
+            │               │                                  │
+            │        ┌──────▼──────────┐                       │
+            │        │ OpenWrt/iStore  │ <LAN-3>            │
+            │        │ 旁路+IPTV+Clash │ eth2: 10.227.104.79/21 │
+            │        │ GW→ROS(.2)      │ IPTV 专用路由           │
+            │        └─────────────────┘                       │
+            │                                                  │
+   ┌────────▼────────┐  ┌──────────────┐  ┌────────────────┐  │
+   │ PVE <LAN-1>  │  │ Hermes .4    │  │ NAS .5         │  │
+   │ GW→OpenWrt(.3)  │  │ GW→ROS(.2)   │  │ GW→ROS(.2)     │  │
+   │ DNS→AdGuard优先 │  │              │  │ DNS→AdGuard    │  │
+   └────────┬────────┘  └──────────────┘  └────────────────┘  │
+            │ 承载虚拟机/容器                                   │
+   ┌────────┼─────────┬──────────┬──────────┬─────────┐       │
+   │        │         │          │          │         │       │
+ ROS.2   iStore.3  hermes.4   NAS.5     ad.6      HA.7   bt.8 │
+ (VM207) (VM208)  (VM102)   (VM205)  (LXC206)  (VM204) (LXC211)
+                                                              │
+                         AdGuard .6 ◄── DHCP DNS ─────────────┘
+                         宝塔 CPA: 8317/18317 + 桥接服务
+```
+
+### 一句话结构
+- **出口主路由：ROS（MikroTik CHR）** —— PPPoE 拨号、DHCP、NAT、大部分终端默认网关  
+- **旁路/业务辅助：OpenWrt iStoreOS** —— IPTV 网段、Clash 代理、被 PVE 主机当作默认网关  
+- **计算底座：PVE** —— 几乎所有业务机都是其上的 VM/LXC  
+- **DNS：AdGuard Home（<LAN-6>）** —— DHCP 下发的主 DNS  
+- **应用层：宝塔（CPA 模型代理）、Hermes、NAS、HA**
+
+---
+
+## PVE 桥接与虚拟机角色
+
+PVE 物理口 → 网桥（注释来自 `/etc/network/interfaces`）：
+
+| 桥 | 物理口 | 用途注释 |
+|---|---|---|
+| vmbr0 | eno1 | 管理口 / `<LAN-1>/24` |
+| vmbr1 | eno2 | lan1(1G2) |
+| vmbr2 | eno3 | wan(1G3) |
+| vmbr3 | eno4 | iptv(1G4) |
+| vmbr4–7 | 10G 口 | lan 10G 扩展 |
+
+主要 running 实例（摘自 cluster resources）：
+
+| VMID | 名称 | 类型 | 对应内网角色 |
+|---:|---|---|---|
+| 100 | winserver2022 | qemu | Windows 服务器 |
+| 102 | hermes | qemu | Hermes Agent 主机 `.4` |
+| 204 | HA | qemu | Home Assistant `.7` |
+| 205 | NAS | qemu | Synology `.5` |
+| 206 | ad | **lxc** | AdGuard `.6` |
+| 207 | ROS | qemu | MikroTik CHR `.2` |
+| 208 | istore | qemu | OpenWrt/iStoreOS `.3` |
+| 211 | bt | **lxc** | 宝塔/CPA `.8` |
+| 202 等 | 其他 | - | 另有运行中实例 |
+
+PVE 节点资源：20 vCPU，内存约 62G（已用约 44G），根盘 40%。
+
+---
+
+## 路由与流量路径
+
+### 终端上网（主流）
+`终端 → 默认网关 <LAN-2>(ROS) → pppoe-out1 → 公网`
+
+证据：
+- Hermes / NAS / AdGuard / 宝塔：`default via <LAN-2>`
+- ROS DHCP network：`gateway=<LAN-2> dns-server=<LAN-6>`
+- ROS main 默认路由：`gateway=pppoe-out1`（公网地址动态）
+
+### PVE 主机自身
+`PVE → 默认网关 <LAN-3>(OpenWrt) → 再经 ROS 出口`
+
+这是**与业务终端不同的路径**：PVE 管理流量走 OpenWrt，可能用于代理表/策略分流（ROS 上有 `routing-table=proxy gateway=<LAN-3>`）。
+
+### IPTV / 电信相关
+- OpenWrt `eth2` 在 `10.227.104.0/21`，hostname/clientid 像机顶盒侧
+- 多条静态路由指向电信网段（`<PUBLIC-IP>/16` 等）
+- ROS 有静态路由：`<PUBLIC-IP>/32 → <LAN-3>`（注释：Route-Telecom-Auth-to-iStoreOS）
+
+### DNS
+1. DHCP 主推：**AdGuard <LAN-6>**
+2. 备份：ROS 自身 DNS（allow-remote-requests）+ 公共 DNS `<PUBLIC-IP>` / `<PUBLIC-IP>`
+3. NAS 明确只用 `<LAN-6>`
+4. AdGuard 监听 `*:53` / `*:853`
+
+---
+
+## 服务健康（摘要）
+
+### 宝塔 / CPA
+- `cpa_health_check.py` → **HEALTH_OK**（CLIProxyAPI CPU warn ≈43%，属业务负载）
+- systemd active：`cpa-stable-proxy` / `cpa-provider-watch` / `rawchat-*` / `muyuan-openai-bridge`
+- 端口：`8317`(稳定菜单代理)、`18317`(CPA 容器)、`18417/18418/18420`(桥)
+- 其它容器：vaultwarden、qinglong、anki、iptv、php-epg 等 Up
+
+### 资源关注
+| 项 | 状态 |
+|---|---|
+| NAS `/` | **70%**（持续关注） |
+| Hermes `/` | 58% |
+| PVE load | ~2.3–2.9（较此前高峰缓和） |
+| 宝塔 load | 与 PVE 同量级；CLIProxyAPI 有请求时 ~40% CPU |
+| AdGuard 内存 | 1G 配额，使用正常 |
+
+### SSH 认证
+- 全部 8 台 BatchMode 密钥成功  
+- Hermes 现可用 **`user@<LAN-4>`**（此前空 authorized_keys 已修复）
+
+---
+
+## 拓扑结论
+
+1. **核心交换/二层**：业务机都在 `<LAN-0>/24`，PVE `vmbr0` 是管理网桥，ROS/OpenWrt/业务 VM 同网段互通。  
+2. **三层出口权威：ROS** —— 真正的 WAN（PPPoE）与 DHCP 网关权威。  
+3. **OpenWrt 不是主网关（对终端）**，而是 **旁路增强节点**（IPTV、Clash、电信认证、给 PVE/策略路由用）。  
+4. **DNS 权威：AdGuard** —— 与 ROS DHCP 配置一致。  
+5. **几乎全家桶虚拟化**：路由、旁路、DNS、NAS、HA、宝塔、Hermes 都跑在同一台 PVE 上 → 单点是 **PVE 硬件/存储**，不是某一个应用容器。  
+6. **双路径设计**：终端走 ROS；PVE 主机走 OpenWrt。排障时不要假设“全网同一默认网关”。
+
+---
+
+## 建议（非阻断）
+
+1. **NAS 根分区 70%**：安排清理/扩容。  
+2. **PVE 内存 44G/62G**：VM 密度高，避免再无节制加内存规格。  
+3. **HA SSH 视角受限**：若要巡检宿主机网卡，需走 HAOS 主机 SSH/控制台，而不是仅 core-ssh 插件。  
+4. **文档化双网关**：在变更 OpenWrt/ROS 时同步检查 PVE 的 `gateway <LAN-3>` 是否仍符合预期。  
+5. **CPA CPU warn**：长会话时正常；privacyfilter 保持关闭。
+
+---
+
+## 采集方式
+- ICMP + TCP/SSH + 管理 HTTP  
+- 每台独立密钥 `~/.ssh/<SSH-KEY>*`，`BatchMode=yes` 禁止密码回退  
+- 原始 JSON：`/tmp/fleet_topo_report.json`
+
+相关：[[infrastructure/fleet-baseline-2026-07-15]]、[[infrastructure/fleet-inspect-2026-07-17]]、[[infrastructure/ros]]、[[decisions/cpa-local-model-sync]]
+
+服务/端口详细清单见 [[infrastructure/fleet-services-2026-07-17]]。

@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA 设置选项与优先级说明（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="cpa-2026-07-18">CPA 设置选项与优先级说明（2026-07-18）</h1>
+<h2 id="1">1. 时区</h2>
+<ul>
+<li>宝塔 LXC 已改为 <code>Asia/Shanghai</code>（CST +0800）</li>
+<li>cron 增加 <code>TZ=Asia/Shanghai</code></li>
+<li>相关 systemd 服务 Environment=TZ=Asia/Shanghai</li>
+<li>之后日志/定时按北京时间理解</li>
+</ul>
+<h2 id="2-cpa">2. 路由策略（CPA 设置）</h2>
+<p>官方 <code>routing.strategy</code>：
+- <code>round-robin</code>（默认）：多凭据/多可用后端之间轮询负载均衡
+- <code>fill-first</code>：优先填满先匹配到的可用后端</p>
+<p>已改为：</p>
+<pre><code class="language-yaml">routing:
+  strategy: round-robin
+  session-affinity: false
+  session-affinity-ttl: 1h
+</code></pre>
+<h3 id="priority">不配置 priority 会怎样？</h3>
+<ul>
+<li><strong>可以工作</strong>，主要靠 <code>round-robin</code> 在可用凭据间轮询</li>
+<li>同模型多上游时，缺少明确先后偏好，故障转移顺序不稳定</li>
+<li><strong>不是“不配置更好”</strong>：有多个上游时，建议给 priority，方便把稳的放前、差的放后</li>
+</ul>
+<h3 id="priority-cpanewapi">priority 数字含义（本机约定，贴合常见 CPA/NewAPI 面板习惯）</h3>
+<p><strong>数字越大越优先使用</strong></p>
+<p>当前：
+| 站点 | priority |
+|---|---:|
+| RawChat | 90 |
+| temp1 | 80 |
+| mimo | 70 |
+| snote-temp | 60 |
+| alfred-temp | 50 |
+| 薄荷/喵喵 | 40 |
+| 魔方 | 20 |
+| 简直了 | 10 |</p>
+<p>说明：官方 example 对 openai-compatibility 的 priority 排序文档不充分；插件体系里 “higher-priority” 表示更高优先。我们按“越大越优先”与面板直觉对齐。</p>
+<h2 id="3-cpa">3. 已配置的 CPA 设置项（全局）</h2>
+<ul>
+<li>request-retry: 2</li>
+<li>max-retry-credentials: 5</li>
+<li>max-retry-interval: 3</li>
+<li>transient-error-cooldown-seconds: 300</li>
+<li>disable-cooling: false</li>
+<li>save-cooldown-status: true</li>
+<li>commercial-mode: true</li>
+<li>logging-to-file: false</li>
+<li>usage-statistics-enabled: false</li>
+<li>debug: false</li>
+<li>ws-auth: false</li>
+<li>quota-exceeded.switch-project/preview/credits: true</li>
+<li>privacyfilter: false</li>
+<li>codex.identity-confuse: true</li>
+<li>remote-management.allow-remote: true</li>
+<li>8317 稳定 10 模型边缘代理 + 认证自动清理 cron</li>
+</ul>
+<h2 id="4">4. 验证</h2>
+<ul>
+<li>时区：Local time CST +0800</li>
+<li>chat：grok-4.5 / gpt-5.5 200</li>
+<li>health：HEALTH_OK</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

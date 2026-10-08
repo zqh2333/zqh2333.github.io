@@ -1,0 +1,26 @@
+# Anki IP 历史「未知」修复（2026-07-24）
+
+## 症状
+设备详情 IP 历史显示：`<PUBLIC-IP> (未知) - 未知`。
+
+## 根因（三层查询全失败）
+1. **Vore**：容器内 DNS 解析失败 `api.vore.top`
+2. **IPShudi**：HTML 中 `<td>` 与 `<span>` 之间有换行/空白，旧正则过严导致匹配失败；超时过短
+3. **本地 ip2region xdb**：`utf-8` 解码抛 `UnicodeDecodeError`，异常被吞掉后返回 None
+
+结果：`get_ip_location` 返回默认「未知」，worker 写入历史后一直停在未知。
+
+## 修复
+- 放宽 IPShudi 正则（允许 td/span 空白换行）
+- 增加 **ip-api.com** 兜底源（`[IPAPI]`）
+- 本地 xdb 多编码解码 + 垃圾结果过滤
+- 查询顺序：IPShudi → IPAPI → Vore → Local
+- 缓存 key 升级到 `ip_loc_v52`（避免永久缓存旧「未知」）
+- 回填已有「未知/查询中」历史：共 12 条，其中目标 IP 1 条
+
+## 目标 IP 结果
+- `<PUBLIC-IP>` → `中国 河南省 郑州市 [IPShudi]` / ISP `教育网`
+- 设备 id=1115 历史已回填
+
+## 验证
+- `verify_all.py` success=true ready=true

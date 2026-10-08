@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anki 管理后台巡检（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="anki-2026-07-18">Anki 管理后台巡检（2026-07-18）</h1>
+<h2 id="_1">部署</h2>
+<ul>
+<li>路径：<code>/www/anki_server</code>（宝塔 LXC 211）</li>
+<li>入口：<code>https://anki.example.com:2333</code> → 内网 <code>0.0.0.0:5778</code></li>
+<li>栈：nginx + gunicorn web + worker + monitor + mysql8 + redis</li>
+<li>版本：<code>configVersion/protocolVersion v136.7</code></li>
+</ul>
+<h2 id="_2">运行状态</h2>
+<ul>
+<li>6 容器全部 Up；db/redis healthy</li>
+<li><code>/api/status</code> 200：db/redis ok；devices=323, activationCodes=1471, deckKeys=183</li>
+<li>真实浏览器持续轮询 <code>/api/admin/data</code> 与 <code>/api/status</code> 均为 200（生产在用）</li>
+<li>无端口冲突（5778 仅 anki）</li>
+<li>资源正常（web ~379MB，db ~543MB，CPU 低）</li>
+</ul>
+<h2 id="verify_all">自检 verify_all</h2>
+<ul>
+<li>绝大多数检查 OK（编译、静态标记、HTTP、管理鉴权 302、日志无异常、主数据内部验收 total_items=1471）</li>
+<li><strong>唯一失败</strong>：Schema drift 在<strong>宿主机</strong>直连 <code>DATABASE_URL</code> 的 <code>db</code> 主机名失败（Docker 内网名）。属验收脚本运行位置问题，不是生产库挂了。</li>
+<li>Dashboard JS 语法：跳过（环境无 node）→ warn</li>
+</ul>
+<h2 id="_3">代码问题（非阻断）</h2>
+<ol>
+<li><code>app/routes/api.py</code> 存在默认 <code>DEFAULT_ADMIN_TOKEN = "SuperAdmin2026_ChangeMe"</code>；当前 <code>.env</code> 已配置 <code>ANKI_ADMIN_TOKEN</code>，生产走 env。建议确认永远不要回落到默认值。</li>
+<li><code>app/routes/admin.py</code> 约 3444 行 <code>except:</code> 裸捕获，排障困难，建议改为 <code>except Exception</code>。</li>
+<li>Monitor 周期性提示 Device 1032 IP=未知IP，随后多报“无需修复”；属数据质量噪音，非服务故障。</li>
+</ol>
+<h2 id="_4">功能结论</h2>
+<ul>
+<li>管理后台核心功能可用：状态、数据列表、激活校验链路、worker 队列、monitor 巡检均正常。</li>
+<li>未发现容器/端口/依赖冲突。</li>
+<li>未发现导致后台不可用的阻断级 bug。</li>
+</ul>
+<h2 id="_5">建议</h2>
+<ol>
+<li>修 verify_all 的 DB 检查：容器内执行或把 host 映射为 127.0.0.1/服务名。</li>
+<li>去掉/强化默认 admin token 回落。</li>
+<li>处理 device 1032 未知 IP 脏数据（可选）。</li>
+</ol>
+<h2 id="_6">已修复（同日）</h2>
+<ol>
+<li><strong>默认 ADMIN_TOKEN 回落</strong>
+   - <code>app/routes/api.py</code>：不再使用可用弱默认口令
+   - 引入 <code>INSECURE_DEFAULT_TOKENS</code>，未配置/弱 token 一律失败关闭</li>
+<li><strong>裸 except</strong>
+   - <code>app/routes/admin.py</code> 批量导入解码：<code>except:</code> → <code>except Exception:</code></li>
+<li><strong>verify_all Schema drift</strong>
+   - 改为 <code>docker exec anki_server-web-1</code> 内执行，可解析 <code>db</code> 服务名
+   - 复测：<code>missing=[] extra_count=0</code>，<code>verify_all success=true ready=true</code> exit 0</li>
+</ol>
+<p>备份：<code>*.bak_fix_20260718_052537</code></p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

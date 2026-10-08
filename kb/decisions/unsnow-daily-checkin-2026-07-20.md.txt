@@ -1,0 +1,38 @@
+# Unsnow / SnowAPI 每日签到（2026-07-20）
+
+## 站点
+- 个人页：`https://api.unsnow.org/profile`
+- API base：`https://api.unsnow.org`
+- 账号：id=334 / display_name=Zqh2333（LinuxDO 424835）
+
+## 认证
+New API 风格：
+```
+Authorization: <access_token>   # 裸 token 或 Bearer 均可
+New-Api-User: <user_id>
+```
+凭据：`~/.hermes/secrets/unsnow.env`（600）  
+**不写知识库明文 token。**
+
+## 接口
+| 方法 | 路径 | 作用 |
+|---|---|---|
+| GET | `/api/user/self` | 用户信息 / 余额 quota |
+| GET | `/api/user/checkin` | 签到状态（checked_in_today） |
+| POST | `/api/user/checkin` | 执行签到 |
+
+## 脚本 / cron
+| 项 | 路径 |
+|---|---|
+| 脚本 | `~/.hermes/scripts/unsnow_daily_checkin.py` |
+| wrapper | `unsnow_checkin_random.sh`（08:00 起随机 0–30min） |
+| cron | `Unsnow每日签到（08:00-08:30随机）` · `no_agent=true` |
+
+## 验证（2026-07-20）
+- 首次 POST → `签到成功`，`quota_awarded=250000000`（约 $500 内部单位）
+- 再次 POST → `今日已签到`
+- 脚本 dry-run：`ALREADY_CHECKED_IN` exit 0
+
+## 维护
+- token 失效：更新 secrets 里 `UNSNOW_ACCESS_TOKEN` 即可
+- 勿对 CPA 敏感站探测；本脚本仅打用户授权的 unsnow

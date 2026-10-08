@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ABRDNS 福利站签到失败 NEED_CHECKIN → hCaptcha（2026-07-28） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="abrdns-need_checkin-hcaptcha2026-07-28">ABRDNS 福利站签到失败 NEED_CHECKIN → hCaptcha（2026-07-28）</h1>
+<h2 id="_1">现象</h2>
+<p>cron <code>1856c16b45bd</code> 输出 <code>[abrdns] NEED_CHECKIN</code> exit 1。</p>
+<h2 id="_2">根因</h2>
+<ol>
+<li>登录会话 <code>checkin_session</code> <strong>有效</strong>（能看到当前余额）。</li>
+<li>签到表单 <code>POST /checkin</code> <strong>强制 hCaptcha</strong>（sitekey <code>332a8f5a-…</code>），提交按钮默认 disabled。</li>
+<li>旧脚本空 body POST，页面仍返回未签到 → 误报 <code>NEED_CHECKIN</code>。</li>
+<li>主站 <code>https://new-api.abrdns.com/api/user/checkin</code> 返回 <strong>「签到功能未启用」</strong>，令牌/会话都不能代替福利站。</li>
+<li>用户 ID 实际为 <strong>9732</strong>（历史消息写 9372 会 token mismatch）。</li>
+<li>headless/headed 自动点 hCaptcha 会进入「请点击正在变大的形状」挑战，<strong>禁止自动打码</strong>。</li>
+</ol>
+<h2 id="_3">修复</h2>
+<ul>
+<li>脚本识别 <code>HCAPTCHA_REQUIRED</code>，无人值守不再空 POST。</li>
+<li><code>ABRDNS_INTERACTIVE=1</code>：本机弹出 Chrome，人工完成验证后点签到。</li>
+<li>secrets：<code>abrdns.env</code> 存主站 token + 正确 UID（不进 KB 明文）。</li>
+</ul>
+<h2 id="_4">日常</h2>
+<ul>
+<li>cron 在站点开启 hCaptcha 期间会失败并提示交互命令——属预期。</li>
+<li>每日可本机跑一次交互签到；或等站点关闭 captcha / 提供无 captcha API。</li>
+</ul>
+<h2 id="2026-07-28">继续修复 2026-07-28（下午）</h2>
+<ul>
+<li>交互脚本：<code>~/.hermes/scripts/abrdns_checkin_interactive.sh</code></li>
+<li>支持 <code>ABRDNS_CDP</code> 附着真实 Chrome；默认不自动点 hCaptcha 勾选（避免升级拖拽题）</li>
+<li>验证通过后脚本自动点「签到领取奖励」</li>
+<li>无人值守仍只能 <code>HCAPTCHA_REQUIRED</code>（合规边界，非脚本逻辑错误）</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

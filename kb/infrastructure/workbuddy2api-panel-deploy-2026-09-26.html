@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WorkBuddy2API Panel 宝塔 Docker 部署 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="workbuddy2api-panel-docker">WorkBuddy2API Panel 宝塔 Docker 部署</h1>
+<p>日期：2026-09-26</p>
+<h2 id="_1">部署</h2>
+<ul>
+<li>仓库：<code>https://github.com/linguo2625469/workbuddy2api-panel</code></li>
+<li>Commit：<code>&lt;HASH&gt;</code></li>
+<li>路径：<code>/www/workbuddy2api-panel</code></li>
+<li>Compose 服务：<code>wb2api</code></li>
+<li>容器：<code>workbuddy2api</code></li>
+<li>端口：<code>7863:7863</code></li>
+<li>数据：<code>auths/</code>、<code>data/</code>、<code>config.json</code></li>
+<li>运行用户：容器 uid/gid 10001，非 root</li>
+<li>配置 API key：随机生成，未记录明文</li>
+</ul>
+<h2 id="_2">验证</h2>
+<ul>
+<li>Docker Compose build：通过</li>
+<li>容器：running，healthcheck starting/运行中</li>
+<li><code>/panel/</code>：HTTP 200</li>
+<li><code>/healthz</code>：HTTP 503，<code>healthy=0,total=0</code>，原因是尚未添加 CodeBuddy OAuth 账号，不是容器故障</li>
+<li><code>/v1/models</code>：HTTP 401，未携带 API key，说明本地鉴权生效</li>
+<li>日志：<code>workbuddy2api listening on :7863 (api_key=true)</code></li>
+<li>Redis 未配置，按项目设计进入纯内存模式</li>
+<li>未执行 CodeBuddy 上游登录、聊天或任务上报</li>
+</ul>
+<h2 id="_3">后续</h2>
+<p>打开 <code>http://&lt;LAN-8&gt;:7863/panel/</code>，使用「添加账号」完成本人授权的 CodeBuddy OAuth 登录。添加账号后再验证 <code>/healthz</code> 从 503 变为可服务状态；不要把示例 <code>test_key</code> 用于生产。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

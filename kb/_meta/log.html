@@ -1,0 +1,808 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>log - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · _meta</nav><article><h2 id="2026-09-26-v1212-v103-test-key">2026-09-26 | 验证插件 v1.2.12 + 靶场 v1.0.3：官方 test key 沙箱自动化</h2>
+<ul>
+<li>边界先实测后定：用官方 test key 建页观察 widget 无人值守行为——Turnstile <code>1x…AA</code> 零点击下发 21 字符 token（文档 dummy token）→ 可自动化；reCAPTCHA <code>&lt;TOKEN&gt;</code> 15s 内不出 token、必须点击跨域 iframe → <strong>不造绕过 primitive</strong>，只识别交人工。判据是行为而非厂商名。</li>
+<li>白名单用对象键<strong>精确匹配</strong>（6 个官方 test key），无前缀/子串匹配 → 真实 key 不可能误命中；<code>detectProvider()</code> 中 Turnstile 判定必须前置（两者都用 <code>[data-sitekey]</code>）。</li>
+<li>修真实缺陷：<code>MutationObserver</code> 监听 <code>class/style</code> 触发 <code>scheduleRun()</code>，验证码控件持续改 DOM → <code>run()</code> 反复重入、每次先把状态重置为 <code>RUNNING</code>，<strong>已判定完的挑战看起来一直在运行</strong>并重复写审计（live 探针撞到 reCAPTCHA test key 页卡 <code>RUNNING</code> 满 45s）。修复：<code>settleProvider()</code> 判定一次即冻结 + 断开该页监听，guard 置于 <code>status('RUNNING')</code> 之前。</li>
+<li><code>sandboxChallenge()</code> 由裸字符串 <code>'handled'/'handoff'</code> 改为返回 <code>{state,detail}</code>；handoff 场景保留 <code>HUMAN_REQUIRED</code> + 原因 detail（可观测契约不变）。</li>
+<li>靶场加 5 个沙箱夹具于 <code>/sandbox/{kind}</code>，<strong>刻意不带</strong> <code>data-authorized-simulation</code> 标记，否则被本地模拟分支短路、测不到沙箱闸门。</li>
+<li>验收：契约 <code>13 passed</code>（白名单恰 6 条、真实 demo sitekey 不在内、粘性 guard 位置）；夹具 E2E <code>SANDBOX_TESTKEY_E2E_PASS</code> 5/5 夹具 9/9 检查；live <code>LIVE_SANDBOX_TESTKEY_PASS</code> 8/8（Cloudflare 官方 demo 自动过、reCAPTCHA 官方 test key 交人工、Google 真实 key 必拒且未伪造 token）；全套 <code>39 passed</code>。</li>
+<li>新 E2E 一律包 <code>TestCase</code>：<code>main()</code> 放在 <code>test_*.py</code> 但无 <code>Test*</code> 类会静默收集 0 条，并用 <code>--collect-only</code> 核对条数。</li>
+<li>产物分开发布 NAS：<code>authorized-verification-assistant/v1.2.12/</code>（21697 B，<code>91f2e3a2…</code>）、<code>verification-challenge-lab/v1.0.3/</code>（8013 B，<code>33bed4bd…</code>）；从 NAS 下载真实字节后本地哈希 + <code>cmp</code> 逐字节一致、权限 664；独立校验两包归档条目与源码逐字节一致、无 <code>.pem/.crx/.key</code>；靶场包独立解压可运行（<code>/health</code> → 1.0.3、pages 8、sandbox_pages 5，13 条链接全 200）。</li>
+<li>边界：reCAPTCHA 官方 test key 不自动求解（需点击）属设计边界；仅 Linux 本地验证，Windows 实机未验证；live 探针依赖公网，刻意不进默认套件。</li>
+</ul>
+<h2 id="2026-09-26-v1211-v102-chrome-e2e-88">2026-09-26 | 验证插件 v1.2.11 + 靶场 v1.0.2：真实 Chrome E2E 8/8 全绿</h2>
+<ul>
+<li>先证明测试在跑：pytest 默认只收 <code>test_*.py</code>，4 个真实 E2E（<code>*_e2e.py</code>）与 <code>DirectChromeExtensionE2E</code> 类名不合规，<strong>从未被收集</strong>——此前"通过"是假绿。重命名/改类名/包 TestCase 后纳入套件。</li>
+<li>Chrome 153 实测 <code>--load-extension</code> 完全失效（扩展根本没注册），改用 CDP <code>Extensions.loadUnpacked</code>；固定 <code>key</code> 使 ID 稳定 <code>mgpembebkeoiciopndiciehcokojeldf</code>。</li>
+<li>OCR 无限挂起根因：<code>ImageDecoder.completed</code> 对不支持类型（<code>image/svg+xml</code>）永不 settle，<code>await</code> 卡死整条链路；靶场 <code>LAB_REQ</code> 日志证明 <code>POST /api/ocr/solve</code> 从未发出，状态卡 <code>OCR_STARTED</code> 48s。修复：MIME 白名单 + <code>withTimeout</code> 有界兜底 + 超时上报。</li>
+<li>靶场页被误判成真实 provider（URL 子串检测先于本地授权判定）→ 显式授权模拟优先；真实站点仍 <code>HUMAN_REQUIRED</code>，不自动求解。</li>
+<li>靶场 <code>allow_reuse_address=False</code> 致 TIME_WAIT 下 <code>EADDRINUSE</code>；<code>/health</code> 增 <code>version</code>/<code>pages</code>，审计补 <code>state</code>/<code>detail</code>，新增 <code>LAB_REQ</code> 日志。</li>
+<li>契约测试原断言 <code>detectLocalChallenge</code>（实现中不存在）与硬编码版本；改为断言真实符号 + 版本自洽（源 manifest 与 CRX 内一致）。</li>
+<li>验收：<code>pytest tests -q</code> → <code>24 passed in 43.37s</code>；靶场报告 <code>pass=true</code>、<code>all_kinds_pass=true</code>、17/17 checks 全 true；8 类含 image 答案 <code>A7K9</code>；对照页 <code>HUMAN_REQUIRED</code> 未自动求解。</li>
+<li>产物分开发布 NAS：<code>verification-extension/1.2.11/</code>（19496 B，<code>bdc8235a…</code>）、<code>verification-challenge-lab/1.0.2/</code>（7061 B，<code>d9ba8a9b…</code>），回读哈希一致、权限 664。</li>
+<li>边界：仅 Linux 本地授权靶场验证，Windows Chrome/Edge 实机未验证。</li>
+</ul>
+<h2 id="2026-09-26-cpa-v7317-cpamp">2026-09-26 | CPA v7.3.17 + CPAMP 升级与菜单同步</h2>
+<ul>
+<li>备份 <code>/root/cpa_update_backups/20260926_081236</code>（config/auth/plugins/CPAMP SQLite 在线备份/inspect），<code>BACKUP_DB_INTEGRITY=ok</code>。</li>
+<li>旧镜像打回滚标签 <code>cli-proxy-api:rollback-20260926</code>、<code>cpa-manager-plus:rollback-20260926</code>；<code>cpa-usage-keeper</code> 全程未动。</li>
+<li>CPA <code>v7.3.3 → v7.3.17</code>；CPAMP 换新 digest；插件 <code>cpa-key-billing v1.3.3</code>、<code>keeper v0.1.0</code> 正常加载。</li>
+<li>端口/挂载逐项一致；CPA 200、CPAMP <code>/</code> 307 + <code>/management.html</code> 200、Keeper <code>/keeper/health</code> 200、CPAMP SQLite <code>integrity_check=ok</code>。</li>
+<li>CPA 升级后本地聚合模型列表变化，Hermes 菜单同步后与聚合 <code>EQUAL=True</code>（11/11）；<code>global:deepseek-v4.1-flash</code> 已可用。</li>
+</ul>
+<h2 id="2026-09-24-localscan">2026-09-24 | LocalScan 多证件类型升级</h2>
+<ul>
+<li><code>localscan-docker</code>（<LAN-8>:38127）新增身份证、银行卡、驾驶证、社保卡、护照、其他证明文件类型选择器。</li>
+<li>类型选择写入 <code>localStorage.localscan-document-type</code>，Worker 请求携带 <code>documentType/targetRatio/outputWidth/outputHeight</code>。</li>
+<li>Worker 按类型应用比例校验；其他证明文件放宽比例容错；保留原有本地 ONNX 边缘检测、透视矫正、裁切、A4 排版和水印流程。</li>
+<li>部署前备份 <code>/root/localscan-backups/20260924_151552/</code>；Nginx 配置、容器 healthz、真实浏览器上传页和六类型选项验证通过。</li>
+<li>
+<p>当前部署无原始源码，使用版本化静态 bundle；真实银行卡/驾照/社保卡/护照样本的图像质量回归仍待脱敏样本。</p>
+</li>
+<li>
+<p>解决 Chrome 150 扩展加载阻碍：使用实际 CDP <code>Extensions.loadUnpacked</code>，确认固定 ID 和 Worker。</p>
+</li>
+<li>设备指纹闭环：真实 Worker <code>DEVICE_INFO</code> → SHA-256 持久化 → 本地 activate/validate 记录。</li>
+<li>本地五类插件 E2E 通过：reCAPTCHA 模拟、易盾、拼图/滑块、图片选择、风险挑战。</li>
+<li>JavaScript/Python 检查通过，既有回归 <code>28 passed</code>，ZIP/NAS 哈希回读通过。</li>
+<li>创建本地八类模拟验证码/安全盾靶场：reCAPTCHA、Turnstile、hCaptcha、易盾、图片验证码、图片点选、拼图/滑块、风险人机验证。</li>
+<li>仅监听 <code>127.0.0.1</code>，不访问第三方 provider，不生成真实 token。</li>
+<li><code>/health</code>、全部页面和系统 Google Chrome 交互冒烟通过；ZIP/NAS 大小与 SHA-256 回读通过。</li>
+<li>Windows 启动入口：<code>lab/start-windows.cmd</code>。</li>
+<li>基于用户上传的 <code>1.2.13-test.1</code> 增加通用安全挑战识别分类：reCAPTCHA、Turnstile、hCaptcha、网易易盾/拼图/滑块、通用人机风险挑战与站点自有图片验证码。</li>
+<li>真实第三方安全盾统一 <code>HUMAN_REQUIRED</code>，未加入 token 伪造/重放、挑战状态修改、隐身驱动或第三方打码服务。</li>
+<li>包级 JS 语法、挑战探测器、现有验证码/Hassbian/契约/策略矩阵通过；现有回归 <code>28 passed</code>。</li>
+<li>Google reCAPTCHA Demo 与网易易盾 Jigsaw 已做真实页面只读识别，未点击/拖动/提交。</li>
+<li>产物 ZIP 已归档 NAS，大小/哈希/ZIP 完整性回读通过；Windows Chrome/Edge 实机仍需用户侧验收。</li>
+<li>CPA <code>cli-proxy</code> 从旧镜像升级到运行时 <code>v7.3.3</code>，镜像 digest=<code>sha256:&lt;HASH&gt;</code>。</li>
+<li>CPAMP <code>cpa-manager-plus</code> 拉取最新镜像，digest=<code>sha256:&lt;HASH&gt;</code>。</li>
+<li>备份目录 <code>/root/cpa_update_backups/20260915_145822</code>，CPAMP SQLite 在线一致性校验 <code>ok</code>。</li>
+<li>CPA 配置 SHA-256 与升级前备份一致；auth、plugins、CPAMP 数据挂载保持不变。</li>
+<li><code>cpa-key-billing v1.3.3</code>、Keeper v0.1.0 均正常加载注册。</li>
+<li>
+<p>CPA 8318、CPAMP 18317、Keeper 18080 本地服务验证通过；未访问 CPA 上游、未执行上游测活。</p>
+</li>
+<li>
+<p>生成不含 <code>.env</code>、数据库、token、Cookie、密码和私钥的可迁移 Docker 源码包：<code>authorized-verification-docker-v1.2.9.tar.gz</code>。</p>
+</li>
+<li>宝塔 Docker 构建镜像 <code>verification-license:package-v1.2.9</code>，隔离容器验证 <code>/health</code>、后台首页、管理员登录、更新 XML、CRX 下载均通过。</li>
+<li>update XML integrity 与实际 CRX SHA-256 一致；指纹与地理位置字段存在。</li>
+<li>Docker 源码包 SHA-256：<code>&lt;HASH&gt;</code>。</li>
+<li>Docker 镜像归档 SHA-256：<code>&lt;HASH&gt;</code>。</li>
+<li>NAS 归档：<code>verification-extension-docker/v1.2.9/</code>。</li>
+<li>
+<p>发布边界：源码扩展 manifest 为 <code>1.2.9</code>，但可签名 CRX 为 <code>1.1.6</code>；原扩展私钥缺失，未伪造新版 CRX。</p>
+</li>
+<li>
+<p>用户要求取消白名单，改为黑名单：<code>blockedHosts</code> 为空时激活插件可在普通页面运行；仅命中精确域名、通配子域或 <code>*</code> 时阻止，状态为 <code>HOST_BLOCKED</code>。</p>
+</li>
+<li>系统 Google Chrome 真实重装验证：删除旧 <code>1.0.0</code>，企业策略重新安装 <code>mgpembebkeoiciopndiciehcokojeldf</code> v1.2.4；Options 页面真实激活成功，黑名单为空；打开真实 Hassbian 登录弹窗后插件实际填入验证码 <code>92xh</code>，控制台 <code>CAPTCHA_FILLED</code>/<code>WAITING_FOR_USER_FIELDS</code>，未提交登录。</li>
+<li>
+<p>v1.2.5 正式发布：18 项回归通过；公网 update.xml=1.2.5；线上 CRX 与 integrity 一致，SHA-256=<code>&lt;HASH&gt;</code>；健康检查 200；ZIP/CRX 已归档 NAS。</p>
+</li>
+<li>
+<p>用户截图报错：授权中心 <code>https://v.example.com:2333/</code> 上旧 content.js 在扩展更新/重载后继续运行，<code>chrome.runtime.sendMessage</code> 抛 <code>Extension context invalidated</code>，MutationObserver 反复调度，导致 Hassbian OCR 链路未启动。</p>
+</li>
+<li>修复：content script 捕获失效上下文后一次性停机并断开 MutationObserver；manifest 排除授权控制面；扩展更新时刷新授权中心和已配置白名单页，确保新脚本重新注入。</li>
+<li>真实系统 Google Chrome <code>/usr/bin/google-chrome</code> 验证：Options 页激活成功、白名单 <code>bbs.hassbian.com</code> 保存成功；Hassbian 动态登录弹窗验证码实际填入 <code>69gy</code>，控制台 <code>CAPTCHA_FILLED</code>/<code>WAITING_FOR_USER_FIELDS</code>，未提交登录。</li>
+<li>
+<p>v1.2.3 发布：update.xml 1.2.3，公网 CRX integrity 与下载哈希一致；Docker <code>verification-license</code> 重建并健康；18 项回归通过；ZIP/CRX 已归档 NAS。</p>
+</li>
+<li>
+<p>真实 Chrome + Hassbian <code>https://bbs.hassbian.com/</code> 验证通过：动态弹窗生成 <code>input[name="seccodeverify"]</code>，GIF 动图 OCR 后实际填入验证码；控制台 <code>CAPTCHA_FILLED</code>，测试未提交登录。</p>
+</li>
+<li>发布门禁：JS 语法通过；回归 <strong>23 passed</strong>；正式 CRX 包内 manifest <code>1.2.0</code>、固定 key/ID <code>mgpembebkeoiciopndiciehcokojeldf</code>、含 GIF 最长帧逻辑、公网授权地址、无测试配置桥。</li>
+<li>线上：<code>https://v.example.com:2333/health</code>=200；update.xml=1.2.0；线上 CRX SHA-256=<code>&lt;HASH&gt;</code>，与本地构建包一致。</li>
+<li>归档：正式 ZIP/CRX 已归档 NAS <code>verification-extension/v1.2.0/</code>。</li>
+<li>根因：Discuz <code>misc.php?mod=seccode</code> 是 10 帧 GIF，完整字符在最长停留帧（约 3–4s）；<code>canvas.drawImage</code> 只抽到第一帧噪声，OCR 失败不填。二次 <code>fetch</code> 会因 <code>no-cache</code> 换码。</li>
+<li>修复：缓存命中用 <code>ImageDecoder</code> 取最长 duration 帧；缓存未命中则截当前页可见帧，禁止再拉 seccode；服务端 Pillow 同样抽最长帧；同一验证码签名只提交一次。</li>
+<li>回归：契约/行为/GIF hold-frame/Hassbian 夹具 23/23 PASS。未登录真实 Hassbian。</li>
+<li>产物 ZIP <code>&lt;HASH&gt;</code>，CRX <code>&lt;HASH&gt;</code>。</li>
+<li>宝塔更新清单 <code>1.1.6</code>；<code>/health</code> 200；NAS 归档 <code>verification-extension/v1.1.6</code>。</li>
+</ul>
+<h2 id="2026-09-12">2026-09-12 | 授权中心完整显示授权码并支持删除</h2>
+<ul>
+<li>列表原先只显示 <code>key_hint</code>，且没有删除授权接口。</li>
+<li>新增 <code>license_key</code> 落库、列表完整显示/复制、<code>DELETE /api/admin/licenses/{id}</code>。</li>
+<li>旧记录无法还原明文；新建授权可完整显示。本地管理页 E2E PASS，宝塔服务已重建。</li>
+</ul>
+<h2 id="2026-09-12-v114">2026-09-12 | 验证自动化插件 v1.1.4 后填凭据自动提交</h2>
+<ul>
+<li>审查发现：验证码 OCR 后若账号密码尚未填写，后续输入不会触发提交。</li>
+<li>修复：监听 username/password 的 input/change；run 进行中被触发则结束后重跑；已填验证码且表单就绪则提交。</li>
+<li>回归：行为测试 4/4 PASS，含 <code>&lt;TOKEN&gt;</code>。</li>
+<li>产物 ZIP <code>&lt;HASH&gt;</code>，CRX <code>&lt;HASH&gt;</code>。</li>
+<li>宝塔更新清单 <code>1.1.4</code>；NAS 归档 <code>verification-extension/v1.1.4</code>。</li>
+</ul>
+<h2 id="2026-09-12-v113-hassbiandiscuz-seccode">2026-09-12 | 验证自动化插件 v1.1.3 Hassbian/Discuz seccode</h2>
+<ul>
+<li>根因：旧 content script 只匹配 <code>captcha|verify.?code|验证码</code>，吃不到 Discuz <code>seccodeverify</code> 和无 alt 的 <code>misc.php?mod=seccode</code> 图。</li>
+<li>修复：选择器、src 评分、动态弹窗/验证码刷新观察、空用户名密码不自动提交、预览模式不填写。</li>
+<li>回归：契约 14/14、Hassbian 夹具 PASS、行为测试 3/3、API E2E PASS、Chrome smoke PASS。本机 headless 真实扩展加载受企业策略拦截，未作为发布阻塞。</li>
+<li>产物：ZIP <code>&lt;HASH&gt;</code>，CRX <code>&lt;HASH&gt;</code>。</li>
+<li>宝塔 <code>verification-license</code> 已重建，<code>/health</code> 200，更新清单 <code>1.1.3</code>；NAS 归档 <code>verification-extension/v1.1.3</code>。</li>
+</ul>
+<h2 id="2026-09-12-nas">2026-09-12 | 项目发布产物统一归档 NAS</h2>
+<ul>
+<li>Synology NAS <code>&lt;LAN-5&gt;</code> 建立 <code>/volume1/云/Hermes项目产物/&lt;project&gt;/&lt;version&gt;/</code> 统一目录；SMB 入口 <code>smb://&lt;LAN-5&gt;/云/Hermes项目产物</code>。</li>
+<li>新增 <code>~/.hermes/scripts/publish_artifacts_to_nas.py</code>，正式 ZIP/CRX/APK/EXE/文档等产物默认上传 NAS并生成 <code>SHA256SUMS.json</code>；secrets、密码、token、Cookie 和私钥禁止上传。</li>
+<li>Synology SCP/SFTP 对中文远程路径返回 255，改用 <code>tar | ssh tar</code> 流式传输，并统一文件权限 664。</li>
+<li>验证自动化插件 v1.1.0 ZIP/CRX 已归档；NAS 回读大小、可读性与 SHA-256 均和本机源文件一致。</li>
+</ul>
+<h2 id="2026-09-11-cpa-cpamp-billing">2026-09-11 | CPA / CPAMP / Billing 插件升级</h2>
+<ul>
+<li>备份 CPA config/auth-dir、CPAMP data、容器 inspect 与容器内 Billing 插件状态；主备份 <code>/root/cpa_update_backups/20260911_083926</code>。</li>
+<li>将容器内 <code>/CLIProxyAPI/plugins</code> 迁移到宿主机 <code>/root/CLIProxyAPI/plugins</code> 并作为 bind mount 持久化，避免重建 CPA 容器丢 Billing SQLite 状态。</li>
+<li>拉取并重建 <code>eceasy/cli-proxy-api:latest</code> 与 <code>seakee/cpa-manager-plus:latest</code>；运行官方 <code>haowang02/cpa-plugin-key-billing</code> install.sh。</li>
+<li>验证 CPA <code>v7.2.157</code>、CPAMP Up、Billing <code>v1.3.3</code> loaded/registered、Billing UI 200、本地 <code>/v1/models</code> 200/22 模型；provider 仍为薄荷/烁/Lanln，未恢复旧站点且未探测上游。</li>
+</ul>
+<h2 id="2026-09-11-hermes-cron">2026-09-11 | Hermes Cron 青龙式脚本管理升级</h2>
+<ul>
+<li>面板新增“脚本管理”：可查看、新建、编辑、保存、删除 <code>~/.hermes/scripts/</code> 内 <code>.py/.sh/.bash</code> 脚本，并显示大小、权限、更新时间和绑定任务。</li>
+<li>保存前自动 Python/bash 语法检查，旧版本及删除文件均移入 <code>.panel_backups</code>；启用任务仍引用的脚本拒绝删除。</li>
+<li>移除旧 token URL systemd 环境配置与 token 文件，当前仅保留账号密码 PBKDF2 登录和内存 session token。</li>
+<li>服务 active；未登录 401、错误/正确登录、真实任务/脚本 API、脚本 CRUD 烟测和浏览器脚本页加载均通过，控制台无错误。</li>
+</ul>
+<h2 id="2026-09-11">2026-09-11 | 本机磁盘垃圾清理</h2>
+<ul>
+<li>清理 pip、Playwright、Chrome、Electron、Go、node-gyp、Mesa、缩略图、npm 缓存及 Python 字节码，并清空用户回收站。</li>
+<li>保留 Hermes 配置、state.db、会话、skills、scripts、secrets、浏览器 profile 和运行环境 venv。</li>
+<li>实际释放 5.89 GiB；根分区已用率从 65% 降至 54%。<code>uv</code> 不在 PATH，未清理 <code>~/.cache/uv</code>。</li>
+</ul>
+<h2 id="2026-09-05-hermes-cron-web-ui">2026-09-05 | Hermes Cron 管理面板（自研轻量 Web UI）</h2>
+<ul>
+<li>token 保护：?token= 或 Bearer；token 存 <code>~/.hermes/secrets/cron_panel_token</code>，env <code>cron_panel_token_file.env</code>；服务日志不打印 token，若误打印须立即轮换。</li>
+<li>列表/日志/手动执行：GET /api/jobs、GET /api/log/<jobid>、POST /api/run/<jobid>；手动执行异步 Popen <code>hermes cron run &lt;id&gt;</code>，同一 job 防重复。</li>
+<li>青龙式管理已补齐：GET /api/scripts；POST /api/create、/api/edit/<jobid>、/api/pause/<jobid>、/api/resume/<jobid>、/api/delete/<jobid>，全部走 Hermes 原生 cron CLI；script 只允许 <code>~/.hermes/scripts/</code> 下现有 .py/.sh 文件名。</li>
+<li>验证：创建烟测任务→暂停→恢复→删除；确认 jobs.json 无残留；<LAN-4>:8421 带 token 200、无 token 401。</li>
+<li>UI 已重做为青龙式 Operate/Monitor 管理台：左侧导航、顶部标题栏、4 张状态卡、任务标签过滤、搜索、表格操作按钮、右侧日志抽屉、居中创建/编辑弹窗；浏览器控制台 0 错误。</li>
+<li>2026-09-06/07：Key Policy 已不在运行，CPA 当前实际启用 <code>cpa-key-billing v1.3.3</code>（repo haowang02/cpa-plugin-key-billing）；不要按旧 Key Policy state/API 修改。李林 native key <code>sk-hxd…JzWz</code> 已绑定 Billing 计划「李林 · Codex Plus 共享额度」；后续按用户要求已扩展到 CPA 本地 <code>/v1/models</code> 的全部 18 个模型，清空 credential/model 限制以允许所有 CPA 上游，最大并发恢复为1。models.dev 无价格的 3 个 DeepSeek 模型及 builtin 0 价 codex-auto-review 已补自定义价：deepseek flash 0.30/1.20/0.06、deepseek pro 1/4/0.20、codex-auto-review 2/12/0.20（USD/1M input/output/cache-read）。验证价格缺失为0、全部18模型已绑定；owner key <code>sk-lWa…AKlo</code> 未改且无限制。</li>
+<li>2026-09-07：CPAMP 错误日志排查：<code>cpap.example.com:2333/management.html#/logs?tab=errors</code> 最新错误全部为外部 IP <PUBLIC-IP> 使用失效 API key，CPA 返回 401 <code>Invalid API key</code>，同时混有 Claude <code>/v1/messages</code>、Codex <code>/v1/responses</code>、Gemini <code>/v1beta</code>，不是上游模型/反代故障。当前有效 CPA API keys 为面板现存两条 <code>sk-...</code>（均通过公网 <code>https://cli.example.com:2333/v1/models</code> HTTP 200）；<code>cpap.example.com:2333</code> 是 CPAMP 管理面板域名，<code>/v1/responses</code> 返回 404 属正常，不能作为客户端 Base URL。CPAMP 与 CPA 容器均 Up、管理页 HTTP 200。修复动作是客户端换有效 key，并使用 <code>https://cli.example.com:2333/v1</code>；不恢复旧 key、不改 CPA 上游。</li>
+<li>2026-09-07：按 <code>https://github.com/jwangkun/CPA-Manager-Plus</code> README_CN 安装官方 <code>seakee/cpa-manager-plus:latest</code>（镜像 digest <code>sha256:&lt;HASH&gt;</code>），容器名 <code>cpa-manager-plus</code>，端口 <code>18317</code>，数据 <code>/root/cpa-manager-plus-data</code> 持久化到 <code>/data</code>。未重新部署 CPA；向导已连接现有 <code>http://&lt;LAN-8&gt;:8318</code>，请求监控开启、采集间隔500ms、凭证已保存。验证：CPAMP <code>Up</code>、<code>/management.html</code> HTTP 200、面板显示 CPA 已连接/18模型/1 OAuth 凭证/2 providers；数据文件 <code>usage.sqlite</code> 和 <code>data.key</code> 已创建。管理员密钥不写知识库。随后按官方 reset-admin-key 流程轮换 CPAMP 管理密钥为用户指定值；备份 <code>/root/cpa-manager-plus-backups/data_before_admin_reset_*</code> 已保留。第一次轮换后登录失败，使用无换行密钥文件重试后浏览器登录成功，CPA 连接和请求监控正常。</li>
+<li>2026-09-06 加账号密码登录和改密：默认 admin/初始密码已写入哈希文件 <code>~/.hermes/secrets/panel_auth.json</code>（0600）；页面 <code>/</code> 显示登录门禁；登录后用内存 session token；<code>POST /api/change-password</code> 可修改密码；服务日志不打印密码/token。验证：错密 401、正确登录 200、jobs 未登录 401、改密临时→旧密失败→新密成功→改回。</li>
+</ul>
+<h2 id="2026-09-04-hermes-adiscover_models-true">2026-09-04 | Hermes 方案A：discover_models true 实时发现</h2>
+<ul>
+<li>用户选择方案A：Hermes <code>CPA Local Config</code> 的 discover_models 改为 true，模型菜单每次实时请求 base_url（https://cli.example.com:2333/v1 经 Lucky → CPA 本地聚合）发现，不再依赖固定菜单。</li>
+<li>停用 hermes-cpa-model-sync.timer/service：固定菜单同步脚本强制写 discover_models=false，与方案A冲突。</li>
+<li>永久回归说明：若再启用该同步，必须改脚本去掉强制 false，否则会把 discover 覆盖回 false。</li>
+</ul>
+<h2 id="2026-09-03-anki">2026-09-03 | Anki 公告组件化后续遗留死循环修复</h2>
+<ul>
+<li>根因：重构时引入了递归钩子 <code>var _oldRenderSec = window.renderAnnouncementSecurity; window.renderAnnouncementSecurity = ...</code>，每次重载页面或弹窗由于闭包状态未隔离导致无限递归 <code>RangeError: Maximum call stack size exceeded</code>。</li>
+<li>修复：增加 <code>window._annRenderHooked</code> 只加载一次标记，切断闭包死循环，恢复渲染。</li>
+</ul>
+<h2 id="2026-09-03-anki_1">2026-09-03 | Anki 公告编辑器减法重构与布局优化</h2>
+<ul>
+<li>根据截图审计，左侧编辑区承担了太多低频项（横幅、样式全局覆盖），右侧被多层历史和 Diff 卡片堆叠压缩了预览空间。</li>
+<li>精简布局：顶部压缩为单行（状态、历史按钮）；左侧收起高级字段；右侧默认仅显示安全/Diff 摘要，详情收进下拉抽屉；底栏仅保留取消、草稿、发布三个核心。</li>
+<li><code>v=20260903.4</code>，服务 200，原有逻辑和 Chrome E2E 回读未受影响。</li>
+</ul>
+<h2 id="2026-09-03-anki_2">2026-09-03 | Anki 公告编辑体验增强</h2>
+<ul>
+<li>增加撤销/重做、文字高亮、插入链接、清除格式、字数/段落统计、未保存/保存中/已保存状态。</li>
+<li>快捷键：Ctrl+S 草稿、Ctrl+Z 撤销、Ctrl+Y/Ctrl+Shift+Z 重做；离开页面有未保存警告。</li>
+<li>sanitizer 安全放行 background-color；静态资源版本 20260903.3。</li>
+<li>组件/现有测试、服务状态、Chrome 改色发布重开 E2E 全通过并恢复原公告。</li>
+</ul>
+<h2 id="2026-09-03-anki_3">2026-09-03 | Anki 公告组件化后续审查修复</h2>
+<ul>
+<li>工具栏 listener 加一次性 guard；poll timer 生命周期可取消；整体字号从已保存值回填。</li>
+<li>对齐/清除局部颜色迁入 canonical-v4；发布回读扩展至正文、整体样式、横幅关键字段。</li>
+<li>静态资源升级 <code>v=20260903.2</code>；组件/现有测试、服务状态、真实 Chrome E2E 全通过。</li>
+</ul>
+<h2 id="2026-09-03-anki_4">2026-09-03 | Anki 公告模块组件化重构</h2>
+<ul>
+<li>将 canonical-v4 JS/CSS 从 1.05MB <code>dashboard.html</code> 抽离至 <code>app/static/js/announcement-editor.js</code> 和 <code>app/static/css/announcement-editor.css</code>。</li>
+<li>删除模板内公告控制器；静态资源加 <code>?v=20260903.1</code> 缓存版本；新增永久回归 <code>tests/test_announcement_component_regression.py</code>。</li>
+<li>修复抽离时 <code>async async</code> 语法回归；Chrome E2E 最终通过选区改色→发布→关闭→重开 computed color 验证并恢复原公告。</li>
+</ul>
+<h2 id="2026-09-03-anki-e2e">2026-09-03 | Anki 公告颜色发布浏览器 E2E 最终修复</h2>
+<ul>
+<li>Chrome E2E 复现：发布保存了外层 <code>rgb(34,197,94)</code>，但选区内部旧 <code>div color:#67e8f9</code> 覆盖，重开后计算颜色仍青色。</li>
+<li>后端 sanitize 增加安全 rgb/rgba；canonical-v4 对选区及内部元素深层应用颜色/字号/字体。</li>
+<li>真实浏览器：选“下载渠道”→改绿→发布→关闭→重开，computed color=<code>rgb(34,197,94)</code>；原公告 finally 恢复。</li>
+</ul>
+<h2 id="2026-09-03-anki-canonical-v4">2026-09-03 | Anki 公告前端控制器彻底收敛 canonical-v4</h2>
+<ul>
+<li>证据：用户发布 POST 200，current/history 已写新 revision，但颜色集合未变化；页面叠加 7 套控制器互相覆盖。</li>
+<li>修复：删除 7 套旧脚本和 6 套旧样式，只保留 canonical-v4，统一 AJAX 加载、选区格式、草稿、预览、发布与回读。</li>
+<li>验证：只剩一个公告控制器；Word 样式草稿、authenticated POST/admin/public GET 全通过；服务 200。</li>
+</ul>
+<h2 id="2026-09-03-anki_5">2026-09-03 | Anki 公告重新打开恢复旧内容修复</h2>
+<ul>
+<li>根因：旧 <code>openAnnouncementModal</code> 的 AJAX fill + 旧 <code>setAnnouncementEditorMode('canvas')</code> 在新版控制器之后重置 canvas，发布内容重新打开看似失效。</li>
+<li>修复：reopen-guard 最终控制器固定左 canvas 为唯一源，阻止旧 mode 重置；草稿/预览直连保存。</li>
+<li>验证：Jinja compile、<code>WORDLIKE_STYLE_PERSIST_PASS</code>；dashboard 302、status 200、无错误。</li>
+</ul>
+<h2 id="2026-09-03-anki_6">2026-09-03 | Anki 公告左侧编辑器异步回填修复</h2>
+<ul>
+<li>根因：AJAX fill 通过 jQuery <code>.val()</code> 更新隐藏 textarea，不触发 input/change；最终控制器已先运行并把空值挂载到 canvas，导致左侧空白而右侧预览仍有内容。</li>
+<li>修复：增加 async fill sync 轮询；用户编辑前将 textarea 最新值写入左侧 canvas，用户编辑后不覆盖；增加选区高对比。</li>
+<li>验证：Jinja compile、<code>WORDLIKE_STYLE_PERSIST_PASS</code>；dashboard 302、status 200、无错误。</li>
+</ul>
+<h2 id="2026-09-03-anki_7">2026-09-03 | Anki 公告颜色发布最终控制器</h2>
+<ul>
+<li>旧多套 JS 仍抢颜色/发布；安装 final-v3 controller，左侧 canvas 唯一源，接管颜色/字号/字体、草稿、预览、发布。</li>
+<li>发布通过真实 admin/public 回读，测试内容恢复；web status 200，无新错误。</li>
+</ul>
+<h2 id="2026-09-03-anki_8">2026-09-03 | Anki 公告保存不生效与浅色文字可读性修复</h2>
+<ul>
+<li>根因：新版 footer 草稿按钮仍走旧 <code>submitAnnouncementMode</code>；左侧白色编辑区承载白/浅色公告内联样式，文字不可见。</li>
+<li>修复：草稿/预览按钮改 direct-v2 fetch；保存源固定左侧 canvas；编辑区改深色高对比并保留彩色 inline style。</li>
+<li>验证：Jinja compile、<code>WORDLIKE_STYLE_PERSIST_PASS</code>；dashboard 302、status 200、无新错误。</li>
+</ul>
+<h2 id="2026-09-03-anki-500">2026-09-03 | Anki 公告重做后模板 500 修复</h2>
+<ul>
+<li>根因：新版 CSS 的 <code>@media(...){#announcementModal</code> 中 <code>{#</code> 被 Jinja 识别为未闭合模板注释。</li>
+<li>修复：在 CSS media 与选择器间加空格，Jinja 模板编译通过。</li>
+<li>验证：<code>dashboard_http=302</code>（正常登录跳转）、<code>status_http=200</code>、无 TemplateSyntaxError。</li>
+</ul>
+<h2 id="2026-09-03-anki_9">2026-09-03 | Anki 公告编辑器整体重做</h2>
+<ul>
+<li>旧弹窗存在 textarea、canvas、可编辑 preview、两套工具栏/发布路径，导致选区与发布源混用。</li>
+<li>重做为左侧单一 Word 编辑器（颜色/字号/字体/粗斜下划线），右侧只读客户端预览，底部固定操作栏。</li>
+<li>发布只取左侧 canvas；保留草稿、安全检查、Diff、发布回读。</li>
+<li>验证：<code>SINGLE_SOURCE_EDITOR_SOURCE_OK</code>、<code>WORDLIKE_STYLE_PERSIST_PASS</code>、<code>PUBLISH_STORAGE_ROUNDTRIP_OK</code>；服务 <code>/api/status</code> 200。</li>
+</ul>
+<h2 id="2026-09-03">2026-09-03 | 公告发布回读误报修复（最终）</h2>
+<ul>
+<li>direct-v2 原先仍比较 editor 原始 HTML，浏览器 DOM 序列化差异造成“客户端回读与后台保存不一致”。</li>
+<li>最终仅比较 admin persisted 与 public client 的语义归一化 HTML；编辑器原始值不再阻断发布。</li>
+<li>authenticated POST/admin GET/public GET 通过；线上内容恢复；web status 200。</li>
+<li>根因：direct-v2 用原始 HTML 字符串比较编辑器与服务器回读；后端 sanitize 会规范空格/属性格式，导致成功发布被误报失败。</li>
+<li>修复：先回读 admin 保存值，再对 HTML 做 DOM 语义归一化后比较 public/admin/editor；仍保留不一致拦截。</li>
+<li>验证：<code>SEMANTIC_VERIFY_SOURCE_OK</code> + authenticated POST/admin GET/public GET；线上内容已恢复；web 200。</li>
+</ul>
+<h2 id="2026-09-02">2026-09-02 | 公告浏览器直连发布 + 客户端回读</h2>
+<ul>
+<li>后端真实带管理员 session POST/admin GET/public GET 通过，问题为历史浏览器事件竞争。</li>
+<li>新 direct-v2 捕获阶段发布器只读左侧 canvas；发布后 cache:no-store 回读 <code>/api/announcement.json</code>，不一致即报错。</li>
+<li>验证：direct UI source + authenticated POST chain；服务 200。</li>
+</ul>
+<h2 id="2026-09-02_1">2026-09-02 | 公告真实发布回退：单一发布入口</h2>
+<ul>
+<li>根因：安全发布 submit、底部发布和旧 form 监听构成重复发布路径，可能送出旧 textarea。</li>
+<li>修复：单一 <code>#annPublishBtn</code>；点击/submit 强制 sync 左侧 canvas；拦截旧表单提交。</li>
+<li>验证：真实 GET <code>/api/announcement.json</code> roundtrip 后 <code>REAL_HTTP_LIVE_RESTORED</code>；服务 200。</li>
+</ul>
+<h2 id="2026-09-02-word">2026-09-02 | 公告单一 Word 编辑器架构收敛</h2>
+<ul>
+<li>截图确认左侧才是源正文，右侧却放了工具栏/可编辑预览，导致选区与发布源混用。</li>
+<li>修复：左侧唯一 Word 编辑器；右侧只读预览；collect 固定取左 canvas。</li>
+<li>验证：<code>SINGLE_SOURCE_EDITOR_SOURCE_OK</code> + publish storage roundtrip + <code>LIVE_CURRENT_RESTORED</code>；服务 200。</li>
+</ul>
+<h2 id="2026-09-02_2">2026-09-02 | 公告发布恢复原文与工具栏遮挡</h2>
+<ul>
+<li>根因：collect 同步后又用旧隐藏 canvas 覆盖 payload；字体下拉无独立叠层。</li>
+<li>修复：删除旧 canvas 覆盖；toolbar sticky/z-index、select z-index。</li>
+<li>验证：发布存储 roundtrip 后 <code>LIVE_CURRENT_RESTORED</code>；服务 200。</li>
+</ul>
+<h2 id="2026-09-02-word_1">2026-09-02 | 公告 Word 式选区颜色/字号/字体</h2>
+<ul>
+<li>根因：字号/字体抢隐藏画布；保存优先旧 canvas HTML。</li>
+<li>修复：统一 <code>_annApplySelectionStyles</code>；sync 以书签所在编辑器为准。</li>
+<li>验证：<code>WORDLIKE_SELECTION_SOURCE_OK</code> + <code>WORDLIKE_STYLE_PERSIST_PASS</code>；未发布。</li>
+</ul>
+<h2 id="2026-09-02_3">2026-09-02 | 公告选区：点色盘仍提示请先选中</h2>
+<ul>
+<li>根因：用户划选的是 <code>#annPreviewBox</code>；原生 color picker 抢焦点导致 live Range 失效；save 未挂 window。</li>
+<li>修复：preview 纳入 active editors；选区改文字偏移书签；toolbar capture 保存；色盘只 onchange。</li>
+<li>验证：<code>BOOKMARK_SELECTION_SOURCE_OK</code> + <code>PREVIEW_SELECTION_SOURCE_OK</code> + persist pass；未发布。</li>
+</ul>
+<h2 id="2026-09-02_4">2026-09-02 | 公告选区颜色：只改选中文字并保存生效</h2>
+<ul>
+<li>根因：取色后选区丢失，代码把整篇都上色；整画布 <code>style.color</code> 保存不进 HTML。</li>
+<li>修复：只 wrap 选区 span；无选区 toast；保存前 sync 画布。</li>
+<li>验证：<code>SELECTION_COLOR_SOURCE_OK</code> + <code>SELECTION_COLOR_PERSIST_PASS</code>；未发布线上公告。</li>
+</ul>
+<h2 id="2026-09-02-anki-word">2026-09-02 | Anki 全站公告 Word 式颜色/字体与保存</h2>
+<ul>
+<li>根因：collect 未同步画布 HTML；工具栏无选区颜色/字体族；sanitize 剥掉 font-family。</li>
+<li>修复：dashboard 工具栏 <code>#annTextColor</code>/<code>#annFontFamily</code>、保存前 <code>_annSyncCanvasToTextarea</code>；utils 放行安全 font-family/font-style。</li>
+<li>验证：<code>ANNOUNCEMENT_WORDLIKE_REGRESSION_PASS</code>；web 重启后 <code>/api/status</code> 200；未发布线上公告。详见 <code>incidents/&lt;TOKEN&gt;</code>。</li>
+</ul>
+<h2 id="2026-07-16-cpa">2026-07-16 | CPA 同步排除简直了上游</h2>
+<ul>
+<li>在宝塔主机 <code>sync_cpa_models.py</code> 第 54 行把 <code>MODEL_SYNC_EXCLUDED_PROVIDERS</code> 从 <code>{"RawChat"}</code> 改为 <code>{"RawChat", "简直了"}</code>。</li>
+<li>效果：CPA 模型同步不再请求简直了的 <code>/models</code>（fetched=0），并清空其已同步模型。备份 <code>sync_cpa_models.py.bak-20260716</code>。</li>
+<li>顺带确认 SSH 私钥真实文件名是 <code>baota-&lt;LAN-8&gt;</code>（本机 <code>ls</code> 脱敏显示为 <code>baota-[IP]</code>），可直连宝塔 <LAN-8>。</li>
+</ul>
+<h2 id="2026-07-16-ocr">2026-07-16 | 验证码 OCR 自学习技能内化</h2>
+<h2 id="2026-07-16-cpa-hermes">2026-07-16 | CPA 自动增删上游模型 + Hermes 菜单刷新落地</h2>
+<ul>
+<li>宝塔 cron <code>10 3 * * *</code> 跑 <code>sync_cpa_models.py</code>（自动增删上游模型，简直了/RawChat 除外，写 CPA config 热重载）。</li>
+<li>Hermes cron <code>33e1fa74d8b8</code> 每日 <code>03:30</code> 跑 <code>cpa_hermes_model_audit.py</code>，测活后刷新 Hermes 切换模型列表（剔除不可用）。</li>
+<li>实跑确认：CPA 简直了 models 清空，Hermes 菜单 268 项且无 jianzhile 模型。</li>
+</ul>
+<h2 id="2026-07-16">2026-07-16 | 简直了不自动拉取也不测活（双重保险）</h2>
+<ul>
+<li>sync 排除 简直了（不拉 /models、清空其 models）；审计 EXPORT 也跳过 简直了 provider（不测活）。</li>
+<li>验证：EXPORT 跳过逻辑 303 模型、0 含 jianzhile；Hermes 菜单无 jianzhile 模型。</li>
+</ul>
+<h2 id="2026-07-17-cron-llm">2026-07-17 | 修复 cron 脚本任务不依赖 LLM</h2>
+<ul>
+<li>4 个脚本 cron 全部改为 no_agent=true（纯脚本，不调 provider）。</li>
+<li>33e1fa74d8b8 的 script 含参数被当成路径 → 改用 cpa_hermes_audit_wrap.sh。</li>
+<li>bcff58ebbb8d 原 agent 模式导致 provider timeout → 改 no_agent + sharedchat_claim_wrap.sh（venv python + headless=True）。</li>
+<li>所有 wrapper 显式指向正确 python（venv 或 /usr/bin/python3）。</li>
+</ul>
+<h2 id="2026-07-17-sharedchat-codex-api">2026-07-17 | SharedChat Codex 领取改为 API+浏览器容错</h2>
+<ul>
+<li>重写 sharedchat_codex_claim.py：点击无 dialog（公益 isActive=false）时返回 NO_ACTION 不报错。</li>
+<li>API: POST /frontend-api/vibe-code/codex/claim（需 cookie+reason+浏览器验证），GET /quota 查状态。</li>
+<li>当前 codex 公益 每日50刀 isActive=false（到期），今日 NO_ACTION。</li>
+</ul>
+<h2 id="2026-07-17-sharedchat-codex">2026-07-17 | SharedChat Codex 领取流程修复验证</h2>
+<ul>
+<li>弹窗是 .el-message-box，确认按钮 .el-button--primary。claim API 需 fingerprint eventId。</li>
+<li>验证领取成功：quota isActive=true, remainingAmount=50（当日已领）。脚本次日自动领取有效。</li>
+</ul>
+<h2 id="2026-07-17-hermes">2026-07-17 | Hermes 菜单按家族同步且不测活</h2>
+<ul>
+<li>只同步 gpt/claude/grok/glm/mimo/deepseek 标准名；去掉 provider 前缀别名；不做测活。</li>
+<li>结果：77 模型；claude 当前 CPA 上游无模型；default=grok-4.5。</li>
+</ul>
+<h2 id="2026-07-17-cpa">2026-07-17 | CPA 定时同步确认并允许大删除</h2>
+<ul>
+<li>宝塔 cron 03:10 同步上游模型（--remove-missing --allow-large-delete）；排除 RawChat/简直了。</li>
+<li>本次 mimo 上游 210→84，手动放行大删除后完成增删；Hermes 菜单再同步为 家族标准名。</li>
+</ul>
+<h2 id="2026-07-17-hermes-cpa">2026-07-17 | Hermes 固定常用菜单，CPA 独立定时同步</h2>
+<ul>
+<li>CPA: 每6小时全量增删同步，不排除 RawChat/简直了；允许 zero-model provider。</li>
+<li>Hermes: 固定 17 个常用标准模型，不跟 CPA 全量变动；默认 grok-4.5；故障转移交给 CPA。</li>
+</ul>
+<h2 id="2026-07-17-sharedchat-codex_1">2026-07-17 | 修复 SharedChat Codex 定时领取</h2>
+<ul>
+<li>修正弹窗选择器为 <code>.el-message-box</code>，确认按钮 primary。</li>
+<li>增加 claim API / quota isActive 判定；已领取 exit 0。</li>
+<li>实跑：ALREADY_ACTIVE（公益每日50刀，剩余约 49.40）。</li>
+</ul>
+<h2 id="2026-07-17-cpa_1">2026-07-17 | CPA 上游异名自动映射</h2>
+<ul>
+<li>同步脚本增加 MODEL_NAME_MAP：xai-grok-4.5→grok-4.5 等；实跑后 vendor 名已清除。</li>
+</ul>
+<h2 id="2026-07-17-cpa_2">2026-07-17 | CPA 排除带日期后缀模型</h2>
+<ul>
+<li>is_dated_model_id 过滤 -YYYYMMDD/-YYMMDD/-MMDD 等日期尾巴；实跑 dated remaining=0。</li>
+</ul>
+<h2 id="2026-07-17-cpa_3">2026-07-17 | CPA 只保留稳定名</h2>
+<ul>
+<li>同步脚本过滤日期后缀与 free/preview/latest/highspeed/openai-compact 等噪音；实跑 unstable remaining=0，总 85 模型。</li>
+</ul>
+<h2 id="2026-07-17">2026-07-17 | 十项优化全部落地</h2>
+<ul>
+<li>CPA: mimo 二次确认大删除、RawChat 不拉/models、空列表不覆盖、映射增强、稳定名、6h 同步、backup 30、回滚脚本。</li>
+<li>Hermes: 固定 10 模型菜单 + 存在性校验（不测活）；签到全 no_agent + 绝对 python。</li>
+</ul>
+<h2 id="2026-07-17-cpa-v1models">2026-07-17 | CPA /v1/models 对外只返回稳定模型</h2>
+<ul>
+<li>jshandler 过滤实时模型列表；213→稳定集合，噪音为 0。Hermes 菜单保持固定 10 个。</li>
+</ul>
+<h2 id="2026-07-17-cpa-hermes-10">2026-07-17 | CPA 对外模型列表对齐 Hermes 固定 10 名</h2>
+<ul>
+<li>8317 边缘代理只暴露 10 个稳定裸名；后端 CPA 改 18317；同名 alias 清空以支持故障转移。</li>
+</ul>
+<h2 id="2026-07-17-user">2026-07-17 | 简直了签到支持双账号并补签 user</h2>
+<ul>
+<li>脚本改为多账号；secrets 增加 user。</li>
+<li>补签成功 uid=4042 quota=5000000；双账号复跑均为已签到。</li>
+</ul>
+<h2 id="2026-07-17-2">2026-07-17 | 接入新上游 临时/临时2</h2>
+<ul>
+<li>用户新增 <code>临时</code>(cpa.snote.cc.cd) 与 <code>临时2</code>(api.alfredng.example.org)。</li>
+<li>已跑 sync：临时 +8 grok 系；临时2 的 <code>xai-grok-4.5</code> 映射为 <code>grok-4.5</code>。</li>
+<li><code>grok-4.5</code> 现分布：mimo / 临时 / 临时2，alias 全空，支持裸名故障转移。</li>
+<li>8317 仍只暴露 Hermes 同款 10 稳定名；chat grok-4.5 返回 200。</li>
+<li>codex-fingerprint providers 已加入 临时/临时2。</li>
+</ul>
+<h2 id="2026-07-17_1">2026-07-17 | 新增上游自动立刻同步</h2>
+<ul>
+<li>cpa-provider-watch.service 监听 config 拓扑变化并立即跑 sync；已实测触发。</li>
+</ul>
+<h2 id="2026-07-17_2">2026-07-17 | 全设备巡检</h2>
+<ul>
+<li>8 台设备网络/SSH/管理口巡检完成。</li>
+<li>处理：宝塔卡死 patch 进程已杀；Hermes SSH 应用 root 密钥；AdGuard 偶发 reset 可重试。</li>
+<li>CPA 栈 HEALTH_OK；NAS rootfs 70% 关注。</li>
+<li>页面：infrastructure/fleet-inspect-2026-07-17</li>
+</ul>
+<h2 id="2026-07-17-cliproxyapi-cpu-hermes">2026-07-17 | 巡检后续：CLIProxyAPI 高CPU + Hermes 用户公钥</h2>
+<ul>
+<li>关闭 privacyfilter（大上下文脱敏烧 CPU）；codex-fingerprint 降日志。</li>
+<li>为 user 安装 Hermes 管理公钥，BatchMode 验证通过。</li>
+</ul>
+<h2 id="2026-07-17-cpa_4">2026-07-17 | 进一步优化 CPA 性能与巡检</h2>
+<ul>
+<li>privacyfilter 保持关闭；logging-to-file=false；usage-statistics-enabled=false；commercial-mode=true。</li>
+<li>健康检查增强：校验 privacy 关闭、8317=10 裸名、stable_models.json、CLIProxyAPI CPU 阈值告警。</li>
+<li>SharedChat / Hermes 菜单 cron 手动重跑后 last_status=ok。</li>
+<li>空闲时 docker stats 可接近 0%；有长会话时 host pcpu ~40% 属业务负载，非卡死进程。</li>
+</ul>
+<h2 id="2026-07-17-gpt-55-503-glm-52">2026-07-17 | 排查 gpt-5.5 503 与 glm-5.2 超时</h2>
+<ul>
+<li>gpt-5.5：魔方 503；CPA 汇总 auth_unavailable/503。</li>
+<li>glm-5.2：mimo 间歇 200/502；薄荷/喵喵 超时；CPA 整体超时。</li>
+<li>结论：上游供给侧故障，非 Hermes 菜单/映射问题。</li>
+</ul>
+<h2 id="2026-07-17_3">2026-07-17 | 全设备巡检 + 网络拓扑分析</h2>
+<ul>
+<li>8/8 在线，SSH 全通过（Hermes 可用 user）。</li>
+<li>拓扑：ROS 主出口/DHCP；OpenWrt 旁路+IPTV；PVE 承载全家桶；AdGuard 主 DNS；宝塔 CPA HEALTH_OK。</li>
+<li>注意：PVE 主机默认网关指向 OpenWrt(.3)，终端默认网关指向 ROS(.2)。</li>
+<li>页面：infrastructure/fleet-topology-2026-07-17</li>
+</ul>
+<h2 id="2026-07-17_4">2026-07-17 | 全设备服务全面扫描</h2>
+<ul>
+<li>扫描 8 台：监听端口、systemd/容器/插件、关键进程。</li>
+<li>服务最密：宝塔（CPA+14容器+BT面板）；OpenWrt（Clash/WG/Samba/NFS）。</li>
+<li>安全提醒：ROS 巡检输出含敏感字段，建议轮换凭据；RDP/ttyd/面板端口复核暴露面。</li>
+<li>页面：infrastructure/fleet-services-2026-07-17</li>
+</ul>
+<h2 id="2026-07-17-cpa_5">2026-07-17 | CPA 进阶故障转移落地</h2>
+<ul>
+<li>瞬态冷却 300s + 重试收敛 + glm-5.2 禁止落慢上游 + 边缘 chat 超时 90s。</li>
+<li>烟测 glm-5.2/gpt-5.5/deepseek-v4-flash 200；HEALTH_OK。</li>
+</ul>
+<h2 id="2026-07-17-3">2026-07-17 | 临时3 等上游丢失核查</h2>
+<ul>
+<li>磁盘仅 8 站；临时/临时2 改名为 snote-temp/alfred-temp 仍在。</li>
+<li>面板 11:21–13:51 曾到 11 个 OpenAI-compat，14:37 重载回 8；备份无临时3，需用户重加。</li>
+</ul>
+<h2 id="2026-07-17_5">2026-07-17 | 同步脚本竞态可误盖面板新增站点</h2>
+<ul>
+<li>根因：sync load-then-dump 覆盖并发 PUT 的临时3 等。</li>
+<li>已修：写前 re-read + merge 保留新 provider；禁止 provider 数变少。</li>
+<li>临时3 无备份，需用户重加。</li>
+</ul>
+<h2 id="2026-07-17-cpa_6">2026-07-17 | 同步策略改为 CPA 站点权威（可增可删）</h2>
+<ul>
+<li>用户要求：站点以 CPA 为准，脚本跟随操作；不能只增不减。</li>
+<li>已修 merge/write：live 站点列表权威；删除保持删除；新增保留后拉模型。</li>
+</ul>
+<h2 id="2026-07-18-xai-register-lite">2026-07-18 | xAI register-lite 认证上传后抽测</h2>
+<ul>
+<li>3250 个 xai oauth 认证文件已加载（auth-dir）。</li>
+<li>抽测：<code>grok-4.5</code> 经 8317/18317 均 200，约 1.7s，输出正确。</li>
+<li><code>deepseek-v4-flash</code> 200；<code>gpt-5.5</code> 403（Codex 订阅/权限，与 xAI auth 无关）。</li>
+<li>加载后 CLIProxyAPI CPU 偏高（健康检查 WARN/FAIL 阈值），属大批量 auth 热启动后观察项。</li>
+</ul>
+<h2 id="2026-07-18-sharedchat-cron-failed-no-confirmation">2026-07-18 | 修复 SharedChat cron FAILED: no confirmation</h2>
+<ul>
+<li>根因：claim 成功判定过窄 + Vue 输入/确认不稳定。</li>
+<li>已修脚本：secrets、指纹等待、Vue textarea、quota/rolling-limit 成功源。</li>
+<li>实跑 ALREADY_ACTIVE exit 0。</li>
+</ul>
+<h2 id="2026-07-18-cron-sharedchathermes">2026-07-18 | Cron 自动修复 SharedChat+Hermes</h2>
+<ul>
+<li>SharedChat no confirmation：扩展成功判定与 Vue 输入修复，实跑 ALREADY_ACTIVE。</li>
+<li>Hermes 菜单：baota SSH refused → PVE 跳板 + 本地降级，exit 0。</li>
+</ul>
+<h2 id="2026-07-18">2026-07-18 | 失败/报错自动修复硬规则</h2>
+<ul>
+<li>用户要求：只要失败/报错就自动修复，不诊断停工、不等催促。</li>
+<li>已写入 user/memory + decisions/auto-fix-on-errors.md</li>
+</ul>
+<h2 id="2026-07-18_1">2026-07-18 | 自动修复范围扩大到所有问题</h2>
+<ul>
+<li>用户明确：不仅是脚本，所有问题都要自动修复闭环。</li>
+<li>已更新 decisions/auto-fix-on-errors.md 与长期记忆。</li>
+</ul>
+<h2 id="2026-07-18-cpa">2026-07-18 | CPA 整体配置与问题凭证治理</h2>
+<ul>
+<li>清理过期 xAI 凭证 2582，保留 668；自动清理 cron 已装。</li>
+<li>固化冷却/故障转移/10模型/桥接服务；HEALTH_OK，grok 抽测 200。</li>
+</ul>
+<h2 id="2026-07-18-cpa_1">2026-07-18 | CPA 设置选项与优先级</h2>
+<ul>
+<li>时区 Asia/Shanghai；routing 改 round-robin；priority 按越大越优先重排。</li>
+<li>全局设置项固化：重试/冷却/quota/隐私关闭等；HEALTH_OK。</li>
+</ul>
+<h2 id="2026-07-18_2">2026-07-18 | 新站点自动配置优先级</h2>
+<ul>
+<li>新增 cpa_auto_priority.py；watch/定时同步接入。</li>
+<li>数字越大越优先；不同站点模型集合可不同，按模型名路由。</li>
+</ul>
+<h2 id="2026-07-18-anki">2026-07-18 | Anki 管理后台巡检</h2>
+<ul>
+<li>6 容器健康，生产 dashboard 轮询 200；无端口冲突。</li>
+<li>verify_all 仅 schema 宿主机连 db 失败（脚本问题）；代码有默认 token 回落与裸 except 待改进。</li>
+</ul>
+<h2 id="2026-07-18-anki_1">2026-07-18 | Anki 三处小问题修复</h2>
+<ul>
+<li>默认 token 失败关闭；裸 except 收紧；verify_all schema 改 docker exec。</li>
+<li>verify_all 全绿 success=true。</li>
+</ul>
+<h2 id="2026-07-18-anki_2">2026-07-18 | Anki 全站公告编辑修复</h2>
+<ul>
+<li>颜色改不了：内联 style 覆盖；已改为重写 HTML color。</li>
+<li>补齐画布无选区改色、发布前同步、草稿回载、到期动作。</li>
+</ul>
+<h2 id="2026-07-18_3">2026-07-18 | 优化包落地</h2>
+<ul>
+<li>responses 清洗、xAI 清理防误伤、上游 401 降权、NAS 巡检 cron、Anki 清内联色、暴露面清单。</li>
+</ul>
+<h2 id="2026-07-18-cc-switch-responses-name-is-required">2026-07-18 | CC Switch /responses name is required</h2>
+<ul>
+<li>实际模型 gpt-5.6-sol；8317/jshandler 深度清洗 input[].name。</li>
+<li>清洗后主要剩 429/503 上游额度问题；Grok 需显式选 grok-4.5。</li>
+</ul>
+<h2 id="2026-07-18-hermes-gpt-56-sol">2026-07-18 | Hermes 菜单加入 gpt-5.6-sol</h2>
+<ul>
+<li>固定名单 11；8317 已暴露；chat 200；luna 仍排除。</li>
+</ul>
+<h2 id="2026-07-18-cc-switch-422-modelinput">2026-07-18 | CC Switch 422 ModelInput 修复</h2>
+<ul>
+<li>清洗过深破坏 function_call_output；已收紧。grok-4.5 /responses 200。</li>
+<li>用户选 grok 但错误体仍 sol → 查 CC Switch 模型映射。</li>
+</ul>
+<h2 id="2026-07-18-anki_3">2026-07-18 | Anki 下载按钮关闭不了修复</h2>
+<ul>
+<li>bool 字符串+API 强制覆盖；已加总开关 final filter，所有下发字段 false。</li>
+</ul>
+<h2 id="2026-07-18-hermes-gpt-56-sol_1">2026-07-18 | Hermes 菜单移除 gpt-5.6-sol</h2>
+<ul>
+<li>Hermes/8317 固定名单恢复 10；上游 provider 模型未删除。</li>
+</ul>
+<h2 id="2026-07-18-gpt-56-sol">2026-07-18 | 取消移除 gpt-5.6-sol</h2>
+<ul>
+<li>从精确备份恢复 Hermes config/stable/audit + CPA stable policy/jshandler。</li>
+<li>验证 8317=11 且含 sol。</li>
+</ul>
+<h2 id="2026-07-18-anki_4">2026-07-18 | 恢复其余 Anki 反应开关</h2>
+<ul>
+<li>下载按钮关闭误伤其他 reactionEffects；恢复默认，仅 enableDownloadButton=false。</li>
+</ul>
+<h2 id="2026-07-18-cpa_2">2026-07-18 | CPA 新增站点被脚本覆盖</h2>
+<ul>
+<li>根因：多写盘脚本无共享锁/旧快照覆盖；已上 cpa_config_guard 全路径加固。</li>
+</ul>
+<h2 id="2026-07-18-anki_5">2026-07-18 | Anki 下载按钮开关覆盖全关</h2>
+<ul>
+<li>根因 button 空 value 覆盖；已修 JS 与恢复配置，仅下载按钮关闭。</li>
+</ul>
+<h2 id="2026-07-18-hermes-failed-after-retries">2026-07-18 | Hermes failed-after-retries 自动修复</h2>
+<ul>
+<li>日志定位 auth_unavailable/timeout；启用 fallback_providers + 代理180s + 失败检测 cron。</li>
+</ul>
+<h2 id="2026-07-18-cpa-priority">2026-07-18 | 取消 CPA 自动设置站点 priority</h2>
+<ul>
+<li>停用 <code>cpa_auto_priority</code> 自动入口（notify/watch）。</li>
+<li>脚本默认 DISABLED；仅 <code>--force</code> 或 <code>CPA_AUTO_PRIORITY_ENABLED=1</code> 可写。</li>
+<li><code>cpa_upstream_quality</code> 只告警，不再 demote priority / restart。</li>
+<li>现有站点 priority 保持面板/当前值不动。</li>
+<li>文档：<code>decisions/cpa-auto-priority-disabled-2026-07-18.md</code>。</li>
+</ul>
+<h2 id="2026-07-18-snote-temp-alfred-temp">2026-07-18 | 删除 snote-temp / alfred-temp</h2>
+<ul>
+<li>核查：用户以为已删，但 config 仍在且 quality 因 401 持续报警。</li>
+<li>已按用户意图从 CPA 删除两站，清理 alerts，quality 忽略已删站历史日志。</li>
+<li>现网 7 站：RawChat / 薄荷 / mimo / 魔方 / 喵喵 / 简直了 / 烁。</li>
+</ul>
+<h2 id="2026-07-18-cpa-rawchat">2026-07-18 | 删除 CPA 自动化脚本（保留 RawChat）</h2>
+<ul>
+<li>归档宝塔全部 cpa/sync/muyuan 脚本；清 cron；停 stable-proxy/provider-watch/muyuan-bridge。</li>
+<li>docker 恢复 <code>8317:8317</code> 直连；仅保留 rawchat-codex-proxy + rawchat-openai-bridge。</li>
+<li>Hermes 侧归档 CPA 脚本并删除相关 cron。</li>
+<li>验证：models 200、chat 200、RawChat base=18418。</li>
+</ul>
+<h2 id="2026-07-19-temp1-temp-1234">2026-07-19 | 恢复 temp1（用户称 temp 1234）</h2>
+<ul>
+<li>历史无 temp 1234 站名；temp1 于 07-18 10:27 从磁盘消失（-['temp1']）。</li>
+<li>从备份恢复 temp1（sub.yxxb.eu.cc），chat 探针 200。</li>
+</ul>
+<h2 id="2026-07-19-temp14">2026-07-19 | temp1–4 澄清与部分恢复</h2>
+<ul>
+<li>用户指 temp1/2/3/4。已恢复 temp1 + temp2（临时2/alfred）。</li>
+<li>temp3/temp4 全库备份无完整配置（无 base/key），需用户重发。</li>
+</ul>
+<h2 id="2026-07-19-user">2026-07-19 | 简直了 user 登录失败</h2>
+<ul>
+<li>github_10641 签到成功；user 站点返回密码错误或封禁。</li>
+<li>secrets 密码与用户提供一致；非脚本/OCR 问题。需网页确认账号。</li>
+</ul>
+<h2 id="2026-07-19-cpa">2026-07-19 | CPA 本地模型状态面板</h2>
+<ul>
+<li>落地 <code>cpa_model_status.py</code> + user systemd <code>:8787</code>。</li>
+<li>真实 chat 探测 11 固定模型；API/页面仿简直了 model-status。</li>
+<li>访问：<code>http://&lt;LAN-4&gt;:8787/</code>。</li>
+</ul>
+<h2 id="2026-07-19-cpa_1">2026-07-19 | 模型状态改挂 CPA 主机</h2>
+<ul>
+<li>用户要求“做在 CPA 上”，已部署到宝塔 <code>&lt;LAN-8&gt;:8787</code>（systemd <code>cpa-model-status</code>）。</li>
+<li>探测本机 8317；Hermes 本机 user 服务可停以免混淆。</li>
+<li>页面：<code>http://&lt;LAN-8&gt;:8787/</code>。</li>
+</ul>
+<h2 id="2026-07-19-cpa_2">2026-07-19 | 删除 CPA 模型状态探测</h2>
+<ul>
+<li>用户不需要；已停用并删除宝塔 <code>cpa-model-status</code> 服务/脚本/状态文件。</li>
+<li>Hermes 本机对应脚本与 user 服务一并清理；8787 关闭。</li>
+</ul>
+<h2 id="2026-07-19-8317-v1models">2026-07-19 | 8317 /v1/models 恢复固定裸名白名单</h2>
+<ul>
+<li>仅恢复 <code>cpa-stable-proxy</code>（无其它自动脚本）。</li>
+<li>CPA docker <code>18317</code>；边缘代理 <code>8317</code> 只吐 stable 裸名；chat 透传 failover。</li>
+<li>验证：edge 无 <code>/</code> 前缀名；chat 200。</li>
+</ul>
+<h2 id="2026-07-19-8317">2026-07-19 | 8317 模型名大小写归一</h2>
+<ul>
+<li><code>cpa-stable-proxy</code> 现将请求中的模型名按稳定白名单做大小写归一后再转发。</li>
+<li><code>Grok-4.5</code>/<code>GROK-4.5</code>/<code>Claude-Opus-4-8</code> 都会归一到标准裸名再路由。</li>
+<li>backend 18317 仍保持精确匹配；归一只在 8317 边缘层发生。</li>
+</ul>
+<h2 id="2026-07-20-abrdns">2026-07-20 | ABRDNS 福利站每日签到</h2>
+<ul>
+<li>复用本机 Chrome 已登录 Linux DO 会话，OAuth 授权福利站。</li>
+<li>今日已签到 $5.19 x3；脚本+cron 08:00–08:30 随机。</li>
+<li>不绕过 Cloudflare；会话失效需本机 Chrome 保持 linux.do 登录。</li>
+</ul>
+<h2 id="2026-07-20-unsnow">2026-07-20 | Unsnow 每日签到</h2>
+<ul>
+<li><code>api.unsnow.org</code> New-Api-User + access token；POST <code>/api/user/checkin</code>。</li>
+<li>今日成功奖励 250000000 quota；cron 08:00–08:30 随机，no_agent。</li>
+</ul>
+<h2 id="2026-07-20-deepseek-flash-mimo-v25">2026-07-20 | 固定菜单移除 DeepSeek Flash / Mimo v2.5</h2>
+<ul>
+<li>用户要求从 CPA 8317 stable 白名单与 Hermes 固定菜单移除 <code>deepseek-v4-flash</code>、<code>mimo-v2.5</code>。</li>
+<li>保留 <code>deepseek-v4-pro</code>、<code>mimo-v2.5-pro</code>；不改上游 provider 配置或路由池。</li>
+</ul>
+<h2 id="2026-07-20-cpa">2026-07-20 | 禁止 CPA 上游定时探活</h2>
+<ul>
+<li>清理本机遗留 <code>cpa-model-audit-sync</code> systemd timer/service 与审计同步脚本。</li>
+<li>宝塔无活动 sync/probe/health/quality/watch 定时器；仅保留被动转发的 stable-proxy 与 RawChat 桥。</li>
+<li>后续不得对 CPA 上游定时 <code>/models</code>、chat 或 health 探测；大报文 agent 工作负载禁止。</li>
+</ul>
+<h2 id="2026-07-20-byd">2026-07-20 | BYD 每日签到</h2>
+<ul>
+<li><code>some.byd.skin</code> New-Api-User + access token；POST <code>/api/user/checkin</code>。</li>
+<li>今日成功奖励 10000000 quota；cron 08:00–08:30 随机，no_agent。</li>
+</ul>
+<h2 id="2026-07-20-cc-switch-codex">2026-07-20 | CC Switch Codex 间歇失败</h2>
+<ul>
+<li>根因：上游余额/全站额度/并发 + 冷却导致 auth_unavailable；非菜单挂死。</li>
+<li>修：fallback 对齐菜单；abrdns 模型名大小写；edge 超时 300s。</li>
+<li>验证：grok-4.5 200；gpt-5.4 403 时段额度；gpt-5.6-terra 403 余额。</li>
+</ul>
+<h2 id="2026-07-20-cpa-failover">2026-07-20 | CPA 抗反分发 failover 加固</h2>
+<ul>
+<li>空 alias（含 temp2）；手动 priority 降权斑马；cooldown 90s；retry/cred 4/8。</li>
+<li>验证：grok 5/5、多数模型 200；glm 2/3 仍 failover。</li>
+</ul>
+<h2 id="2026-07-20">2026-07-20 | 抗反分发稳定输出</h2>
+<ul>
+<li>根因：公共站被标 Codex UA → ua_blocked + 冷却雪崩；edge 透传 agent 头。</li>
+<li>修：edge 剥指纹；公共站 OpenAI/Python UA；fingerprint 仅 RawChat；清 cds。</li>
+<li>验证：grok-4.5 6/6 + responses 200（伪造 CC Switch 头仍稳）。</li>
+</ul>
+<h2 id="2026-07-20_1">2026-07-20 | 新站自动规范化</h2>
+<ul>
+<li>systemd <code>cpa-new-site-normalize</code> 监听 config：公共站 OpenAI/Python UA + 空 alias。</li>
+<li>不探活、不改 priority/站点集合；已修 temp4。</li>
+</ul>
+<h2 id="2026-07-21-0xpsyche-welfare">2026-07-21 | 0xPsyche Welfare 每日签到</h2>
+<ul>
+<li><code>welfare.0xpsyche.me</code> New-Api-User + access token；POST <code>/api/user/checkin</code>。</li>
+<li>今日已签到 12500000 quota；cron 08:00–08:30 随机，no_agent。</li>
+</ul>
+<h2 id="2026-07-21-anki">2026-07-21 | Anki 卡牌文案配置全量验收</h2>
+<ul>
+<li>修 <code>verify_all.py</code> schema drift 必须在 web 容器内运行的误报。</li>
+<li>修 <code>/api/protocol</code> 缺 <code>cardText/cardTexts</code> 的传播缺口；保存文案现可 protocol/validate 下发。</li>
+<li>容器内端到端覆盖 GET/预览/导入/探针/保存/导出/下载开关隔离/回滚，全部 PASS；<code>verify_all ready=true</code>。</li>
+</ul>
+<h2 id="2026-07-22-anki">2026-07-22 | Anki 全后台功能审计</h2>
+<ul>
+<li>全服务、公开 API、后台只读 handler、鉴权边界、资源/日志均实测通过；<code>FULL_ANKI_AUDIT_OK</code>。</li>
+<li>修 API 源码弱默认 admin token 残留为 fail-closed deny-list；清理现行文件裸 <code>except:</code>。</li>
+<li>最终 <code>verify_all success=true ready=true</code>。</li>
+</ul>
+<h2 id="2026-07-22-anki_1">2026-07-22 | Anki 全功能深度复审</h2>
+<ul>
+<li>全路由未认证矩阵：后台 session 99、token 4、后台页面 6、公开端 9，均符合授权边界。</li>
+<li>容器内 51 个无参数后台 GET handler 全部 200；Redis AOF/RQ/DB迁移/静态安全均通过。</li>
+<li>deck meta 与 activation event 的未匹配关联确认是设计性历史/审计保留，不删。</li>
+</ul>
+<h2 id="2026-07-22">2026-07-22 | 牌组密钥回收站</h2>
+<ul>
+<li>新增 <code>DeckKeyRecycle</code>；单删/批量/全清/按日/智能清理均改为软删入回收站。</li>
+<li>API：list/restore/purge；前端牌组管理页增加回收站面板。</li>
+<li>E2E 删除→恢复→永久删除通过；<code>verify_all ready=true</code>。</li>
+</ul>
+<h2 id="2026-07-22-cc-switch-codex-tool_calls-400">2026-07-22 | CC Switch Codex tool_calls 400</h2>
+<ul>
+<li>根因：CC Switch <code>/responses.input[]</code> 历史 assistant <code>tool_calls[]</code> 可缺 <code>id</code>/<code>function.name</code>，原 8317 只修顶层 call 的 name。</li>
+<li>8317 浅层补 id/name/call_id，严格不触碰 <code>role=tool</code> / function_call_output；纯本地回归通过。</li>
+</ul>
+<h2 id="2026-07-22-anki_2">2026-07-22 | Anki 单设备解绑</h2>
+<ul>
+<li>根因：设备卡片调用的 <code>deleteDevice(...)</code> 前端函数缺失，浏览器不发请求。</li>
+<li>补函数+后端审计/错误提示；临时设备 E2E 解绑/重复404/未授权302通过，<code>verify_all ready=true</code>。</li>
+</ul>
+<h2 id="2026-07-22_1">2026-07-22 | 牌组密钥回收站清空</h2>
+<ul>
+<li>增加 UI「清空回收站」+ <code>DELETE /api/admin/deck_key_recycle/clear</code>。</li>
+<li>需精确确认词+二次确认；只永久删除回收站条目，记录 critical 审计。</li>
+<li>事务 E2E/未授权/全站验收通过。</li>
+</ul>
+<h2 id="2026-07-22-10">2026-07-22 | 后台卡“最多等待 10 秒”</h2>
+<ul>
+<li>根因：清空回收站前端 <code>prompt</code> 单引号跨行，整页 JS 语法错误，<code>refreshData</code> 不执行。</li>
+<li>修 prompt 为 <code>\n</code>；给 <code>refreshData</code> 加渲染 try/catch；主数据接口本身一直 200。</li>
+</ul>
+<h2 id="2026-07-22_2">2026-07-22 | 清空回收站去掉确认词</h2>
+<ul>
+<li>前后端均不再要求 <code>CLEAR_ALL_RECYCLED_DECK_KEYS</code>；只保留一次 confirm。</li>
+</ul>
+<h2 id="2026-07-22-luckyg">2026-07-22 | luckyg 每日签到</h2>
+<ul>
+<li><code>luckyg.131518.xyz</code> id=966；今日签到成功 +3147838 quota。</li>
+<li>cron 08:00–08:30 随机，no_agent；secrets 600。</li>
+</ul>
+<h2 id="2026-07-24-anki-ip">2026-07-24 | Anki IP 历史未知</h2>
+<ul>
+<li>根因：Vore DNS 失败 + IPShudi 正则过严 + 本地 xdb utf-8 解码失败。</li>
+<li>修：IPShudi 正则、ip-api 兜底、xdb 多编码、回填 12 条未知；目标 <PUBLIC-IP> → 郑州教育网。</li>
+</ul>
+<h2 id="2026-07-24">2026-07-24 | 打开卡片误提示网络环境变化</h2>
+<ul>
+<li>截图实际为 IP_CHANGE_REAUTH_REQUIRED，非首次 AUTH_REQUIRED。</li>
+<li>根因：近期 IP 未按时间窗统计，移动网络 NAT 易误伤。</li>
+<li>修：24h 窗口 + 阈值 6；首次未激活仍正确显示“请输入激活码”。</li>
+</ul>
+<h2 id="2026-07-24-risk_locked">2026-07-24 | RISK_LOCKED 跨激活码误伤</h2>
+<ul>
+<li>码 BDF3G5729UCX 0 设备；手机指纹已绑 R6RQFDXQEGJE 并带江西→北京 risk_locked。</li>
+<li>静默无码不再展示外码轨迹；清锁 7 台；运营商 IP 不再写瞬移锁。</li>
+<li>复测静默 OK；新设备 AUTH_REQUIRED。</li>
+</ul>
+<h2 id="2026-07-24_1">2026-07-24 | 一键解绑/指纹碰撞/手机按钮</h2>
+<ul>
+<li>补 unbindAllDevices + 按码批量解绑 API；移动端设备弹窗按钮缩小。</li>
+<li>无码静默禁止跨激活码盲匹配同一 device_id。</li>
+</ul>
+<h2 id="2026-07-24_2">2026-07-24 | 指纹碰撞防护优化</h2>
+<ul>
+<li>无码禁止跨码盲匹配；支持 scopedDeviceId；protocol 下发 fingerprintPolicy。</li>
+<li>新增 fingerprint_lookup 与后台查询入口；验证多码同指纹不再 RISK_LOCKED。</li>
+<li>服务器无打包器源码；落地 JS/Python 片段与公开下载路由。</li>
+<li>服务端可按 deckId 派生 scoped id；protocol 暴露 fingerprintPolicy.snippetEndpoints。</li>
+<li>以雅思词汇真经样本建立 Python CLI；输入包禁止覆盖，sandbox 产物注入 scopedDeviceId runtime。</li>
+<li>3673 notes/cards、3633 media、调度/CSS/媒体映射验收通过；原包 SHA 不变。</li>
+<li>protect：字段 AES 加密 + 激活 UI + validate/dynamicKeyToken 解密渲染。</li>
+<li>样本包同步 deck_id=DK-IELTS-PROT-8358C3AC；原包未改；6 tests passed。</li>
+</ul>
+<h2 id="2026-07-25-10">2026-07-25 | 后台再次卡加载 10 秒</h2>
+<ul>
+<li>公告函数恢复后顶层 jQuery 绑定影响 boot；改为 ready 内绑定 + refreshData 优先 + failsafe。</li>
+</ul>
+<h2 id="2026-07-25">2026-07-25 | 编辑全站公告优化</h2>
+<ul>
+<li>完整字段回填、草稿载入、画布/HTML 模式、sticky 操作栏、防重复发布、Ctrl+S 草稿。</li>
+</ul>
+<h2 id="2026-07-26">2026-07-26 | 公告排版优化</h2>
+<ul>
+<li>分层标题/渠道/三步故障处理；横幅同步优化；适配 sanitize 白名单并已发布。</li>
+</ul>
+<h2 id="2026-07-27">2026-07-27 | 网页配置工作台去重</h2>
+<ul>
+<li>合并重复下载/教程/版本表单为唯一入口；FullOps 仅留工具；保存链路统一。</li>
+</ul>
+<h2 id="2026-07-28-abrdns-hcaptcha">2026-07-28 | ABRDNS 签到 hCaptcha</h2>
+<ul>
+<li>根因：福利站 POST /checkin 需 hCaptcha；主站签到 API 未启用。</li>
+<li>脚本改为 HCAPTCHA_REQUIRED + 可选交互签到；禁止自动过验证。</li>
+</ul>
+<h2 id="2026-09-29-ip">2026-09-29 | 指定 IP 段端口扫描脚本</h2>
+<ul>
+<li>新增 <code>~/.hermes/scripts/port_scan.py</code> v1.0.0：纯标准库并发 connect 扫描，支持 CIDR/区间/末位简写/主机名与 top 端口集，输出 text/json/csv。</li>
+<li>关键修复：本机 <code>/etc/services</code> 会把 443 解析成 microsoft-ds、139 解析成 http、8080 带注释换行 → 内置 WELL_KNOWN 权威表覆盖（含 5700/5778/8317/18317/8006）。</li>
+<li>误扫保护：主机数默认上限 4096（超出退出码 3）；单点探测异常不中断整轮。</li>
+<li>真实回归：本机真实监听回扫精确命中（含 banner 抓取与 UDP echo）；真实内网 <LAN-1>-10 用 1.5s 命中 42 个开放端口，与已知拓扑一致。</li>
+<li>边界：UDP 仅 open / open|filtered；仅限自有或已授权资产，禁止对 CPA 上游等第三方探测。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>取消 CPA 自动设置站点优先级（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="cpa-2026-07-18">取消 CPA 自动设置站点优先级（2026-07-18）</h1>
+<h2 id="_1">目标</h2>
+<p>用户要求：<strong>不要再有脚本自动设置 CPA 站点 priority</strong>。</p>
+<h2 id="priority">原先会改 priority 的路径</h2>
+<ol>
+<li><code>cpa_auto_priority.py</code>
+   - 被 <code>sync_cpa_models_notify.sh</code> 调用（定时同步）
+   - 被 <code>cpa_provider_watch.py</code> 在拓扑变更前后调用</li>
+<li><code>cpa_upstream_quality.py</code>
+   - cron / notify 后置：对 401/慢上游 demote priority 并可能 <code>docker restart</code></li>
+</ol>
+<h2 id="_2">已落地</h2>
+<h3 id="1-wrapper">1) 同步 wrapper</h3>
+<p><code>/root/cli-proxy-data/scripts/sync_cpa_models_notify.sh</code>
+- 删除所有 <code>cpa_auto_priority.py</code> 调用
+- 仍跑：sync + provider_audit + upstream_quality + stable_menu_policy</p>
+<h3 id="2-provider-watch">2) provider watch</h3>
+<p><code>/root/cli-proxy-data/scripts/cpa_provider_watch.py</code>
+- <code>run_auto_priority()</code> 改为 <strong>no-op 日志</strong>：<code>auto-priority disabled (skip)</code>
+- 拓扑变更只触发 model sync，不再前后写 priority
+- 已 <code>systemctl restart cpa-provider-watch</code>，active</p>
+<h3 id="3-auto_priority">3) auto_priority 硬开关</h3>
+<p><code>/root/cli-proxy-data/scripts/cpa_auto_priority.py</code>
+- 默认直接退出：
+  <code>DISABLED: auto priority assignment is off ...</code>
+- 仅在以下情况才会真正写 priority：
+  - <code>--force</code>
+  - 或环境变量 <code>CPA_AUTO_PRIORITY_ENABLED=1</code></p>
+<h3 id="4-quality-priority">4) quality 只告警不写 priority</h3>
+<p><code>/root/cli-proxy-data/scripts/cpa_upstream_quality.py</code>
+- 仍读日志、写 <code>upstream_alerts.json</code> / 计划变更
+- <strong>不再</strong> <code>save_cfg</code> / 改磁盘 priority / restart 容器
+- 有计划变更时打印 <code>PRIORITY_WRITE_DISABLED</code></p>
+<h2 id="_3">验证</h2>
+<ul>
+<li><code>python3 cpa_auto_priority.py</code> → DISABLED, exit 0</li>
+<li><code>sync_cpa_models_notify.sh</code> 无 auto_priority</li>
+<li>watch active，函数为 disabled skip</li>
+<li>quality 实跑：<code>NO_PRIORITY_CHANGE</code> / alerts only</li>
+<li>当前 priority 快照（未被动改）：</li>
+<li>RawChat 90, 薄荷 40, mimo 70, 魔方 20, 喵喵 40, 简直了 10, snote-temp 20, alfred-temp 10, 烁 79</li>
+</ul>
+<h2 id="_4">备份</h2>
+<ul>
+<li><code>*.bak_disable_auto_prio_20260718_220001</code></li>
+<li><code>cpa_upstream_quality.py.bak_disable_prio_write_20260718_220829</code></li>
+</ul>
+<h2 id="_5">回滚</h2>
+<ol>
+<li>从上述 bak 恢复脚本</li>
+<li>或对 auto_priority 用 <code>--force</code> / <code>CPA_AUTO_PRIORITY_ENABLED=1</code> 临时手动一次</li>
+<li>restart <code>cpa-provider-watch</code></li>
+</ol>
+<h2 id="_6">说明</h2>
+<ul>
+<li><strong>面板手动改 priority 不受影响</strong></li>
+<li>模型同步、稳定菜单、故障转移（空 alias + RR）仍在</li>
+<li>只是不再由脚本自动分配/降权 priority</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

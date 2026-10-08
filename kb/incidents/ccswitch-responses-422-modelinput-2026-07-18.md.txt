@@ -1,0 +1,45 @@
+# CC Switch 422 ModelInput（清洗过深导致，2026-07-18）
+
+## 报错
+```
+unexpected status 422 Unprocessable Entity
+CC Switch ... Codex endpoint /responses
+Provider: cpa; model: gpt-5.6-sol; upstream_status: HTTP 422
+cause: Failed to deserialize the JSON body into the target type:
+data did not match any variant of untagged enum ModelInput
+url: http://127.0.0.1:15721/v1/responses
+```
+用户：CC Switch 选 custom **grok-4.5**，改菜单/清洗后一直报错。
+
+## 根因
+1. **实际请求模型仍是 `gpt-5.6-sol`**（错误体写明），不是 grok-4.5 —— CC Switch 模型映射/默认模型问题。
+2. **422 根因**：上一版 `/responses` sanitizer **深度递归**给不该有 `name` 的项加了字段
+   - 例如 `function_call_output`、部分 content parts
+   - 破坏 Codex `ModelInput` 反序列化 → 422
+3. 日志侧大量 422 也出现在 `/v1/chat/completions`（外网 43.x），与 responses 清洗叠加混淆。
+
+## 修复（已落地）
+- `cpa_stable_models_proxy.py`：**安全清洗**
+  - 只处理 top-level `input[]` 里 `type in {function_call, tool_call, ...}` 且缺 `name` 的项
+  - **不再** deep-walk 整棵树
+  - **绝不**给 `function_call_output` 加 `name`
+- `codex_fingerprint.js`：同样收紧
+- 备份：`*.bak_safe422_20260718_084718`
+
+## 验证
+| 用例 | 结果 |
+|---|---|
+| grok-4.5 string/msg/input_text parts `/responses` | **200**（18317+8317） |
+| unit：fco 不被加 name | pass |
+| unit：fc 缺 name 会补 | pass |
+| gpt-5.6-sol 当前 | **429 model_cooldown**（上游冷却/额度，不是 422） |
+
+## CC Switch 必查
+1. Base URL: `http://<LAN-8>:8317/v1`
+2. 自定义模型 ID 必须是 **`grok-4.5`**（不能是 sol，也不能别名指错）
+3. 若 UI 显示 Grok 但错误体 `model: gpt-5.6-sol` → 改 Provider 模型映射/默认模型
+4. 改完后**新开对话**（旧会话历史可能仍带 sol 的 tool items）
+
+## 与「name is required」关系
+- 400 name required：缺 name → 需要补
+- 422 ModelInput：补错了/补多了 → 本次收紧修复

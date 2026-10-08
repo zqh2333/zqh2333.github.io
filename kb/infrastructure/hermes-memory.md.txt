@@ -1,0 +1,19 @@
+# Hermes + TencentDB Agent Memory
+
+## 组件
+- Hermes Memory Provider：`memory_tencentdb`
+- Gateway 服务：`tencentdb-memory-gateway.service`（用户级 systemd）
+- 监听：`127.0.0.1:8420`
+- 数据目录：`~/.memory-tencentdb/memory-tdai/`
+- 存储：本地 SQLite + FTS5/BM25
+
+## 模型
+记忆提取复用 Hermes 当前 OpenAI 兼容模型端点；模型名称为 `gpt-5.6-terra`。
+
+## 验证
+2026-07-15：
+- `systemctl --user is-active tencentdb-memory-gateway.service` 返回 `active`。
+- `GET http://127.0.0.1:8420/health` 返回 `status: ok`。
+- Hermes 真实对话已自动写入 Gateway，并可通过对话搜索接口检索。
+
+相关：[[incidents/tencentdb-memory-keyword-recall]]

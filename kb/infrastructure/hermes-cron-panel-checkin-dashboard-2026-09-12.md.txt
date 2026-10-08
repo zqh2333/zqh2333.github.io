@@ -1,0 +1,22 @@
+# Hermes Cron 面板签到看板升级
+
+- 日期：2026-09-12
+- 文件：`~/.hermes/scripts/hermes_cron_panel.py`
+- 服务：`hermes-cron-panel.service`，监听 `0.0.0.0:8421`
+
+## 改动
+
+- 首页增加“签到自动化看板”视觉区。
+- 新增统计：签到任务数、签到成功数、失败数、运行中、总余额/额度。
+- 从最近 cron 输出解析 `CHECKIN_SUCCESS`、`CHECKED_IN`、`CLAIMED`、`ALREADY_ACTIVE`、`领取成功`、`签到成功`。
+- 提取字段：`quota`、`quota_awarded`、`remainingAmount`、`balance/余额`，并在表格新增“签到/余额”列。
+- 美化为渐变卡片、hero 区、现代统计卡，保留青龙式左侧导航/任务表格/脚本管理。
+
+## 验证
+
+- `python3 -m py_compile` 通过。
+- systemd user 服务重启后 active。
+- `/api/jobs` 返回 dashboard：签到任务 10、签到成功 6、失败 4、总余额/额度 14.29M。
+- 浏览器登录后首页显示：`6 / 10`、`14.29M`，表格列显示各任务奖励/余额，如 SharedChat `剩余 50`、薄荷 `奖励 75000`。
+- LAN 地址 `http://<LAN-4>:8421/` HTTP 200。
+- 服务日志无 traceback/error/明文 token/password 泄露。

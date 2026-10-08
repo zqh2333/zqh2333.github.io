@@ -1,0 +1,36 @@
+# Anki 下载按钮关闭后其余全关且无法再开（2026-07-18）
+
+## 现象
+- 只关「下载按钮」
+- 入口动画/成功横幅/失败遮罩/弱网重试/水印等全部变关
+- 再点开启也打不开
+
+## 根因
+卡牌文案页开关 DOM 同时有：
+1. `<input type=hidden data-path=... value="true|false">`
+2. `<button data-path=...>`（value 为空字符串）
+
+`syncFormToJson()` 遍历所有 `[data-path]`。
+按钮空值经 `boolOn('')` 被当成 **false**，后写覆盖先写，于是：
+- 任意一次切换/保存都会把**全部开关写成 false**
+- 再开也会被按钮空值盖回 false
+
+## 修复
+文件：`app/routes/admin.py`（卡牌显示与反应控制页内嵌 JS）
+1. `syncFormToJson` 只读 `input/textarea/select[data-path]`，不读 button
+2. `toggleSwitch` 只改 `input[data-path=...]`
+3. 按钮改为 `data-switch-path`，避免再污染
+4. `boolOn` 空值不再默认 false
+5. 保存校验检查整组 reaction 开关一致性
+
+## 数据恢复
+已把 reaction/overlay 默认功能恢复为开启，**仅** `enableDownloadButton=false`。
+
+## 验证
+- JS 模型：旧逻辑全 false；新逻辑仅 download false
+- API/Admin：其余 enable* = true，download=false
+- 来回 OFF→ON→OFF：其余开关始终 true（`TOGGLE_ISOLATION_OK`）
+- `/api/protocol`：downloadAvailable/showDownload=false
+
+## 用户操作
+强制刷新管理后台（Ctrl+F5）后再试开关。

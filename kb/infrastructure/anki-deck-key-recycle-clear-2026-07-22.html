@@ -1,0 +1,21 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>牌组密钥回收站：清空功能（2026-07-22） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="2026-07-22">牌组密钥回收站：清空功能（2026-07-22）</h1>
+<h2 id="_1">新增</h2>
+<p>后台「牌组专属密钥管理 → 密钥回收站」增加 <strong>清空回收站</strong>。</p>
+<ul>
+<li>UI：红色「清空回收站」按钮。</li>
+<li>前端只需一次 <code>confirm</code> 确认，<strong>无需输入确认词</strong>（2026-07-22 按用户要求去掉）。</li>
+<li>后端：<code>DELETE /api/admin/deck_key_recycle/clear</code>（不再校验确认词）。</li>
+<li>未登录仍被管理鉴权拦截。</li>
+<li>清空为<strong>永久删除</strong>，只影响 <code>deck_key_recycle</code> 记录；不会删除当前有效 <code>decks</code> 或 <code>deck_key_meta</code> 历史元数据。</li>
+<li>写入 <code>AdminOperationLog</code>：<code>deck_key_recycle_clear</code> / <code>critical</code>。</li>
+</ul>
+<h2 id="_2">验证</h2>
+<ul>
+<li>无确认词请求：事务内真实清空路径成功并回滚。</li>
+<li><code>verify_all.py</code>: <code>success=true</code>, <code>ready=true</code>。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>首次激活却提示 RISK_LOCKED「江西→北京」（2026-07-24） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="risk_locked2026-07-24">首次激活却提示 RISK_LOCKED「江西→北京」（2026-07-24）</h1>
+<h2 id="_1">用户反馈</h2>
+<ul>
+<li>苹果手机第一次激活</li>
+<li>激活码 <code>BDF3G5729UCX</code> 后台 0 设备</li>
+<li>却提示：轨迹瞬移 4 小时内由江西突变至北京（<code>RISK_LOCKED</code>）</li>
+</ul>
+<h2 id="_2">根因</h2>
+<ol>
+<li>激活码 <code>BDF3G5729UCX</code> 确实从未绑定设备。</li>
+<li>该 iPhone 的 <code>device_id=HW-9993F969E659AB20FB0686CD</code>（hash <code>07cc95e6c3</code>）<strong>已绑定其它激活码</strong> <code>R6RQFDXQEGJE</code>（设备 id 754）。</li>
+<li>静默校验在无 <code>code_input</code> 时用 <strong>全局 device_id</strong> 命中这台旧设备，继承了其 <code>ip_history</code> 上的 <code>risk_locked</code>（江西→北京）。</li>
+<li>因此对「本码未激活」的用户展示了<strong>别的码的 IP 轨迹</strong>。</li>
+</ol>
+<h2 id="_3">修复</h2>
+<ul>
+<li>静默无码路径：若命中设备存在 <code>risk_locked</code> 或 IP 高风险，改为返回 <code>AUTH_REQUIRED</code>「请输入激活码」，<strong>不再展示外码轨迹文案</strong>。</li>
+<li>Worker：移动/电信/联通/教育网等运营商 IP 不再因省际跳变写 <code>risk_locked</code>（仅机房类 ISP 保留）。</li>
+<li>已清理 7 台设备的错误 <code>risk_locked</code> 标记（含设备 754）。</li>
+</ul>
+<h2 id="_4">当前状态（验证）</h2>
+<ul>
+<li>该指纹静默打开雅思牌组：<code>error_code=OK</code> / 激活成功（复用已有绑定 <code>R6RQFDXQEGJE</code>）</li>
+<li>全新指纹无码：<code>AUTH_REQUIRED</code> / 请输入激活码</li>
+<li><code>BDF3G5729UCX</code> 仍为 0 设备（若用户坚持用这码绑定，需在输入框显式输入）</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

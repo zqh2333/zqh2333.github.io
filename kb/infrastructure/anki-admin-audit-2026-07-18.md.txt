@@ -1,0 +1,46 @@
+# Anki 管理后台巡检（2026-07-18）
+
+## 部署
+- 路径：`/www/anki_server`（宝塔 LXC 211）
+- 入口：`https://anki.example.com:2333` → 内网 `0.0.0.0:5778`
+- 栈：nginx + gunicorn web + worker + monitor + mysql8 + redis
+- 版本：`configVersion/protocolVersion v136.7`
+
+## 运行状态
+- 6 容器全部 Up；db/redis healthy
+- `/api/status` 200：db/redis ok；devices=323, activationCodes=1471, deckKeys=183
+- 真实浏览器持续轮询 `/api/admin/data` 与 `/api/status` 均为 200（生产在用）
+- 无端口冲突（5778 仅 anki）
+- 资源正常（web ~379MB，db ~543MB，CPU 低）
+
+## 自检 verify_all
+- 绝大多数检查 OK（编译、静态标记、HTTP、管理鉴权 302、日志无异常、主数据内部验收 total_items=1471）
+- **唯一失败**：Schema drift 在**宿主机**直连 `DATABASE_URL` 的 `db` 主机名失败（Docker 内网名）。属验收脚本运行位置问题，不是生产库挂了。
+- Dashboard JS 语法：跳过（环境无 node）→ warn
+
+## 代码问题（非阻断）
+1. `app/routes/api.py` 存在默认 `DEFAULT_ADMIN_TOKEN = "SuperAdmin2026_ChangeMe"`；当前 `.env` 已配置 `ANKI_ADMIN_TOKEN`，生产走 env。建议确认永远不要回落到默认值。
+2. `app/routes/admin.py` 约 3444 行 `except:` 裸捕获，排障困难，建议改为 `except Exception`。
+3. Monitor 周期性提示 Device 1032 IP=未知IP，随后多报“无需修复”；属数据质量噪音，非服务故障。
+
+## 功能结论
+- 管理后台核心功能可用：状态、数据列表、激活校验链路、worker 队列、monitor 巡检均正常。
+- 未发现容器/端口/依赖冲突。
+- 未发现导致后台不可用的阻断级 bug。
+
+## 建议
+1. 修 verify_all 的 DB 检查：容器内执行或把 host 映射为 127.0.0.1/服务名。
+2. 去掉/强化默认 admin token 回落。
+3. 处理 device 1032 未知 IP 脏数据（可选）。
+
+## 已修复（同日）
+1. **默认 ADMIN_TOKEN 回落**
+   - `app/routes/api.py`：不再使用可用弱默认口令
+   - 引入 `INSECURE_DEFAULT_TOKENS`，未配置/弱 token 一律失败关闭
+2. **裸 except**
+   - `app/routes/admin.py` 批量导入解码：`except:` → `except Exception:`
+3. **verify_all Schema drift**
+   - 改为 `docker exec anki_server-web-1` 内执行，可解析 `db` 服务名
+   - 复测：`missing=[] extra_count=0`，`verify_all success=true ready=true` exit 0
+
+备份：`*.bak_fix_20260718_052537`

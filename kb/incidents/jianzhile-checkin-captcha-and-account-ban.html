@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>简直了签到验证码 OCR 方案 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="ocr">简直了签到验证码 OCR 方案</h1>
+<h2 id="_1">日期</h2>
+<p>2026-07-16</p>
+<h2 id="_2">背景</h2>
+<p>简直了（jianzhile.vip）每日签到需要图片验证码。验证码为 160×58 的 PNG，混合中文字符、英文字母与数字，每次随机生成。答案即图片上按阅读顺序显示的全部字符。</p>
+<h2 id="_3">已验证可用的自动化路径</h2>
+<ul>
+<li>登录：<code>POST /api/user/login</code> 用账号密码，从 <code>Set-Cookie</code> 取 <code>session</code>（HttpOnly, SameSite=Strict）。</li>
+<li>取验证码：<code>POST /api/user/checkin/captcha</code>，携带 <code>Cookie: session</code> 与 <code>New-Api-User: &lt;id&gt;</code>，返回 <code>data.captcha_image</code>（data URL）与 <code>data.captcha_id</code>。</li>
+<li>提交：<code>POST /api/user/checkin</code>，body <code>{"captcha_id":..,"captcha_answer":..}</code>。成功返回 <code>data.quota_awarded</code>；重复签到返回 <code>message</code> 含“已签到”；验证码错误返回“验证码错误，请重试”。</li>
+<li>脚本：<code>~/.hermes/scripts/jianzhile_daily_checkin.py</code>，凭据在 <code>~/.hermes/secrets/jianzhile.env</code>（权限 600）。Cron 任务 <code>ad9a8ca09987</code> 每日 09:00 运行，已固定模型 <code>glm-5.2 / custom:cpa-local-config</code> 以避免配置漂移导致任务跳过。</li>
+</ul>
+<h2 id="ocr_1">OCR 结论</h2>
+<p>单引擎（ddddocr / cnocr / rapidocr）对该类验证码单字符准确率不足 100%，而该站点要求完全正确才会接受。实测可用的组合策略：
+1. 将 data URL 解码为原始 PNG 字节（<strong>关键修复</strong>：之前直接传 data URL 字符串导致 <code>cannot identify image file</code>）。
+2. 用 ddddocr 对原图 + 5 个预处理变体（不同二值化阈值、增强对比度）各识别一次。
+3. cnocr 按坐标排序后拼接；rapidocr 作为第三候选。
+4. 取长度 3–6 且均为合法字符（中文/字母/数字）的候选，按出现频次投票。
+5. 每次失败换新验证码重试，最多 80 次。第一次实跑在第 4 次尝试成功（获得 5,000,000 额度）。</p>
+<h2 id="ocr_2">失败的 OCR 方案（记录以避免重复）</h2>
+<ul>
+<li>paddleocr / easyocr：本机 CPU 指令集不兼容，加载即 <code>非法指令（核心已转储）</code>，不可用。</li>
+<li>纯 ddddocr 或纯 cnocr：单引擎准确率不够，连续 40 次全部失败。</li>
+<li>直接把 data URL 传给 PIL/ddddocr：会报 <code>cannot identify image file</code>，必须先 base64 解码。</li>
+</ul>
+<h2 id="_4">待优化</h2>
+<ul>
+<li>当前成功率约 10%（4/40 内成功 1 次），靠重试堆概率。若需更高一次成功率，应建立字符模板库（已知字符集约 54 个字符）做分割+模板匹配，但需要标注数据。</li>
+<li>用户提示“识别验证码越多越精确”符合本策略：每次成功提交都意味着该次 OCR 候选正确，可用来反向标注积累模板。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

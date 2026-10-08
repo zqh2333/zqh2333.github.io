@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA 新增站点被脚本写回旧列表（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="cpa-2026-07-18">CPA 新增站点被脚本写回旧列表（2026-07-18）</h1>
+<h2 id="_1">用户反馈</h2>
+<p>在 CPA 新增站点后，被脚本删除/恢复成之前的站点列表。</p>
+<h2 id="_2">日志证据</h2>
+<ul>
+<li><code>provider_watch.log</code> 10:27:25：<code>providers changed +[] -['temp1']</code></li>
+<li>说明 watcher 看到<strong>磁盘上已经没有 temp1</strong>，不是它主动删站。</li>
+<li>随后 auto-priority / sync 基于当时 live 列表写回，固化 9 站状态。</li>
+<li>Docker 管理面日志也有面板真实操作：</li>
+<li><code>PUT /v0/management/openai-compatibility</code>（新增）</li>
+<li><code>DELETE /v0/management/openai-compatibility?index=...</code>（删除）</li>
+<li>20:25 一度回到 10 OpenAI-compat，当前磁盘 9 站。</li>
+</ul>
+<h2 id="_3">根因类别</h2>
+<p>多脚本并发整文件写 <code>config.yaml</code>，且部分写盘路径：
+1. 无共享 flock（<code>cpa_auto_priority</code> / <code>cpa_upstream_quality</code> / <code>cpa_safe_model_audit</code>）
+2. 可能用启动时的旧 provider 列表覆盖面板刚新增的站
+3. <code>cpa_safe_model_audit.py</code> 会 <code>write_text</code> 整份 config，原先无 membership 保护</p>
+<p>高风险脚本：
+- <code>cpa_auto_priority.py</code>（写 priority/alias/plugins）
+- <code>cpa_upstream_quality.py</code>（写 priority）
+- <code>sync_cpa_models.py</code>（写 models；已有 partial authority）
+- <code>cpa_safe_model_audit.py</code>（写 models 整文件）</p>
+<h2 id="_4">修复</h2>
+<p>新增共享守卫：<code>/root/cli-proxy-data/scripts/cpa_config_guard.py</code></p>
+<p>规则：
+1. 所有写配置走 <code>cpa_config_write.lock</code> 共享锁
+2. 锁内二次读取 live config
+3. <strong>站点 membership 以面板 live 为准</strong>：脚本只能改仍存在站的 <code>models/priority/disable-cooling</code>
+4. 默认拒绝脚本造成的站点增删（面板才是站点编辑器）
+5. 每次写盘审计到 <code>provider_write_audit.jsonl</code>（+[]/-[]）</p>
+<p>已接入：
+- <code>cpa_auto_priority.py</code>
+- <code>cpa_upstream_quality.py</code>
+- <code>sync_cpa_models.py</code>
+- <code>cpa_safe_model_audit.py</code></p>
+<h2 id="_5">验证</h2>
+<ul>
+<li>旧快照缺新站 → merge 后仍保留 panel-new</li>
+<li>旧快照含已删站 → merge 后不会复活</li>
+<li>旧快照试图缩站 → 不删 live 站</li>
+<li>auto-priority --dry-run / sync --dry-run：真实 config 站点数不变</li>
+<li><code>ALL_GUARD_TESTS_OK</code></li>
+</ul>
+<h2 id="_6">说明</h2>
+<p>若用户在面板主动 DELETE 站点，脚本会跟随删除，不会复活。
+若用户在面板 PUT 新站，脚本不得覆盖掉。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

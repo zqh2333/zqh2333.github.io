@@ -1,0 +1,30 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>简直了 user 登录失败（2026-07-19） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="user-2026-07-19">简直了 user 登录失败（2026-07-19）</h1>
+<h2 id="_1">现象</h2>
+<p>cron 输出：
+- <code>[github_10641] CHECKIN_SUCCESS</code>
+- <code>[user] LOGIN_FAILED: Username or password is incorrect, or user has been banned</code>
+- 整体 exit 1</p>
+<h2 id="_2">核查</h2>
+<ul>
+<li>secrets <code>~/.hermes/secrets/jianzhile.env</code>（600）中已有 <code>user</code>，且与用户本次提供密码一致</li>
+<li>直接调 <code>POST https://jianzhile.vip/api/user/login</code>：</li>
+<li><code>user</code> + 该密码 → <strong>success=false</strong>，message 同上</li>
+<li>用户名大小写/邮箱变体同样失败</li>
+<li><code>github_10641</code> 同接口 → <strong>success=true</strong></li>
+<li>结论：<strong>不是脚本/OCR/cron 问题，是站点侧拒绝该账号密码（错密或封禁）</strong></li>
+</ul>
+<h2 id="_3">处理</h2>
+<ul>
+<li>无需改脚本逻辑即可定位</li>
+<li>密码不写入知识库明文；仅保存在 secrets（600）</li>
+<li>待用户在网页确认账号可登录，或提供正确密码/解封后再跑</li>
+</ul>
+<h2 id="_4">验证命令（成功后）</h2>
+<pre><code class="language-bash">~/.hermes/hermes-agent/venv/bin/python ~/.hermes/scripts/jianzhile_daily_checkin.py user
+</code></pre>
+<p>期望：<code>CHECKIN_SUCCESS</code> 或 <code>ALREADY_CHECKED_IN</code></p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

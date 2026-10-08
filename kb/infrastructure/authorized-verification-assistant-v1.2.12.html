@@ -1,0 +1,220 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Authorized Verification Assistant v1.2.12 + 靶场 v1.0.3 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="authorized-verification-assistant-v1212-v103">Authorized Verification Assistant v1.2.12 + 靶场 v1.0.3</h1>
+<ul>
+<li>日期：2026-09-26</li>
+<li>项目：<code>/home/user/projects/verification-extension</code></li>
+<li>扩展：<code>authorized-verification-assistant</code> <code>1.2.11 → 1.2.12</code></li>
+<li>靶场：<code>verification-challenge-lab</code> <code>1.0.2 → 1.0.3</code></li>
+<li>固定扩展 ID：<code>mgpembebkeoiciopndiciehcokojeldf</code></li>
+</ul>
+<h2 id="_1">本轮目标</h2>
+<p>在「真实第三方反机器人系统不自动求解」这条边界内，把<strong>厂商官方文档发布的测试 key</strong>
+做成可自动化的沙箱路径。测试 key 存在的意义就是让开发者自动化，因此自动化它不构成
+绕过；真实 sitekey 的行为必须<strong>逐字节保持不变</strong>（识别、审计、<code>HUMAN_REQUIRED</code>）。</p>
+<h2 id="_2">边界怎么定的（先实测，再写代码）</h2>
+<p>用官方 test key 建本地页实测 widget 在<strong>无人值守</strong>下的行为：</p>
+<table>
+<thead>
+<tr>
+<th>厂商 test key</th>
+<th>无人值守行为</th>
+<th>结论</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Turnstile <code>1x…AA</code></td>
+<td>零点击自动下发 21 字符 token（文档 dummy token <code>XXXX.DUMMY.TOKEN.XXXX</code>）</td>
+<td>可沙箱自动化</td>
+</tr>
+<tr>
+<td>reCAPTCHA v2 <code>&lt;TOKEN&gt;</code></td>
+<td>15s 内<strong>不</strong>自动出 token，必须点击复选框</td>
+<td>不自动化</td>
+</tr>
+</tbody>
+</table>
+<p>判据因此是<strong>行为</strong>而非厂商：只自动化「widget 在官方 test key 下会自己完成」的部分。
+reCAPTCHA 官方 test key 仍需点击 Google 跨域 iframe，属绕过 primitive，<strong>不造</strong>——只识别为
+沙箱测试 key 并交人工。</p>
+<h2 id="_3">实现</h2>
+<h3 id="_4">白名单：精确字符串，无前缀/子串匹配</h3>
+<pre><code class="language-js">const SANDBOX_SITEKEYS={
+  '&lt;TOKEN&gt;':{provider:'recaptcha',mode:'pass',autoToken:false},
+  '1x00000000000000000000AA':{provider:'turnstile',mode:'pass',autoToken:true},
+  '2x00000000000000000000AB':{provider:'turnstile',mode:'block',autoToken:true},
+  '1x00000000000000000000BB':{provider:'turnstile',mode:'pass',autoToken:true},
+  '2x00000000000000000000BB':{provider:'turnstile',mode:'block',autoToken:true},
+  '3x00000000000000000000FF':{provider:'turnstile',mode:'interactive',autoToken:false},
+};
+</code></pre>
+<p><code>sandboxSitekey()</code> 用对象键精确查找（<code>SANDBOX_SITEKEYS[key]</code>），因此真实 key 不可能误命中。</p>
+<h3 id="turnstile-recaptcha">识别顺序：Turnstile 必须排在 reCAPTCHA 之前</h3>
+<p>两者都用 <code>[data-sitekey]</code>，reCAPTCHA 分支会吞掉 Turnstile。<code>detectProvider()</code> 中
+<code>TURNSTILE_DETECTED</code> 判定前置。</p>
+<h3 id="_5">闸门与求解路径</h3>
+<p>provider 分支改为先过沙箱闸门，未命中才走真实 provider 审计：</p>
+<pre><code class="language-js">const sandbox=await sandboxChallenge();
+if(sandbox){settleProvider(sandbox.state,sandbox.detail);return;}
+await auditProviderChallenge(provider);
+settleProvider('HUMAN_REQUIRED',provider);
+</code></pre>
+<p><code>sandboxChallenge()</code> 返回 <code>{state,detail}</code>（不再用 <code>'handled'/'handoff'</code> 裸字符串）：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>state</th>
+<th>detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Turnstile always-pass</td>
+<td><code>TURNSTILE_SANDBOX_PASS</code></td>
+<td>sitekey + <code>token_len=N</code></td>
+</tr>
+<tr>
+<td>Turnstile always-fail</td>
+<td><code>TURNSTILE_SANDBOX_BLOCKED</code></td>
+<td>sitekey</td>
+</tr>
+<tr>
+<td>Turnstile 强制交互</td>
+<td><code>HUMAN_REQUIRED</code></td>
+<td><code>TURNSTILE_SANDBOX_INTERACTIVE</code></td>
+</tr>
+<tr>
+<td>reCAPTCHA 官方 test key</td>
+<td><code>HUMAN_REQUIRED</code></td>
+<td><code>SANDBOX_RECAPTCHA_TESTKEY</code></td>
+</tr>
+<tr>
+<td>非测试 key</td>
+<td><code>HUMAN_REQUIRED</code></td>
+<td>provider 名（与旧版一致）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">粘性判定（本轮修的真实缺陷）</h3>
+<p><code>MutationObserver</code> 监听 <code>class/style</code> 并 <code>scheduleRun()</code>——验证码控件会持续改 DOM，于是
+<code>run()</code> 反复重入，每次都先把状态重置成 <code>RUNNING</code>，<strong>已判定完的挑战看起来一直在运行</strong>，
+并重复写审计。首次 live 探针就撞到这个：reCAPTCHA test key 页在 <code>RUNNING</code> 卡满 45s。</p>
+<p>修复：</p>
+<pre><code class="language-js">function settleProvider(state,detail){
+  providerDecision={state,detail};
+  try{mutationObserver?.disconnect();}catch(_){}
+  status(state,detail);
+}
+</code></pre>
+<p><code>run()</code> 开头在 <code>status('RUNNING')</code> <strong>之前</strong>加 <code>if(providerDecision){…return;}</code>，判定一次即冻结，
+并断开该页变动监听。</p>
+<h2 id="5-sandboxkind">靶场：5 个沙箱夹具（<code>/sandbox/{kind}</code>）</h2>
+<p>夹具刻意<strong>不带</strong> <code>data-authorized-simulation</code> 标记，走真实 provider 检测路径——否则会走
+本地模拟分支，测不到沙箱闸门。索引页 <code>/</code> 同时列 <code>/challenge/*</code>（8 类授权页）与 <code>/sandbox/*</code>。</p>
+<h2 id="_7">验收证据（第一手）</h2>
+<h3 id="teststest_sandbox_testkey_gatepy">契约测试 <code>tests/test_sandbox_testkey_gate.py</code></h3>
+<pre><code class="language-text">13 passed, 25 subtests passed in 0.15s
+</code></pre>
+<p>守卫：白名单只含官方 test key 且数量恰为 6、真实 demo sitekey 不在白名单、
+Turnstile 判定先于 reCAPTCHA、<code>sandboxChallenge()</code> 不再返回裸字符串、粘性判定存在且
+guard 位于 <code>RUNNING</code> 重置之前、靶场夹具 sitekey 与白名单一致。</p>
+<h3 id="chrome-e2e-teststest_sandbox_fixture_e2epy">真实 Chrome 夹具 E2E <code>tests/test_sandbox_fixture_e2e.py</code></h3>
+<pre><code class="language-text">SANDBOX_TESTKEY_E2E_PASS
+{&quot;lab_health&quot;:true,&quot;sandbox_fixtures_served&quot;:true,&quot;authorized_pages_unchanged&quot;:true,
+ &quot;unpacked_loaded&quot;:true,&quot;version_match&quot;:true,&quot;activation&quot;:true,&quot;real_sitekey_refused&quot;:true,
+ &quot;testkeys_routed_to_sandbox&quot;:true,&quot;sandbox_audited&quot;:true}
+</code></pre>
+<p>5/5 夹具、9/9 检查全 true；<code>recaptcha-real</code>（真实 key）仍 <code>HUMAN_REQUIRED / RECAPTCHA_DETECTED</code>。</p>
+<h3 id="live-testslive_sandbox_testkey_probepy">真实站点 live 探针 <code>tests/live_sandbox_testkey_probe.py</code></h3>
+<pre><code class="language-text">LIVE_SANDBOX_TESTKEY_PASS  (8/8 checks true)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>目标</th>
+<th>结果</th>
+<th>状态</th>
+<th>转换序列</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>demo.turnstile.workers.dev</code>（官方 test key）</td>
+<td>自动通过</td>
+<td><code>TURNSTILE_SANDBOX_PASS</code></td>
+<td><code>null → TURNSTILE_SANDBOX_WAIT → …_PASS</code></td>
+</tr>
+<tr>
+<td>本地页 + reCAPTCHA 官方 test key（真实 Google api.js）</td>
+<td>交人工</td>
+<td><code>HUMAN_REQUIRED / SANDBOX_RECAPTCHA_TESTKEY</code></td>
+<td><code>null → HUMAN_REQUIRED</code></td>
+</tr>
+<tr>
+<td><code>google.com/recaptcha/api2/demo</code>（真实 key）</td>
+<td>拒绝自动化</td>
+<td><code>HUMAN_REQUIRED / RECAPTCHA_DETECTED</code></td>
+<td><code>null → HUMAN_REQUIRED</code></td>
+</tr>
+</tbody>
+</table>
+<p>后两项均 <code>no_forged_token: true</code>（未伪造 token）。</p>
+<h3 id="_8">离线全套回归</h3>
+<pre><code class="language-text">39 passed, 25 subtests passed in 64.41s
+</code></pre>
+<p>（v1.2.11 时为 24 passed；新增契约/夹具/live 相关守卫后 39。）</p>
+<h2 id="nas">产物与 NAS 归档</h2>
+<p>分开交付（插件包 / 靶场包互不包含）：</p>
+<table>
+<thead>
+<tr>
+<th>产物</th>
+<th>字节</th>
+<th>SHA-256</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>authorized-verification-assistant-v1.2.12.zip</code></td>
+<td>21697</td>
+<td><code>&lt;HASH&gt;</code></td>
+</tr>
+<tr>
+<td><code>verification-challenge-lab-v1.0.3.zip</code></td>
+<td>8013</td>
+<td><code>&lt;HASH&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>NAS（回读：从 NAS 下载真实字节后本地哈希与 <code>cmp</code> 逐字节一致，权限 664）：</p>
+<pre><code class="language-text">/volume1/云/Hermes项目产物/authorized-verification-assistant/v1.2.12/
+/volume1/云/Hermes项目产物/verification-challenge-lab/v1.0.3/
+</code></pre>
+<p>独立校验（<code>/tmp/verify_pkgs.py</code>）：两包每个归档条目与源码树<strong>逐字节一致</strong>、无
+<code>.pem/.crx/.key/.db/.sqlite</code>、无多余条目；靶场包<strong>独立解压可运行</strong>
+（<code>/health</code> → <code>version 1.0.3</code>、<code>pages 8</code>、<code>sandbox_pages 5</code>；索引 13 条链接全 200）。</p>
+<h2 id="_9">未验证 / 边界</h2>
+<ul>
+<li><strong>reCAPTCHA 官方 test key 不自动求解</strong>（需点击跨域 iframe）——设计边界，非缺陷。</li>
+<li>全部验证在 <strong>Linux 本地</strong>完成；<strong>Windows Chrome/Edge 实机未验证</strong>。</li>
+<li>live 探针依赖公网，<strong>刻意不进默认 pytest 套件</strong>。</li>
+<li><code>captcha*.scrape.center</code> 需登录才出验证码，<code>secrets/</code> 无账号凭据，<strong>未验证</strong>。</li>
+</ul>
+<h2 id="_10">可复用教训</h2>
+<ol>
+<li><strong>判据用行为，不用厂商名</strong>：同一个「官方 test key」概念下，Turnstile 可无人值守完成、
+   reCAPTCHA 必须点击。按厂商一刀切会要么过度自动化、要么漏掉合法沙箱。</li>
+<li><strong>测试 key 也必须是精确匹配</strong>：用对象键查找而非 <code>startsWith</code>/<code>includes</code>，
+   真实 key 才不可能误命中；契约测试要断言「数量恰为 N」而不只是「包含」。</li>
+<li><strong>终态要有粘性</strong>：任何「观察 DOM 变动 → 重跑」的循环，都会把终态反复打回起始态。
+   判定一次即冻结 + 断开监听，否则现象是「一直 RUNNING」并重复写审计。</li>
+<li><strong>夹具要能测到被测分支</strong>：沙箱夹具必须<strong>不带</strong>授权模拟标记，否则被本地模拟分支
+   短路，沙箱闸门根本没被执行。</li>
+<li><strong>测试包装错一次就够了</strong>：<code>main()</code> 放在 <code>test_*.py</code> 里但无 <code>Test*</code> 类 = 静默收集 0 条。
+   新 E2E 一律包 <code>TestCase</code>，并用 <code>--collect-only</code> 核对条数。</li>
+</ol></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

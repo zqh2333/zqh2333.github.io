@@ -1,0 +1,126 @@
+# Anki 全站公告 Word 式颜色/字体与保存修复（2026-09-02）
+
+## 用户反馈
+- 后台「编辑全站公告与通知」保存不了
+- 不方便编辑颜色、字体，希望像 Word 一样改选区颜色和字体
+
+## 根因
+1. **保存丢画布内容**：`collectAnnouncementData()` 只读 `#annText` textarea，画布 `contenteditable` 的 HTML 未写回 → 草稿/发布看起来“保存不了”。
+2. **工具栏缺选区颜色和字体族**：只有 B/I/U、字号、对齐；没有选区取色器、没有字体下拉。`applyVisualColor` 存在但工具栏未挂控件。
+3. **消毒剥掉 font-family**：`sanitize_announcement_html` 只放行 color/font-size/font-weight/text-align，选中文字改字体后保存即丢失。
+4. 颜色选择器若对 `mousedown` 调 `preventDefault()` 会挡原生取色面板（本次选区色盘未绑 preventDefault）。
+
+未改线上已发布公告；验证只用草稿路径。
+
+## 修复
+- `templates/dashboard.html`
+  - 工具栏增加 `#annFontFamily`（微软雅黑/宋体/黑体/楷体/Arial/Times/Georgia/Courier）
+  - 增加 `#annTextColor` 选区取色（`oninput/onchange` → `applyVisualColor`，不 preventDefault）
+  - 新增 `applyVisualFontFamily`
+  - `collectAnnouncementData` 开头 `_annSyncCanvasToTextarea()`
+  - 打开弹窗默认画布模式
+- `app/utils.py`
+  - 安全 style 增加 `font-family`、`font-style`
+  - font-family 仅允许字母数字、空格、逗号、连字符、引号
+
+备份：
+- `dashboard.html.bak_ann_wordlike_20260902_2008`
+- `utils.py.bak_ann_wordlike_20260902_2008`
+
+## 验证（2026-09-02）
+- 回归：`TEMPLATE_WORDLIKE_OK` / `SANITIZER_WORD_STYLES_OK` / `DRAFT_SAVE_ROUNDTRIP_OK` / `ANNOUNCEMENT_WORDLIKE_REGRESSION_PASS`
+- 消毒保留：`color` `font-size` `font-weight` `font-family` `font-style` `text-align`
+- 草稿写读保留颜色与字体；测试草稿标记已删除，未发布
+- `docker compose restart web` 后 `/api/status` 200；db/redis ok；近期无 announcement traceback
+
+## 使用
+后台 Ctrl+F5 → 编辑全站公告 → 在预览/画布中选中文字 → 点工具栏色盘改颜色 → 保存草稿。
+发布仍立即对用户生效，请先草稿确认。
+
+## 2026-09-02 三次修复：选中后点颜色仍提示「请先选中」
+根因：
+1. 用户实际划选的是 `#annPreviewBox`，代码只认隐藏的 `#annCanvasEditor`。
+2. 原生 `<input type=color>` 一点击就抢走焦点，live Range 失效；`oninput` 在选色过程中反复 apply，于是一直 toast。
+3. `_annSaveSelection` 未挂到 `window`，工具栏 inline `onpointerdown` 调不到。
+
+修复：
+- `_annActiveEditors()` 包含 preview/canvas/marquee
+- 选区改成文字偏移书签（picker 抢焦点后仍能还原）
+- 工具栏 `pointerdown` 捕获阶段保存选区
+- 色盘只在 `onchange` 上色，去掉 `oninput`
+- 预览刷新不覆盖正在编辑的 preview 内容
+
+验证：`BOOKMARK_SELECTION_SOURCE_OK` + `PREVIEW_SELECTION_SOURCE_OK` + `SELECTION_COLOR_PERSIST_PASS`；web 重启 `/api/status` 200；未发布线上公告。
+
+## 2026-09-02 四次修复：Word 式选区颜色/字号/字体
+根因：
+- 字号/字体仍 `_annEnsureCanvasFromHtml` 抢到隐藏画布
+- 保存优先读 canvas HTML，把 preview 里刚改的样式盖掉
+- wrap 后没刷新选区书签
+
+修复：
+- `_annApplySelectionStyles` 统一改选中文字的 color/fontSize/fontFamily/bold/italic/underline
+- `_annSyncCanvasToTextarea` 以书签所在编辑器为准写回
+- wrap 后 `_annRememberRange`
+
+验证：`WORDLIKE_SELECTION_SOURCE_OK` + `WORDLIKE_STYLE_PERSIST_PASS`；未发布。
+
+## 2026-09-03 组件化与维护性重构
+- canonical-v4 已抽离到 `app/static/js/announcement-editor.js`
+- 样式抽离到 `app/static/css/announcement-editor.css`
+- 模板以版本化 URL 引用（当前 `20260903.2`）
+- 删除多代控制器，只保留单一事件所有者
+- 永久测试：`tests/test_announcement_component_regression.py`
+- Chrome E2E 检查真实 computed color、发布、关闭重开，并 finally 恢复公告
+- 后续审查修复 listener 防重、poll timer 取消、字号字段回填、对齐/清色接管和完整字段回读
+
+## 2026-09-02 五次修复：发布恢复原文、字体选择被遮挡
+根因：
+- `collectAnnouncementData()` 先同步编辑内容，随后又将隐藏的旧 `#annCanvasEditor.innerHTML` 覆盖回 `#annText`，所以 POST/发布一直是原文。
+- 工具栏没有独立叠层，字体下拉容易被预览卡片遮挡。
+
+修复：
+- 删除 collect 中同步后的旧 canvas 覆盖；编辑源成为唯一 payload 来源。
+- 工具栏改为 sticky、`z-index:30`、isolation；字体下拉 `z-index:31`、最小宽度并保持可点击。
+
+验证：
+- `PUBLISH_PAYLOAD_AND_TOOLBAR_SOURCE_OK`
+- `PUBLISH_STORAGE_ROUNDTRIP_OK`，随后 `LIVE_CURRENT_RESTORED`（发布模拟后逐字恢复线上公告）
+- web 重启后 `/api/status` 200，无新异常。 
+
+## 2026-09-02 架构收敛：单一 Word 正文编辑器
+截图证实 UI 误导：左列是「公告内容（支持 HTML）」源，右列标题却是「客户端分场景预览」，但工具栏与富文本模式放在右列；用户实际选中文本与工具栏/发布源不是同一个 DOM。
+
+修复：
+- 左侧「公告内容」成为唯一 contenteditable Word 编辑器，工具栏紧贴其下
+- 右侧严格只读预览（禁止 contenteditable/pointer events）
+- 发布 collect 永远取左侧 `#annCanvasEditor.innerHTML`
+- 工具栏字体/颜色/字号仅作用于左侧选中内容
+
+验证：`SINGLE_SOURCE_EDITOR_SOURCE_OK` + `WORDLIKE_STYLE_PERSIST_PASS` + `PUBLISH_STORAGE_ROUNDTRIP_OK`；随后 `LIVE_CURRENT_RESTORED`；服务状态 200。
+
+## 2026-09-02 六次修复：真实发布仍旧内容
+根因：页面有两个发布入口：一个 `type=submit` 的「安全检查后发布」、一个底部直接调用的「发布」，加上历史表单监听，形成容易发送旧 textarea 的并行事件链。
+
+修复：
+- 统一为 `#annPublishBtn` 单一发布入口
+- 隐藏重复的安全发布按钮
+- 每次 submit/click 均先强制把左侧 `#annCanvasEditor.innerHTML` 写入 `#annText`
+- 表单 submit 在捕获阶段拦截，固定走 canonical `submitAnnouncementMode('publish')`
+
+验证：
+- `ONE_PUBLISH_SOURCE_OK`
+- `REAL_HTTP_ANNOUNCEMENT_ROUNDTRIP_OK`：写入样式标记后真实 GET `/api/announcement.json` 立即读到
+- `REAL_HTTP_LIVE_RESTORED`：测试结束后完整恢复线上公告
+- web 重启 `/api/status` 200。
+
+## 2026-09-02 七次修复：浏览器发布仍不落地
+后端已用带管理员 session 的真实 Flask `POST /api/admin/announcement` → admin GET → public GET 全链路验证正常，问题锁定为浏览器历史 inline submit/click 竞争。
+
+修复：
+- 加 `ann-direct-publish-v2` 捕获阶段直连发布器，绕过旧 inline handler
+- 只读取左侧 `#annCanvasEditor` 作为 payload
+- `fetch('/api/admin/announcement')` 成功后以 `cache:no-store` GET `/api/announcement.json?editor_check=...` 回读
+- 回读内容不一致明确报错；一致则显示「已发布并验证生效：版本…」
+
+验证：`DIRECT_PUBLISH_UI_SOURCE_OK` + `<TOKEN>` + `FLASK_POST_LIVE_RESTORED`；服务 200。

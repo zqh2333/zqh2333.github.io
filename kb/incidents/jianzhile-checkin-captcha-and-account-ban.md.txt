@@ -1,0 +1,30 @@
+# 简直了签到验证码 OCR 方案
+
+## 日期
+2026-07-16
+
+## 背景
+简直了（jianzhile.vip）每日签到需要图片验证码。验证码为 160×58 的 PNG，混合中文字符、英文字母与数字，每次随机生成。答案即图片上按阅读顺序显示的全部字符。
+
+## 已验证可用的自动化路径
+- 登录：`POST /api/user/login` 用账号密码，从 `Set-Cookie` 取 `session`（HttpOnly, SameSite=Strict）。
+- 取验证码：`POST /api/user/checkin/captcha`，携带 `Cookie: session` 与 `New-Api-User: <id>`，返回 `data.captcha_image`（data URL）与 `data.captcha_id`。
+- 提交：`POST /api/user/checkin`，body `{"captcha_id":..,"captcha_answer":..}`。成功返回 `data.quota_awarded`；重复签到返回 `message` 含“已签到”；验证码错误返回“验证码错误，请重试”。
+- 脚本：`~/.hermes/scripts/jianzhile_daily_checkin.py`，凭据在 `~/.hermes/secrets/jianzhile.env`（权限 600）。Cron 任务 `ad9a8ca09987` 每日 09:00 运行，已固定模型 `glm-5.2 / custom:cpa-local-config` 以避免配置漂移导致任务跳过。
+
+## OCR 结论
+单引擎（ddddocr / cnocr / rapidocr）对该类验证码单字符准确率不足 100%，而该站点要求完全正确才会接受。实测可用的组合策略：
+1. 将 data URL 解码为原始 PNG 字节（**关键修复**：之前直接传 data URL 字符串导致 `cannot identify image file`）。
+2. 用 ddddocr 对原图 + 5 个预处理变体（不同二值化阈值、增强对比度）各识别一次。
+3. cnocr 按坐标排序后拼接；rapidocr 作为第三候选。
+4. 取长度 3–6 且均为合法字符（中文/字母/数字）的候选，按出现频次投票。
+5. 每次失败换新验证码重试，最多 80 次。第一次实跑在第 4 次尝试成功（获得 5,000,000 额度）。
+
+## 失败的 OCR 方案（记录以避免重复）
+- paddleocr / easyocr：本机 CPU 指令集不兼容，加载即 `非法指令（核心已转储）`，不可用。
+- 纯 ddddocr 或纯 cnocr：单引擎准确率不够，连续 40 次全部失败。
+- 直接把 data URL 传给 PIL/ddddocr：会报 `cannot identify image file`，必须先 base64 解码。
+
+## 待优化
+- 当前成功率约 10%（4/40 内成功 1 次），靠重试堆概率。若需更高一次成功率，应建立字符模板库（已知字符集约 54 个字符）做分割+模板匹配，但需要标注数据。
+- 用户提示“识别验证码越多越精确”符合本策略：每次成功提交都意味着该次 OCR 候选正确，可用来反向标注积累模板。

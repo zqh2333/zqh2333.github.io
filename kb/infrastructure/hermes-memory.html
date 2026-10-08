@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hermes + TencentDB Agent Memory - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="hermes-tencentdb-agent-memory">Hermes + TencentDB Agent Memory</h1>
+<h2 id="_1">组件</h2>
+<ul>
+<li>Hermes Memory Provider：<code>memory_tencentdb</code></li>
+<li>Gateway 服务：<code>tencentdb-memory-gateway.service</code>（用户级 systemd）</li>
+<li>监听：<code>127.0.0.1:8420</code></li>
+<li>数据目录：<code>~/.memory-tencentdb/memory-tdai/</code></li>
+<li>存储：本地 SQLite + FTS5/BM25</li>
+</ul>
+<h2 id="_2">模型</h2>
+<p>记忆提取复用 Hermes 当前 OpenAI 兼容模型端点；模型名称为 <code>gpt-5.6-terra</code>。</p>
+<h2 id="_3">验证</h2>
+<p>2026-07-15：
+- <code>systemctl --user is-active tencentdb-memory-gateway.service</code> 返回 <code>active</code>。
+- <code>GET http://127.0.0.1:8420/health</code> 返回 <code>status: ok</code>。
+- Hermes 真实对话已自动写入 Gateway，并可通过对话搜索接口检索。</p>
+<p>相关：[[incidents/tencentdb-memory-keyword-recall]]</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>
