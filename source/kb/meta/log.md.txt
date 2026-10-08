@@ -656,3 +656,11 @@
 - 修复 Jekyll 忽略 `_` 目录导致 `_meta/` 整个 404 → 输出层映射为 `meta/`。
 - 脱敏兜底补 `<LAN>` 字面量（字母 x 原正则漏网）；线上泄漏复检 0；全站 200。
 - 排查记录：Pages 构建卡 `building` 8 分钟（正常 45 秒）→ 手动 `POST /pages/builds` 触发重建，42 秒完成。
+
+## 2026-10-08 | 知识库升级为「记忆库」
+- 新增技能 `kb-memory`：规定回忆历史时**先查知识库**（本地权威源 + 线上镜像）。
+- 新增检索工具 `~/.hermes/scripts/kb_search.py`（AND 检索 / 分类 / 全文 / 统计）。
+- 站点新增机器可读索引：`/kb/index.json`（结构化）+ `/kb/llms.txt`（一行一条，便于 LLM 整读）。
+- 修复 `index.md`、`runbooks/port-scan-ip-range-2026-09-29.md` 的 `root:root 600` 属主 → 知识库**全部可读**；
+  自动发布脚本随之去掉 `sudo` 依赖，**保留「源篇数==副本篇数」硬断言**作为长期防线。
+- 新增 `runbooks/nas-mtu-1492-rollback-2026-10-08`（MTU 误设回退复盘 + 教训）。

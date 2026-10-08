@@ -1,0 +1,755 @@
+{
+ "site": "运维知识库",
+ "generated": "2026-10-08",
+ "count": 103,
+ "categories": [
+  {
+   "id": "decisions",
+   "name": "决策记录",
+   "count": 24
+  },
+  {
+   "id": "incidents",
+   "name": "故障记录",
+   "count": 30
+  },
+  {
+   "id": "infrastructure",
+   "name": "基础设施",
+   "count": 38
+  },
+  {
+   "id": "runbooks",
+   "name": "操作手册",
+   "count": 8
+  },
+  {
+   "id": "meta",
+   "name": "元数据",
+   "count": 3
+  }
+ ],
+ "entries": [
+  {
+   "title": "运维知识库自动沉淀发布（2026-10-08）",
+   "date": "2026-10-08",
+   "category": "decisions",
+   "url": "decisions/kb-auto-publish-2026-10-08.html",
+   "summary": "运维知识库自动沉淀发布（2026 10 08） 背景 知识库是 Hermes 的长期记忆来源。要求： 有新知识沉淀就自动发布 到公开站点，既可人工查阅，也可作为 AI skill / 记忆来源。 结论 建立一条 无人值守"
+  },
+  {
+   "title": "运维知识库索引",
+   "date": "2026-10-08",
+   "category": "meta",
+   "url": "meta/index.html",
+   "summary": "运维知识库索引 在处理运维、网络、服务部署或故障问题前先检索本索引及相关页面。 最近更新：2026 10 08 基础设施 infrastructure/nas project artifact archive 2026 "
+  },
+  {
+   "title": "NAS MTU 误设 1492 导致 DS file 断连（2026-10-08）",
+   "date": "2026-10-08",
+   "category": "runbooks",
+   "url": "runbooks/nas-mtu-1492-rollback-2026-10-08.html",
+   "summary": "NAS MTU 误设 1492 导致 DS file 断连（2026 10 08） 背景 排查 NAS 16MB 上传 HTTP 405 时，怀疑是 MTU 问题。 未经询问 就把 NAS eth0 MTU 从 1500"
+  },
+  {
+   "title": "指定 IP 段开放端口扫描（port_scan.py）",
+   "date": "2026-09-29",
+   "category": "runbooks",
+   "url": "runbooks/port-scan-ip-range-2026-09-29.html",
+   "summary": "指定 IP 段开放端口扫描（port_scan.py） 日期：2026 09 29 类型：runbook 脚本： ~/.hermes/scripts/port_scan.py （v1.0.0，仅标准库，无需 pip/ve"
+  },
+  {
+   "title": "Authorized Verification Assistant v1.2.11 + 靶场 v1.0.2",
+   "date": "2026-09-26",
+   "category": "infrastructure",
+   "url": "infrastructure/authorized-verification-assistant-v1.2.11.html",
+   "summary": "Authorized Verification Assistant v1.2.11 + 靶场 v1.0.2 日期：2026 09 26 项目： /home/user/projects/verification exten"
+  },
+  {
+   "title": "Authorized Verification Assistant v1.2.12 + 靶场 v1.0.3",
+   "date": "2026-09-26",
+   "category": "infrastructure",
+   "url": "infrastructure/authorized-verification-assistant-v1.2.12.html",
+   "summary": "Authorized Verification Assistant v1.2.12 + 靶场 v1.0.3 日期：2026 09 26 项目： /home/user/projects/verification exten"
+  },
+  {
+   "title": "CPA / CPAMP 升级记录（2026-09-26）",
+   "date": "2026-09-26",
+   "category": "infrastructure",
+   "url": "infrastructure/cpa-cpamp-upgrade-2026-09-26.html",
+   "summary": "CPA / CPAMP 升级记录（2026 09 26） 日期：2026 09 26 目标：升级 CPA cli proxy 与 CPAMP cpa manager plus ，并同步 Hermes 模型菜单 范围：仅重"
+  },
+  {
+   "title": "WorkBuddy2API Lucky + Sun Panel 接入记录",
+   "date": "2026-09-26",
+   "category": "infrastructure",
+   "url": "infrastructure/workbuddy2api-lucky-sunpanel-2026-09-26.html",
+   "summary": "WorkBuddy2API Lucky + Sun Panel 接入记录 日期：2026 09 26 Lucky 反向代理 规则名称： WorkBuddy2API 前端域名： wb.example.com Lucky 监"
+  },
+  {
+   "title": "WorkBuddy2API Panel 宝塔 Docker 部署",
+   "date": "2026-09-26",
+   "category": "infrastructure",
+   "url": "infrastructure/workbuddy2api-panel-deploy-2026-09-26.html",
+   "summary": "WorkBuddy2API Panel 宝塔 Docker 部署 日期：2026 09 26 部署 仓库： https://github.com/linguo2625469/workbuddy2api panel Com"
+  },
+  {
+   "title": "log",
+   "date": "2026-09-26",
+   "category": "meta",
+   "url": "meta/log.html",
+   "summary": "2026 09 26 验证插件 v1.2.12 + 靶场 v1.0.3：官方 test key 沙箱自动化 边界先实测后定：用官方 test key 建页观察 widget 无人值守行为——Turnstile 1x…AA"
+  },
+  {
+   "title": "<LAN-4> Chrome 自动重启原因与修复",
+   "date": "2026-09-25",
+   "category": "infrastructure",
+   "url": "infrastructure/chrome-auto-restart-2026-09-25.html",
+   "summary": "<LAN 4 Chrome 自动重启原因与修复 日期：2026 09 25 症状 关闭浏览器后 Chrome 自动重新打开。 根因 ~/.config/systemd/user/hermes mcii chrome.se"
+  },
+  {
+   "title": "LocalScan 正反面矫正与背景边缘修复",
+   "date": "2026-09-25",
+   "category": "infrastructure",
+   "url": "infrastructure/localscan-vision-fix-2026-09-25.html",
+   "summary": "LocalScan 正反面矫正与背景边缘修复 日期：2026 09 25 用户反馈 正面透视矫正后仍有轻微倾斜。 反面校正后四周仍有拍摄背景残留。 根因 原 Worker 在透视后使用固定像素裁剪，且检测四边形直接用于透"
+  },
+  {
+   "title": "LocalScan 多证件类型选择与专用策略部署记录",
+   "date": "2026-09-24",
+   "category": "infrastructure",
+   "url": "infrastructure/localscan-multi-document-types-2026-09-24.html",
+   "summary": "LocalScan 多证件类型选择与专用策略部署记录 日期：2026 09 24 目标 将 <LAN 8 :38127 的身份证专用上传流程升级为多证件类型选择，并将类型参数传入本地 Worker 的边缘检测/透视矫正流"
+  },
+  {
+   "title": "SharedChat Codex 领取任务提示修复",
+   "date": "2026-09-16",
+   "category": "incidents",
+   "url": "incidents/sharedchat-codex-no-action-fix-2026-09-16.html",
+   "summary": "SharedChat Codex 领取任务提示修复 日期：2026 09 16 任务： bcff58ebbb8d 症状：偶发 NO_ACTION: claim button not present and subscri"
+  },
+  {
+   "title": "Authorized Verification Assistant v1.2.13-test.2",
+   "date": "2026-09-16",
+   "category": "infrastructure",
+   "url": "infrastructure/authorized-verification-assistant-v1.2.13-test.2.html",
+   "summary": "Authorized Verification Assistant v1.2.13 test.2 日期：2026 09 16 产物： authorized verification assistant v1.2.13 t"
+  },
+  {
+   "title": "CPA / CPAMP 升级记录",
+   "date": "2026-09-15",
+   "category": "infrastructure",
+   "url": "infrastructure/cpa-cpamp-upgrade-2026-09-15.html",
+   "summary": "CPA / CPAMP 升级记录 日期：2026 09 15 目标：升级 CPA cli proxy 与 CPAMP cpa manager plus 范围：仅重建两个容器；未修改 CPA config.yaml 、au"
+  },
+  {
+   "title": "授权验证 Docker 发布包 v1.2.9",
+   "date": "2026-09-15",
+   "category": "infrastructure",
+   "url": "infrastructure/verification-extension-docker-v1.2.9.html",
+   "summary": "授权验证 Docker 发布包 v1.2.9 日期：2026 09 15 项目目录： /home/user/projects/verification extension Docker 源码包： /tmp/authori"
+  },
+  {
+   "title": "Hermes Cron 精简通知规范",
+   "date": "2026-09-12",
+   "category": "infrastructure",
+   "url": "infrastructure/hermes-cron-compact-notifications-2026-09-12.html",
+   "summary": "Hermes Cron 精简通知规范 日期：2026 09 12 目标：Telegram cron 推送只发重要信息，不再推随机 sleep、长 JSON、完整 traceback 或大量普通日志。 统一过滤器： ~/."
+  },
+  {
+   "title": "Hermes Cron 面板签到看板升级",
+   "date": "2026-09-12",
+   "category": "infrastructure",
+   "url": "infrastructure/hermes-cron-panel-checkin-dashboard-2026-09-12.html",
+   "summary": "Hermes Cron 面板签到看板升级 日期：2026 09 12 文件： ~/.hermes/scripts/hermes_cron_panel.py 服务： hermes cron panel.service ，监"
+  },
+  {
+   "title": "项目产物统一归档到本地 NAS",
+   "date": "2026-09-12",
+   "category": "infrastructure",
+   "url": "infrastructure/nas-project-artifact-archive-2026-09-12.html",
+   "summary": "项目产物统一归档到本地 NAS 日期：2026 09 12 NAS：Synology <LAN 5 共享入口： smb://<LAN 5 /云/Hermes项目产物 NAS 根目录： /volume1/云/Hermes项"
+  },
+  {
+   "title": "Chrome 验证自动化插件与宝塔授权服务",
+   "date": "2026-09-12",
+   "category": "infrastructure",
+   "url": "infrastructure/verification-extension-docker-2026-09-12.html",
+   "summary": "Chrome 验证自动化插件与宝塔授权服务 日期：2026 09 12 项目： /home/user/projects/verification extension 插件：Manifest V3，固定 ID mgpemb"
+  },
+  {
+   "title": "CPA / CPAMP / cpa-key-billing 升级记录",
+   "date": "2026-09-11",
+   "category": "infrastructure",
+   "url": "infrastructure/cpa-cpamp-billing-update-2026-09-11.html",
+   "summary": "CPA / CPAMP / cpa key billing 升级记录 日期：2026 09 11 目标：升级 CPA（CLIProxyAPI）、CPA Manager Plus 和 haowang02/cpa plugi"
+  },
+  {
+   "title": "Disk cleanup record",
+   "date": "2026-09-11",
+   "category": "infrastructure",
+   "url": "infrastructure/disk-cleanup-2026-09-11.html",
+   "summary": "Disk cleanup record Date: 2026 09 11 Target: local /home/user filesystem cleanup. Action: removed rebuildable "
+  },
+  {
+   "title": "Hermes Cron 青龙式脚本管理面板",
+   "date": "2026-09-11",
+   "category": "infrastructure",
+   "url": "infrastructure/hermes-cron-panel-script-editor-2026-09-11.html",
+   "summary": "Hermes Cron 青龙式脚本管理面板 日期：2026 09 11 目标：在不替换 Hermes 原生 cron 调度器的前提下，提供接近青龙面板的任务与脚本操作界面。 面板文件： ~/.hermes/scripts"
+  },
+  {
+   "title": "Anki 全站公告 Word 式颜色/字体与保存修复（2026-09-02）",
+   "date": "2026-09-02",
+   "category": "incidents",
+   "url": "incidents/anki-announcement-wordlike-editor-2026-09-02.html",
+   "summary": "Anki 全站公告 Word 式颜色/字体与保存修复（2026 09 02） 用户反馈 后台「编辑全站公告与通知」保存不了 不方便编辑颜色、字体，希望像 Word 一样改选区颜色和字体 根因 1. 保存丢画布内容 ： c"
+  },
+  {
+   "title": "elysiver (烁) leak protection 与 CPA 路由",
+   "date": "2026-08-02",
+   "category": "incidents",
+   "url": "incidents/elysiver-gitleaks-leak-protection-2026-08-02.html",
+   "summary": "elysiver (烁) leak protection 与 CPA 路由 现象 日志： leak protection blocked request: matched gitleaks rule generic ap"
+  },
+  {
+   "title": "ABRDNS 福利站签到失败 NEED_CHECKIN → hCaptcha（2026-07-28）",
+   "date": "2026-07-28",
+   "category": "incidents",
+   "url": "incidents/abrdns-hcaptcha-checkin-2026-07-28.html",
+   "summary": "ABRDNS 福利站签到失败 NEED_CHECKIN → hCaptcha（2026 07 28） 现象 cron 1856c16b45bd 输出 abrdns NEED_CHECKIN exit 1。 根因 1. 登"
+  },
+  {
+   "title": "网页配置工作台去重（2026-07-27）",
+   "date": "2026-07-27",
+   "category": "infrastructure",
+   "url": "infrastructure/anki-ops-workbench-dedupe-2026-07-27.html",
+   "summary": "网页配置工作台去重（2026 07 27） 问题 opsWorkbenchModal 内「网页配置」表单重复两套： 1. 主面板 opsDownloadUrl / opsTutorialUrl / opsLatestVe"
+  },
+  {
+   "title": "全站公告排版优化（2026-07-26）",
+   "date": "2026-07-26",
+   "category": "infrastructure",
+   "url": "infrastructure/anki-announcement-layout-optimize-2026-07-26.html",
+   "summary": "全站公告排版优化（2026 07 26） 内容结构 1. 标题：使用必读 / 无人工答疑 2. 教程链接按钮文案：查看教程（必看） 3. 下载渠道：夸克可用、百度不可用 4. 故障三步：删卡牌 → 删笔记模板 → 夸克重"
+  },
+  {
+   "title": "后台卡「正在加载数据，最多等待 10 秒」（2026-07-25）",
+   "date": "2026-07-25",
+   "category": "incidents",
+   "url": "incidents/anki-dashboard-loading-after-announcement-fix-2026-07-25.html",
+   "summary": "后台卡「正在加载数据，最多等待 10 秒」（2026 07 25） 症状 Dashboard 一直显示加载骨架： 正在加载数据，最多等待 10 秒... 排查 /api/admin/data 正常 200（约 1470 "
+  },
+  {
+   "title": "编辑全站公告优化（2026-07-25）",
+   "date": "2026-07-25",
+   "category": "infrastructure",
+   "url": "infrastructure/anki-announcement-editor-optimize-2026-07-25.html",
+   "summary": "编辑全站公告优化（2026 07 25） 背景 公告弹窗此前存在：打开函数缺失/字段回填不全、画布编辑模式函数缺失、底部操作不便、草稿感知弱、发布无防重复提交。 已优化 1. 打开加载 完整回填字号/对齐/位置/横幅/版"
+  },
+  {
+   "title": "未激活/打开卡片却提示「网络环境变化需要重新验证」（2026-07-24）",
+   "date": "2026-07-24",
+   "category": "incidents",
+   "url": "incidents/anki-ip-change-reauth-false-positive-2026-07-24.html",
+   "summary": "未激活/打开卡片却提示「网络环境变化需要重新验证」（2026 07 24） 截图 OCR 标题：网络环境变化，需要重新验证 正文：检测到设备网络/IP变化频繁… 错误码： IP_CHANGE_REAUTH_REQUIRE"
+  },
+  {
+   "title": "Anki IP 历史「未知」修复（2026-07-24）",
+   "date": "2026-07-24",
+   "category": "incidents",
+   "url": "incidents/anki-ip-history-unknown-2026-07-24.html",
+   "summary": "Anki IP 历史「未知」修复（2026 07 24） 症状 设备详情 IP 历史显示： <PUBLIC IP (未知) 未知 。 根因（三层查询全失败） 1. Vore ：容器内 DNS 解析失败 api.vore."
+  },
+  {
+   "title": "首次激活却提示 RISK_LOCKED「江西→北京」（2026-07-24）",
+   "date": "2026-07-24",
+   "category": "incidents",
+   "url": "incidents/anki-risk-locked-cross-code-device-2026-07-24.html",
+   "summary": "首次激活却提示 RISK_LOCKED「江西→北京」（2026 07 24） 用户反馈 苹果手机第一次激活 激活码 BDF3G5729UCX 后台 0 设备 却提示：轨迹瞬移 4 小时内由江西突变至北京（ RISK_LO"
+  },
+  {
+   "title": "一键解绑无响应 + 指纹碰撞 + 手机按钮过大（2026-07-24）",
+   "date": "2026-07-24",
+   "category": "incidents",
+   "url": "incidents/anki-unbind-all-fingerprint-mobile-2026-07-24.html",
+   "summary": "一键解绑无响应 + 指纹碰撞 + 手机按钮过大（2026 07 24） 一键解绑无响应 按钮调用 unbindAllDevices(code) ，但前端函数缺失。 新增 function unbindAllDevices"
+  },
+  {
+   "title": "指纹碰撞防护优化落地（2026-07-24）",
+   "date": "2026-07-24",
+   "category": "infrastructure",
+   "url": "infrastructure/anki-fingerprint-collision-hardening-2026-07-24.html",
+   "summary": "指纹碰撞防护优化落地（2026 07 24） 已实现 服务端匹配 无激活码时禁止 device_id.first() 跨码静默。 多码同指纹：仅当牌组名可唯一对应时才静默；否则要求输码。 有激活码时：在该码下按 devi"
+  },
+  {
+   "title": "luckyg 每日签到（2026-07-22）",
+   "date": "2026-07-22",
+   "category": "decisions",
+   "url": "decisions/luckyg-daily-checkin-2026-07-22.html",
+   "summary": "luckyg 每日签到（2026 07 22） 站点 个人页： https://luckyg.131518.xyz/profile API base： https://luckyg.131518.xyz 账号：id=96"
+  },
+  {
+   "title": "Anki 后台卡在“正在加载数据，最多等待 10 秒”（2026-07-22）",
+   "date": "2026-07-22",
+   "category": "incidents",
+   "url": "incidents/anki-dashboard-loading-10s-2026-07-22.html",
+   "summary": "Anki 后台卡在“正在加载数据，最多等待 10 秒”（2026 07 22） 症状 Dashboard 一直显示： 正在加载数据，最多等待 10 秒... 根因 不是后端慢。 /api/admin/data 持续 20"
+  },
+  {
+   "title": "Anki 单设备解绑按钮失效修复（2026-07-22）",
+   "date": "2026-07-22",
+   "category": "incidents",
+   "url": "incidents/anki-device-unbind-button-fixed-2026-07-22.html",
+   "summary": "Anki 单设备解绑按钮失效修复（2026 07 22） 症状 后台激活码设备列表点击「解绑此设备」无效。 根因 设备卡片渲染的是： html onclick=\"deleteDevice(${device.id}, .."
+  },
+  {
+   "title": "CC Switch Codex `/responses` tool-call 格式修复（2026-07-22）",
+   "date": "2026-07-22",
+   "category": "incidents",
+   "url": "incidents/ccswitch-codex-toolcall-id-name-2026-07-22.html",
+   "summary": "CC Switch Codex /responses tool call 格式修复（2026 07 22） 报错 text CC Switch local proxy failed while handling Code"
+  },
+  {
+   "title": "牌组专属密钥回收站（2026-07-22）",
+   "date": "2026-07-22",
+   "category": "infrastructure",
+   "url": "infrastructure/anki-deck-key-recycle-2026-07-22.html",
+   "summary": "牌组专属密钥回收站（2026 07 22） 需求 在「牌组专属密钥管理」增加与激活码类似的软删除回收站：删除可恢复，永久删除才真正清除。 实现 模型 DeckKeyRecycle 表 deck_key_recycle d"
+  },
+  {
+   "title": "牌组密钥回收站：清空功能（2026-07-22）",
+   "date": "2026-07-22",
+   "category": "infrastructure",
+   "url": "infrastructure/anki-deck-key-recycle-clear-2026-07-22.html",
+   "summary": "牌组密钥回收站：清空功能（2026 07 22） 新增 后台「牌组专属密钥管理 → 密钥回收站」增加 清空回收站 。 UI：红色「清空回收站」按钮。 前端只需一次 confirm 确认， 无需输入确认词 （2026 07"
+  },
+  {
+   "title": "Anki 后台全功能审计（2026-07-22）",
+   "date": "2026-07-22",
+   "category": "infrastructure",
+   "url": "infrastructure/anki-full-backend-audit-2026-07-22.html",
+   "summary": "Anki 后台全功能审计（2026 07 22） 范围 宝塔 LXC 211 的 /www/anki_server ：容器栈、数据库/缓存、公开 API、管理后台路由/鉴权、卡牌协议、配置中心、文案、发布/备份相关只读功"
+  },
+  {
+   "title": "Anki 全功能深度审计（2026-07-22）",
+   "date": "2026-07-22",
+   "category": "infrastructure",
+   "url": "infrastructure/anki-full-deep-audit-2026-07-22.html",
+   "summary": "Anki 全功能深度审计（2026 07 22） 本轮按用户要求复审“全部功能”。破坏性接口仅验证未授权拒绝，不执行删除、恢复、发布、修改密码或备份恢复。 基线 6 容器全 Up；MySQL/Redis healthy；"
+  },
+  {
+   "title": "0xPsyche Welfare 每日签到（2026-07-21）",
+   "date": "2026-07-21",
+   "category": "decisions",
+   "url": "decisions/psyche-daily-checkin-2026-07-21.html",
+   "summary": "0xPsyche Welfare 每日签到（2026 07 21） 站点 个人页： https://welfare.0xpsyche.me/profile API base： https://welfare.0xpsyc"
+  },
+  {
+   "title": "Anki 卡牌文案配置全量验收（2026-07-21）",
+   "date": "2026-07-21",
+   "category": "infrastructure",
+   "url": "infrastructure/anki-card-text-config-audit-2026-07-21.html",
+   "summary": "Anki 卡牌文案配置全量验收（2026 07 21） 目标 核查 Anki 后台「卡牌文案配置」全部可见功能、保存链路及卡牌端读取；发现并修复传播缺口。 健康基线 compose 6 服务均运行；db/redis he"
+  },
+  {
+   "title": "ABRDNS 福利站每日签到（2026-07-20）",
+   "date": "2026-07-20",
+   "category": "decisions",
+   "url": "decisions/abrdns-daily-checkin-2026-07-20.html",
+   "summary": "ABRDNS 福利站每日签到（2026 07 20） 站点 签到： https://checkin.new api.abrdns.com/checkin 登录：仅 Linux DO OAuth（主站用户名密码不能直接签到"
+  },
+  {
+   "title": "BYD (some.byd.skin) 每日签到（2026-07-20）",
+   "date": "2026-07-20",
+   "category": "decisions",
+   "url": "decisions/byd-daily-checkin-2026-07-20.html",
+   "summary": "BYD (some.byd.skin) 每日签到（2026 07 20） 站点 个人页： https://some.byd.skin/profile API base： https://some.byd.skin 账号："
+  },
+  {
+   "title": "CPA 抗反分发 + 稳定输出攻克（2026-07-20）",
+   "date": "2026-07-20",
+   "category": "decisions",
+   "url": "decisions/cpa-anti-distribution-stable-output-2026-07-20.html",
+   "summary": "CPA 抗反分发 + 稳定输出攻克（2026 07 20） 目标 解决上游明确禁止 CPA/sub/new api 分发导致的「一会儿行一会儿不行」，追求稳定输出。 根因（已验证） 1. 边缘透传客户端指纹 ：CC Sw"
+  },
+  {
+   "title": "CPA 抗「反分发/额度/并发」间歇拒流加固（2026-07-20）",
+   "date": "2026-07-20",
+   "category": "decisions",
+   "url": "decisions/cpa-failover-anti-distribution-harden-2026-07-20.html",
+   "summary": "CPA 抗「反分发/额度/并发」间歇拒流加固（2026 07 20） 目标 在上游禁止 CPA/sub/new api 分发、限流/额度窗口拒流的情况下，提高本地 8317 多上游 failover 成功率。 不 做上游"
+  },
+  {
+   "title": "新站自动规范化（2026-07-20）",
+   "date": "2026-07-20",
+   "category": "decisions",
+   "url": "decisions/cpa-new-site-auto-normalize-2026-07-20.html",
+   "summary": "新站自动规范化（2026 07 20） 用户意图 「可以」——以后面板新增公共站自动补稳定模板，无需每次手工设模型相关加固。 做什么（仅本地 config） cpa new site normalize.service "
+  },
+  {
+   "title": "禁止 CPA 上游定时探活（2026-07-20）",
+   "date": "2026-07-20",
+   "category": "decisions",
+   "url": "decisions/cpa-upstream-probes-disabled-2026-07-20.html",
+   "summary": "禁止 CPA 上游定时探活（2026 07 20） 用户规则 CPA 上游站点禁止定时探活：不得定时请求 /health 、 /models 、chat/completions 或发送其他探测报文。频繁请求、尤其大报文 "
+  },
+  {
+   "title": "Unsnow / SnowAPI 每日签到（2026-07-20）",
+   "date": "2026-07-20",
+   "category": "decisions",
+   "url": "decisions/unsnow-daily-checkin-2026-07-20.html",
+   "summary": "Unsnow / SnowAPI 每日签到（2026 07 20） 站点 个人页： https://api.unsnow.org/profile API base： https://api.unsnow.org 账号：i"
+  },
+  {
+   "title": "CC Switch + Codex 经 CPA 间歇失败（2026-07-20）",
+   "date": "2026-07-20",
+   "category": "incidents",
+   "url": "incidents/ccswitch-codex-intermittent-cpa-2026-07-20.html",
+   "summary": "CC Switch + Codex 经 CPA 间歇失败（2026 07 20） 症状 CC Switch 开 Codex 模式走 CPA 时，一会儿能用一会儿不能用 上游站控制台看模型列表正常 上游公告：禁止 CPA/"
+  },
+  {
+   "title": "CPA 主机模型状态页（2026-07-19）",
+   "date": "2026-07-19",
+   "category": "decisions",
+   "url": "decisions/cpa-host-model-status-2026-07-19.html",
+   "summary": "CPA 主机模型状态页（2026 07 19） 状态：已删除（用户 2026 07 19 明确不需要） 曾实现 宝塔 <LAN 8 :8787 + cpa model status.service 脚本 /root/cl"
+  },
+  {
+   "title": "CPA 本地模型状态面板（简直了风格）（2026-07-19）",
+   "date": "2026-07-19",
+   "category": "decisions",
+   "url": "decisions/cpa-model-status-dashboard-2026-07-19.html",
+   "summary": "CPA 本地模型状态面板（简直了风格）（2026 07 19） 目标 仿「简直了」模型状态页，对本地 CPA http://<LAN 8 :8317/v1 做真实 chat 探测，展示成功率/延迟/近24小时柱状图。 实"
+  },
+  {
+   "title": "temp1–temp4 恢复情况（2026-07-19）",
+   "date": "2026-07-19",
+   "category": "incidents",
+   "url": "incidents/cpa-temp1-4-restore-2026-07-19.html",
+   "summary": "temp1–temp4 恢复情况（2026 07 19） 用户澄清 「temp 1234」= temp1、temp2、temp3、temp4 四个站点。 备份扫描结果 名称 备份中是否存在 base url 说明 tem"
+  },
+  {
+   "title": "temp1（用户称 temp 1234）被删与恢复（2026-07-19）",
+   "date": "2026-07-19",
+   "category": "incidents",
+   "url": "incidents/cpa-temp1-deleted-restored-2026-07-19.html",
+   "summary": "temp1（用户称 temp 1234）被删与恢复（2026 07 19） 用户反馈 「temp 1234 怎么给我删了」 核查 现网/历史 没有 名为 temp 1234 的站点 最接近、且曾在面板存在的是 temp1"
+  },
+  {
+   "title": "简直了 user 登录失败（2026-07-19）",
+   "date": "2026-07-19",
+   "category": "incidents",
+   "url": "incidents/jianzhile-user-login-failed-2026-07-19.html",
+   "summary": "简直了 user 登录失败（2026 07 19） 现象 cron 输出： github_10641 CHECKIN_SUCCESS user LOGIN_FAILED: Username or password is "
+  },
+  {
+   "title": "失败/报错自动修复（用户硬规则，全范围）",
+   "date": "2026-07-18",
+   "category": "decisions",
+   "url": "decisions/auto-fix-on-errors.html",
+   "summary": "失败/报错自动修复（用户硬规则，全范围） 规则（2026 07 18 强化） 不仅是脚本 ——所有问题都适用： 只要出现失败、报错、异常、不可用、配置不兼容、服务挂掉、cron 失败、认证失效、网络/设备异常等： 1. "
+  },
+  {
+   "title": "取消 CPA 自动设置站点优先级（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "decisions",
+   "url": "decisions/cpa-auto-priority-disabled-2026-07-18.html",
+   "summary": "取消 CPA 自动设置站点优先级（2026 07 18） 目标 用户要求： 不要再有脚本自动设置 CPA 站点 priority 。 原先会改 priority 的路径 1. cpa_auto_priority.py 被"
+  },
+  {
+   "title": "新站点自动配置优先级（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "decisions",
+   "url": "decisions/cpa-auto-priority-new-sites.html",
+   "summary": "新站点自动配置优先级（2026 07 18） 状态更新 2026 07 18 晚：已按用户要求停用自动设置 priority。 见 decisions/cpa auto priority disabled 2026 07"
+  },
+  {
+   "title": "CPA 整体配置与问题凭证治理（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "decisions",
+   "url": "decisions/cpa-overall-setup-2026-07-18.html",
+   "summary": "CPA 整体配置与问题凭证治理（2026 07 18） 问题 1. 管理中心「认证文件管理」报 timeout of 30000ms exceeded ，筛选「问题」显示 0。 2. 用户要求整体把 CPA 配置好，并自"
+  },
+  {
+   "title": "删除 CPA 自动化脚本并恢复原状（保留 RawChat）（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "decisions",
+   "url": "decisions/cpa-scripts-removed-keep-rawchat-2026-07-18.html",
+   "summary": "删除 CPA 自动化脚本并恢复原状（保留 RawChat）（2026 07 18） 用户要求 删除所有有关 CPA 的脚本，恢复原状； 仅保留已攻克的 RawChat 设置 。 范围解释（已执行） 删除 / 停用 宝塔 "
+  },
+  {
+   "title": "CPA 设置选项与优先级说明（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "decisions",
+   "url": "decisions/cpa-settings-and-priority-2026-07-18.html",
+   "summary": "CPA 设置选项与优先级说明（2026 07 18） 1. 时区 宝塔 LXC 已改为 Asia/Shanghai （CST +0800） cron 增加 TZ=Asia/Shanghai 相关 systemd 服务 E"
+  },
+  {
+   "title": "家实优化「全部落地」清单（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "decisions",
+   "url": "decisions/full-optimization-2026-07-18.html",
+   "summary": "家实优化「全部落地」清单（2026 07 18） P0 项 状态 说明 CC Switch /responses name ✅ 8317+jshandler 深度清洗；日志 responses_sanitize.log "
+  },
+  {
+   "title": "Hermes 菜单加入 gpt-5.6-sol（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "decisions",
+   "url": "decisions/hermes-menu-add-gpt-5.6-sol-2026-07-18.html",
+   "summary": "Hermes 菜单加入 gpt 5.6 sol（2026 07 18） 用户决策 要求把 gpt 5.6 sol 加入 Hermes 固定菜单（此前策略排除）。 变更 1. ~/.hermes/config.yaml m"
+  },
+  {
+   "title": "Hermes 菜单移除 gpt-5.6-sol（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "decisions",
+   "url": "decisions/hermes-menu-remove-gpt-5.6-sol-2026-07-18.html",
+   "summary": "Hermes 菜单移除 gpt 5.6 sol（2026 07 18） 用户要求 从 Hermes 菜单移除 gpt 5.6 sol 。 范围 ✅ 从 Hermes custom provider models 删除 ✅"
+  },
+  {
+   "title": "家实优化包落地（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "decisions",
+   "url": "decisions/optimization-pack-2026-07-18.html",
+   "summary": "家实优化包落地（2026 07 18） 按建议顺序已落地： 1. CC Switch /responses 8317 cpa_stable_models_proxy.py 深度递归 清洗 input .name （含嵌套"
+  },
+  {
+   "title": "Anki 全站公告编辑功能修复（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "incidents",
+   "url": "incidents/anki-announcement-edit-fix-2026-07-18.html",
+   "summary": "Anki 全站公告编辑功能修复（2026 07 18） 用户反馈 修改/编辑功能不完善 字体颜色改不了 其他修改项也不完善/不能用 根因 1. 颜色只改了外层 CSS，没有改 HTML 内联 style=\"color:."
+  },
+  {
+   "title": "Anki 下载按钮关闭不了（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "incidents",
+   "url": "incidents/anki-download-button-cannot-disable-2026-07-18.html",
+   "summary": "Anki 下载按钮关闭不了（2026 07 18） 用户反馈 卡牌显示与反应控制 → 下载按钮设为关闭，但卡牌仍显示下载按钮。 根因 1. 管理页 syncFormToJson() 把 boolean 开关写成字符串 \""
+  },
+  {
+   "title": "Anki 下载按钮关闭后其余全关且无法再开（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "incidents",
+   "url": "incidents/anki-download-button-switch-overwrite-2026-07-18.html",
+   "summary": "Anki 下载按钮关闭后其余全关且无法再开（2026 07 18） 现象 只关「下载按钮」 入口动画/成功横幅/失败遮罩/弱网重试/水印等全部变关 再点开启也打不开 根因 卡牌文案页开关 DOM 同时有： 1. <inp"
+  },
+  {
+   "title": "CC Switch 422 ModelInput（清洗过深导致，2026-07-18）",
+   "date": "2026-07-18",
+   "category": "incidents",
+   "url": "incidents/ccswitch-responses-422-modelinput-2026-07-18.html",
+   "summary": "CC Switch 422 ModelInput（清洗过深导致，2026 07 18） 报错 unexpected status 422 Unprocessable Entity CC Switch ... Codex "
+  },
+  {
+   "title": "CC Switch Codex /responses: input[N].name is required（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "incidents",
+   "url": "incidents/ccswitch-responses-name-required-2026-07-18.html",
+   "summary": "CC Switch Codex /responses: input N .name is required（2026 07 18） 报错 CC Switch local proxy failed while handli"
+  },
+  {
+   "title": "CPA 新增站点被脚本写回旧列表（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "incidents",
+   "url": "incidents/cpa-new-site-wiped-by-writers-2026-07-18.html",
+   "summary": "CPA 新增站点被脚本写回旧列表（2026 07 18） 用户反馈 在 CPA 新增站点后，被脚本删除/恢复成之前的站点列表。 日志证据 provider_watch.log 10:27:25： providers ch"
+  },
+  {
+   "title": "删除 snote-temp / alfred-temp（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "incidents",
+   "url": "incidents/cpa-snote-alfred-deleted-2026-07-18.html",
+   "summary": "删除 snote temp / alfred temp（2026 07 18） 用户反馈 上游质量告警里还有 snote temp 、 alfred temp ，用户认为已经删掉了。 核查结论 当时并没有删掉。 磁盘 c"
+  },
+  {
+   "title": "Hermes “model provider failed after retries” 自动检测与修复（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "incidents",
+   "url": "incidents/hermes-provider-failed-after-retries-autofix-2026-07-18.html",
+   "summary": "Hermes “model provider failed after retries” 自动检测与修复（2026 07 18） 症状 Telegram 只显示： text The model provider fail"
+  },
+  {
+   "title": "Anki 管理后台巡检（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "infrastructure",
+   "url": "infrastructure/anki-admin-audit-2026-07-18.html",
+   "summary": "Anki 管理后台巡检（2026 07 18） 部署 路径： /www/anki_server （宝塔 LXC 211） 入口： https://anki.example.com:2333 → 内网 0.0.0.0:57"
+  },
+  {
+   "title": "家实暴露面收敛清单（2026-07-18）",
+   "date": "2026-07-18",
+   "category": "runbooks",
+   "url": "runbooks/exposure-hardening-checklist-2026-07-18.html",
+   "summary": "家实暴露面收敛清单（2026 07 18） 原则：外网只留必要反代；管理面默认仅内网；改前先备份。 高优先级 设备 端口/服务 风险 建议动作 状态 Hermes <LAN 4 RDP 3389 远程桌面暴露 仅内网/V"
+  },
+  {
+   "title": "SharedChat Codex 每日权益领取",
+   "date": "2026-07-18",
+   "category": "runbooks",
+   "url": "runbooks/sharedchat-codex-claim.html",
+   "summary": "SharedChat Codex 每日权益领取 任务 cron: bcff58ebbb8d / 5 0 wrapper: ~/.hermes/scripts/sharedchat_claim_wrap.sh script"
+  },
+  {
+   "title": "CPA 进阶故障转移：快失败 + 冷却 + 慢上游剔除（2026-07-17）",
+   "date": "2026-07-17",
+   "category": "decisions",
+   "url": "decisions/cpa-advanced-failover-2026-07-17.html",
+   "summary": "CPA 进阶故障转移：快失败 + 冷却 + 慢上游剔除（2026 07 17） 背景 gpt 5.5 / glm 5.2 故障时，fill first 会打到慢上游（薄荷/喵喵 ~40s 超时）或连续 503 上游（魔方"
+  },
+  {
+   "title": "CPA 同步脚本竞态导致面板新增上游丢失（2026-07-17）",
+   "date": "2026-07-17",
+   "category": "incidents",
+   "url": "incidents/cpa-sync-provider-race-2026-07-17.html",
+   "summary": "CPA 同步脚本竞态导致面板新增上游丢失（2026 07 17） 用户反馈 曾加到约 10 个站点； 临时3 及后续新增站点不见了 怀疑脚本误删站点 脚本审查结论 sync_cpa_models.py 没有 “按名称删除"
+  },
+  {
+   "title": "CPA「临时3」等新增上游丢失（2026-07-17）",
+   "date": "2026-07-17",
+   "category": "incidents",
+   "url": "incidents/cpa-temp3-providers-lost-2026-07-17.html",
+   "summary": "CPA「临时3」等新增上游丢失（2026 07 17） 现象 用户反馈：管理面板里新增的 临时3 以及后续几个上游不见了。 核查 当前磁盘 config.yaml 仅 8 个 openai compatibility： "
+  },
+  {
+   "title": "gpt-5.5 / glm-5.2 不可用排查（2026-07-17）",
+   "date": "2026-07-17",
+   "category": "incidents",
+   "url": "incidents/gpt55-403-glm52-timeout-2026-07-17.html",
+   "summary": "gpt 5.5 / glm 5.2 不可用排查（2026 07 17） 症状 经 CPA 8317/18317 ： gpt 5.5 → 503 （ auth_unavailable / upstream unavaila"
+  },
+  {
+   "title": "全体设备巡检（2026-07-17）",
+   "date": "2026-07-17",
+   "category": "infrastructure",
+   "url": "infrastructure/fleet-inspect-2026-07-17.html",
+   "summary": "全体设备巡检（2026 07 17） 范围 PVE / ROS / OpenWrt / Hermes / NAS / AdGuard Home / Home Assistant / 宝塔 方式：ICMP + TCP/SS"
+  },
+  {
+   "title": "全设备服务扫描清单（2026-07-17 13:59）",
+   "date": "2026-07-17",
+   "category": "infrastructure",
+   "url": "infrastructure/fleet-services-2026-07-17.html",
+   "summary": "全设备服务扫描清单（2026 07 17 13:59） 在 infrastructure/fleet topology 2026 07 17 拓扑巡检之上，对 8 台设备做了 监听端口 / 系统服务 / 容器 / 关键进"
+  },
+  {
+   "title": "全设备巡检与网络拓扑（2026-07-17 13:55）",
+   "date": "2026-07-17",
+   "category": "infrastructure",
+   "url": "infrastructure/fleet-topology-2026-07-17.html",
+   "summary": "全设备巡检与网络拓扑（2026 07 17 13:55） 巡检总览 设备 IP 角色 Ping SSH 管理口 默认网关 DNS : PVE <LAN 1 虚拟化宿主机 0.47ms OK root 8006 ✅ <LA"
+  },
+  {
+   "title": "简直了多账号每日签到",
+   "date": "2026-07-17",
+   "category": "runbooks",
+   "url": "runbooks/jianzhile-multi-account-checkin.html",
+   "summary": "简直了多账号每日签到 账号 主账号: github_10641 (uid 10641) 副账号: user (uid 4042) 凭据: ~/.hermes/secrets/jianzhile.env (600) JIA"
+  },
+  {
+   "title": "简直了签到验证码 OCR 方案",
+   "date": "2026-07-16",
+   "category": "incidents",
+   "url": "incidents/jianzhile-checkin-captcha-and-account-ban.html",
+   "summary": "简直了签到验证码 OCR 方案 日期 2026 07 16 背景 简直了（jianzhile.vip）每日签到需要图片验证码。验证码为 160×58 的 PNG，混合中文字符、英文字母与数字，每次随机生成。答案即图片上按"
+  },
+  {
+   "title": "验证码 OCR 自学习 Runbook",
+   "date": "2026-07-16",
+   "category": "runbooks",
+   "url": "runbooks/captcha-ocr-learner.html",
+   "summary": "验证码 OCR 自学习 Runbook 日期 2026 07 16 何时用 用户要求自动识别站点图片验证码（签到/登录）、且要求\"识别越多越精确\"的自学习行为时，加载技能 captcha ocr learner 。 技能"
+  },
+  {
+   "title": "CPA 本地配置同步与低频模型审计",
+   "date": "2026-07-15",
+   "category": "decisions",
+   "url": "decisions/cpa-local-model-sync.html",
+   "summary": "CPA 本地配置同步与低频模型审计 服务位置 CPA 控制面：宝塔主机 <LAN 8 。 容器： cli proxy （ eceasy/cli proxy api ）。 本地配置： /root/CLIProxyAPI/c"
+  },
+  {
+   "title": "CPA/Hermes 模型调用失败诊断",
+   "date": "2026-07-15",
+   "category": "incidents",
+   "url": "incidents/cpa-hermes-model-call-failures.html",
+   "summary": "CPA/Hermes 模型调用失败诊断 日期 2026 07 15 症状 Telegram Gateway 可能只显示通用错误： text The model provider failed after retries."
+  },
+  {
+   "title": "TencentDB Memory 未配置 Embedding 时无法 Hybrid 召回",
+   "date": "2026-07-15",
+   "category": "incidents",
+   "url": "incidents/tencentdb-memory-keyword-recall.html",
+   "summary": "TencentDB Memory 未配置 Embedding 时无法 Hybrid 召回 症状 POST /recall 返回： Recall strategy \"hybrid\" requires EmbeddingSe"
+  },
+  {
+   "title": "全体设备基线巡检与 SSH 密钥认证（2026-07-15）",
+   "date": "2026-07-15",
+   "category": "infrastructure",
+   "url": "infrastructure/fleet-baseline-2026-07-15.html",
+   "summary": "全体设备基线巡检与 SSH 密钥认证（2026 07 15） 范围与方式 目标：PVE、ROS、OpenWrt、Hermes、NAS、AdGuard Home、Home Assistant、宝塔。 网络巡检：只读 ICM"
+  },
+  {
+   "title": "Hermes + TencentDB Agent Memory",
+   "date": "2026-07-15",
+   "category": "infrastructure",
+   "url": "infrastructure/hermes-memory.html",
+   "summary": "Hermes + TencentDB Agent Memory 组件 Hermes Memory Provider： memory_tencentdb Gateway 服务： tencentdb memory gatew"
+  },
+  {
+   "title": "ROS（MikroTik）",
+   "date": "2026-07-15",
+   "category": "infrastructure",
+   "url": "infrastructure/ros.html",
+   "summary": "ROS（MikroTik） 地址： <LAN 2 SSH 端口： 2333 登录用户： admin 认证方式：SSH RSA 4096 公钥 私钥路径： ~/.ssh/<SSH KEY <LAN 2 公钥指纹： SHA2"
+  },
+  {
+   "title": "运维知识库规范",
+   "date": "",
+   "category": "meta",
+   "url": "meta/SCHEMA.html",
+   "summary": "运维知识库规范 范围 本知识库记录家庭实验室、网络设备、服务部署、故障排查、配置决策与验证结果。 安全边界 不记录明文密码、API Key、Token、私钥、会话 Cookie 或恢复码。 可记录设备别名、内网地址、端口"
+  },
+  {
+   "title": "Authorized Verification Assistant v1.2.9-test.3",
+   "date": "",
+   "category": "infrastructure",
+   "url": "infrastructure/authorized-verification-assistant-v1.2.9-test.3.html",
+   "summary": "Authorized Verification Assistant v1.2.9 test.3 本地 ZIP： /home/user/artifacts/authorized verification assistant"
+  },
+  {
+   "title": "Authorized Verification Assistant v1.2.9-test.5",
+   "date": "",
+   "category": "infrastructure",
+   "url": "infrastructure/authorized-verification-assistant-v1.2.9-test.5.html",
+   "summary": "Authorized Verification Assistant v1.2.9 test.5 实测 真实 Chrome 扩展 ID： mgpembebkeoiciopndiciehcokojeldf Worker：已确"
+  },
+  {
+   "title": "Verification Challenge Lab v1.0.0",
+   "date": "",
+   "category": "infrastructure",
+   "url": "infrastructure/verification-challenge-lab-v1.0.0.html",
+   "summary": "Verification Challenge Lab v1.0.0 用途：本地、可重复的授权验证码/安全盾测试靶场。 本地包： /home/user/artifacts/verification challenge la"
+  },
+  {
+   "title": "Verification Challenge Lab v1.0.1",
+   "date": "",
+   "category": "infrastructure",
+   "url": "infrastructure/verification-challenge-lab-v1.0.1.html",
+   "summary": "Verification Challenge Lab v1.0.1 本地产物： /home/user/artifacts/verification challenge lab v1.0.1.zip SHA 256： <H"
+  },
+  {
+   "title": "Cron 自动修复：SharedChat + Hermes 菜单",
+   "date": "",
+   "category": "runbooks",
+   "url": "runbooks/cron-auto-repair-sharedchat-hermes-menu.html",
+   "summary": "Cron 自动修复：SharedChat + Hermes 菜单 SharedChat Codex 领取 () 症状 exit 1 根因 弹窗领取后 claim API/toast 捕获不稳 Vue textarea 未"
+  },
+  {
+   "title": "SSH 公钥免密登录",
+   "date": "",
+   "category": "runbooks",
+   "url": "runbooks/ssh-key-authentication.html",
+   "summary": "SSH 公钥免密登录 前置检查 1. 检查主机网络与目标 SSH 端口连通。 2. 使用 ssh keyscan 固定目标主机指纹。 3. 为每台设备生成独立密钥，保存到 ~/.ssh/<SSH KEY ，目录权限 70"
+  }
+ ]
+}
