@@ -812,5 +812,14 @@
 <li>修复 Jekyll 忽略 <code>_</code> 目录导致 <code>_meta/</code> 整个 404 → 输出层映射为 <code>meta/</code>。</li>
 <li>脱敏兜底补 <code>&lt;LAN&gt;</code> 字面量（字母 x 原正则漏网）；线上泄漏复检 0；全站 200。</li>
 <li>排查记录：Pages 构建卡 <code>building</code> 8 分钟（正常 45 秒）→ 手动 <code>POST /pages/builds</code> 触发重建，42 秒完成。</li>
+</ul>
+<h2 id="2026-10-08_1">2026-10-08 | 知识库升级为「记忆库」</h2>
+<ul>
+<li>新增技能 <code>kb-memory</code>：规定回忆历史时<strong>先查知识库</strong>（本地权威源 + 线上镜像）。</li>
+<li>新增检索工具 <code>~/.hermes/scripts/kb_search.py</code>（AND 检索 / 分类 / 全文 / 统计）。</li>
+<li>站点新增机器可读索引：<code>/kb/index.json</code>（结构化）+ <code>/kb/llms.txt</code>（一行一条，便于 LLM 整读）。</li>
+<li>修复 <code>index.md</code>、<code>runbooks/port-scan-ip-range-2026-09-29.md</code> 的 <code>root:root 600</code> 属主 → 知识库<strong>全部可读</strong>；
+  自动发布脚本随之去掉 <code>sudo</code> 依赖，<strong>保留「源篇数==副本篇数」硬断言</strong>作为长期防线。</li>
+<li>新增 <code>runbooks/nas-mtu-1492-rollback-2026-10-08</code>（MTU 误设回退复盘 + 教训）。</li>
 </ul></article>
 <footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

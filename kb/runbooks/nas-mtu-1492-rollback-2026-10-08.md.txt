@@ -1,0 +1,39 @@
+# NAS MTU 误设 1492 导致 DS file 断连（2026-10-08）
+
+## 背景
+排查 NAS 16MB 上传 HTTP 405 时，怀疑是 MTU 问题。**未经询问**就把 NAS `eth0` MTU 从 1500 改成 1492，并写了开机脚本 `/usr/local/etc/rc.d/mtu-pppoe.sh` 固化。
+
+## 结论
+**这是个错误改动，已回退。**
+
+- PPPoE 链路的 1492 由**路由器**通过 MSS clamping 处理，**NAS 侧不需要也不应该**改 MTU。
+- NAS `eth0` **必须是 1500**。
+- 改 1492 后立刻出现 **DS file 断连**，并伴随 NAS 服务异常。
+
+### 回退动作
+1. 删除 `/usr/local/etc/rc.d/mtu-pppoe.sh`（备份保留在 `/root/mtu-pppoe.sh.bak-20261008_191019`）
+2. 恢复 `eth0` MTU = 1500
+3. 验证出网正常
+
+## 验证方式
+```bash
+# NAS 上
+ip link show eth0 | grep mtu          # 期望 mtu 1500
+ls /usr/local/etc/rc.d/mtu-pppoe.sh   # 期望 No such file
+# 本机
+ping -M do -s 1472 <NAS-IP>           # 1500 路径应通
+```
+
+## 实际结果
+- `eth0` MTU = 1500 ✓
+- 开机脚本已删除 ✓
+- 出网正常 ✓
+- DS file 恢复 ✓
+
+## 教训（重要）
+**动宿主/网络参数（MTU、路由、DNS、防火墙）之前必须先问用户，并说明回滚方案。**
+
+MTU 这类参数改动**不会立刻报错**，而是表现为「某些服务偶发断连 / 大文件传不动」——极难归因。而且写成开机脚本会**跨重启存活**，故障会「莫名其妙反复出现」。
+
+### 遗留
+容器网 `quarknet` MTU = 1400（`docker0` = 1500）。是否回退未决。
