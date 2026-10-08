@@ -1,0 +1,54 @@
+# DSM Cloud Sync 任务重叠限制与绕过（2026-10-09）
+
+## 背景
+要把 NAS `/volume1/云`（503 GB / 33,804 文件）同步到夸克网盘，走"和 Cloud Sync 一样"的方案：
+Alist WebDAV（`127.0.0.1:5244/dav`）作为远程，用 Cloud Sync 的 WebDAV 任务（`client_type=wd`）上传。
+
+建任务时被两个**独立**的限制卡住，报错码完全不同，容易混淆。
+
+## 结论（三条实测事实）
+
+### 1. `418 Local syncfolder has been used` —— 本地目录重叠，**前缀级**判断
+已有「百度云」双向任务占用 `/云`（`/云 → /群晖`）。Cloud Sync **硬禁**本地同步目录重叠。
+
+**实测**：把新任务的 `path` 改成 `/云/小说`（**子目录**）→ **仍然 418**。
+→ 该检查是**前缀级**的，父目录被占，**其下任何子目录也不能用**。拆子目录不管用。
+
+### 2. `418` 是**按路径字符串**判断，不是按 inode —— `mount --bind` 可绕过 ★
+把 `/volume1/云/小说` 用 `mount --bind` 挂到 `/volume1/docker/_bindtest`（**inode 完全相同，都是 700366**），
+再用 `path=/docker/_bindtest` 建任务 → **`{"data":{"id":12},"success":true}` 建成**。
+
+→ 判断依据是**路径字符串**，bind-mount 换了路径就绕过了重叠检查。
+**这是解 `/云` 重叠的可行路径**（B 方案成立）。
+
+### 3. `417 Public cloud account has been linked` —— 一个 WebDAV 账号只能建**一个**任务
+同一 `unique_id`（`127.0.0.1:5244:admin`）建第二个任务 → 417。
+
+**绕过**：`get_user_info` 之后**覆盖** `conn_info["unique_id"]`（如 `127.0.0.1:5244:admin#c`）→ 可建多个任务。
+→ 一个 Alist 账号可以支撑**多个** Cloud Sync 任务，靠 `unique_id` 后缀区分。
+
+## API 契约（`SYNO.CloudSync`，version=1）
+
+方法名从 `/usr/syno/synoman/webapi/SYNO.CloudSync.lib` 读出（是个 JSON 声明文件）。
+
+**建任务**：`test_connection_webdav` → `get_user_info`（回填 `unique_id`）→ `get_server_folder_list`（拿远程目录的 `meta_list`/`file_id`）→ `create_link`
+- `conn_info` 必带 `path_share`（`path.split("/")[1]`）和 `path_sync`（`path[path.index("/",1):]`），缺了报 `401 Failed to get share info`
+- `sync_direction`：`BIDIRECTION` / `ONLY_DOWNLOAD` / `ONLY_UPLOAD`
+- WebDAV 不需要 `part_size`
+
+**删任务**：★ **`unlink_connection`**，参数名是 ★ **`connection_id`**（不是 `id`）
+- `delete_link` / `del_link` / `remove_link` / `delete_conn` / `unlink` 等 → 全部 `103`（方法不存在）
+- `unlink_connection` 传 `id=12` → `120 Invalid parameter`；传 **`connection_id=12`** → `{"success":true}`
+- 另有 `unlink_session`（删 session，不是任务）
+
+**其它有用的**：`pause` / `resume` / `list_conn`（`is_tray=false`）/ `create_server_folder` / `set_schedule_setting` / `get_log`
+
+## 调用姿势（NAS 本地）
+- `_sid` 从 `/usr/syno/etc/private/session/current.users` 提（脚本 `dsm_get_sid.py`），**必须在 NAS 上跑**（会话 IP 绑定）
+- 端点 `http://127.0.0.1:5000/webapi/entry.cgi`，POST 表单
+- `conn_info` 用 `json.dumps(..., ensure_ascii=False)` 序列化后当普通表单字段发
+
+## 坑
+- `/tmp` 易失，重启后 `/tmp/_good_sid` 和脚本都没了 → 脚本要留在持久位置
+- `docker` 不在 SSH 默认 PATH → 加 `export PATH=$PATH:/usr/local/bin`
+- Alist `:5244` 只绑 `127.0.0.1`（有意隔离）→ 从 LAN 看是关的，属**正常**
