@@ -1,0 +1,79 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>运维知识库自动沉淀发布（2026-10-08） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="2026-10-08">运维知识库自动沉淀发布（2026-10-08）</h1>
+<h2 id="_1">背景</h2>
+<p>知识库是 Hermes 的长期记忆来源。要求：<strong>有新知识沉淀就自动发布</strong>到公开站点，既可人工查阅，也可作为 AI skill / 记忆来源。</p>
+<h2 id="_2">结论</h2>
+<p>建立一条<strong>无人值守</strong>发布链路：本地知识库 → 脱敏生成 → 泄漏复检 → 变化检测 → 推送 GitHub → 线上实测。</p>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>路径 / 值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>站点</td>
+<td><code>https://&lt;user&gt;.github.io/kb/</code></td>
+</tr>
+<tr>
+<td>源</td>
+<td><code>~/.hermes/knowledge-base/</code></td>
+</tr>
+<tr>
+<td>生成器</td>
+<td><code>~/.hermes/scripts/kb_publish.py</code></td>
+</tr>
+<tr>
+<td>部署器</td>
+<td><code>~/.hermes/scripts/kb_deploy.py</code></td>
+</tr>
+<tr>
+<td>包装脚本</td>
+<td><code>~/.hermes/scripts/kb_auto_publish.sh</code></td>
+</tr>
+<tr>
+<td>定时</td>
+<td>cron <code>0 */6 * * *</code>（<code>no_agent=true</code>）</td>
+</tr>
+<tr>
+<td>构建产物</td>
+<td><code>~/.hermes/kb-build/{work,site,repo}</code></td>
+</tr>
+<tr>
+<td>凭据</td>
+<td><code>~/.hermes/secrets/github.env</code>（600）</td>
+</tr>
+<tr>
+<td>变化指纹</td>
+<td><code>~/.hermes/kb-build/.site.sha256</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">关键设计</h2>
+<ol>
+<li><strong>静默约定</strong>：无变化 → 无输出（cron 不打扰）；发布成功 → 一行核心结果；失败 → 一行关键原因 + 非零退出。</li>
+<li><strong>脱敏兜底</strong>：<code>&lt;LAN&gt;</code> 这类"字母 x"字面量原正则漏网 → 补 <code>10\.10\.10\.[0-9A-Za-z]*</code>，并覆盖 <code>192.168/172.16</code> 私有段。</li>
+<li><strong>Jekyll 陷阱</strong>：GitHub Pages 跑 Jekyll 会<strong>忽略 <code>_</code> 开头目录</strong> → <code>_meta/</code> 输出时映射为 <code>meta/</code>（只改输出层，不动源目录）。</li>
+<li><strong>防冲掉</strong>：双分支推送 —— <code>master</code> 的 <code>/kb/</code>（立即生效）+ <code>hexo</code> 的 <code>source/kb/</code> + <code>_config.yml</code> 加 <code>skip_render: kb/**</code>。</li>
+<li><strong>★数量校验</strong>：知识库内有 <code>root:root 600</code> 文件，普通 <code>cp</code> 会<strong>静默少复制</strong> → 必须 <code>sudo cp -a</code> + <code>chown</code> 回属主，且<strong>复制数量必须等于源数量</strong>，否则中止（绝不发半份）。</li>
+</ol>
+<h2 id="_4">故障与修复（真实记录）</h2>
+<ul>
+<li><strong>症状</strong>：首次自动运行只发布 99 篇（源 101 篇），线上少了 2 篇。</li>
+<li><strong>根因</strong>：<code>index.md</code> 与 <code>runbooks/port-scan-ip-range-2026-09-29.md</code> 属主 <code>root:root</code> 权限 <code>600</code>，agent 无权读；<code>cp ... 2&gt;/dev/null || true</code> 把错误<strong>吞掉</strong>了。</li>
+<li><strong>修复</strong>：改用 <code>sudo -n cp -a</code> + <code>sudo -n chown -R</code>，并新增"源篇数 == 副本篇数"硬校验。</li>
+<li><strong>教训</strong>：<strong>静默失败比失败本身更危险</strong> —— 任何"吞错误 + 继续"的写法都必须配一个可验证的数量/哈希断言。</li>
+</ul>
+<h2 id="2026-10-08_1">验证（2026-10-08）</h2>
+<ul>
+<li>全站 HTTP 200：<code>/</code>、<code>/kb/</code>、<code>/kb/meta/SCHEMA.html</code>、5 个分类目录页、文章页、原始 md。</li>
+<li>首页分类计数 23/30/38/7/3 = <strong>101 篇</strong>。</li>
+<li>线上泄漏复检全 0：用户名、内网段、密钥路径、家目录、域名、公网 IP。</li>
+<li>幂等性：指纹命中时 1 秒内静默退出，不重复推送。</li>
+<li><strong>Pages 构建卡死</strong>：一次提交后构建停在 <code>building</code> 8 分钟未完成（正常约 45 秒）→ <code>POST /pages/builds</code> 触发重建后 42 秒完成。<strong>排查手法</strong>：对比 <code>pages/builds</code> 历史耗时，异常时手动触发重建。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>
