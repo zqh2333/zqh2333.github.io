@@ -1,0 +1,30 @@
+# WorkBuddy2API Panel 宝塔 Docker 部署
+
+日期：2026-09-26
+
+## 部署
+
+- 仓库：`https://github.com/linguo2625469/workbuddy2api-panel`
+- Commit：`<HASH>`
+- 路径：`/www/workbuddy2api-panel`
+- Compose 服务：`wb2api`
+- 容器：`workbuddy2api`
+- 端口：`7863:7863`
+- 数据：`auths/`、`data/`、`config.json`
+- 运行用户：容器 uid/gid 10001，非 root
+- 配置 API key：随机生成，未记录明文
+
+## 验证
+
+- Docker Compose build：通过
+- 容器：running，healthcheck starting/运行中
+- `/panel/`：HTTP 200
+- `/healthz`：HTTP 503，`healthy=0,total=0`，原因是尚未添加 CodeBuddy OAuth 账号，不是容器故障
+- `/v1/models`：HTTP 401，未携带 API key，说明本地鉴权生效
+- 日志：`workbuddy2api listening on :7863 (api_key=true)`
+- Redis 未配置，按项目设计进入纯内存模式
+- 未执行 CodeBuddy 上游登录、聊天或任务上报
+
+## 后续
+
+打开 `http://<LAN-8>:7863/panel/`，使用「添加账号」完成本人授权的 CodeBuddy OAuth 登录。添加账号后再验证 `/healthz` 从 503 变为可服务状态；不要把示例 `test_key` 用于生产。

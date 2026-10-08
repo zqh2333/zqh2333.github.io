@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>验证码 OCR 自学习 Runbook - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><h1 id="ocr-runbook">验证码 OCR 自学习 Runbook</h1>
+<h2 id="_1">日期</h2>
+<p>2026-07-16</p>
+<h2 id="_2">何时用</h2>
+<p>用户要求自动识别站点图片验证码（签到/登录）、且要求"识别越多越精确"的自学习行为时，加载技能 <code>captcha-ocr-learner</code>。</p>
+<h2 id="_3">技能位置</h2>
+<p><code>~/.hermes/skills/captcha-ocr-learner/</code>
+- <code>SKILL.md</code>：原理、坑、调用约定。
+- <code>references/captcha_template.py</code>：自学习模板库（分割 + 聚类 + 最近模板匹配）。
+- <code>references/bootstrap_captcha_lib.py</code>：冷启动专用，只提交正确识别的样本扩充模板库。</p>
+<h2 id="_4">已落地脚本（调用示例）</h2>
+<p><code>~/.hermes/scripts/jianzhile_daily_checkin.py</code> 已集成自学习闭环：
+- 每次成功签到 → <code>tmpl.add_sample(image, answer)</code> 写入 <code>~/.hermes/data/captcha-templates/</code>。
+- 每次识别 → 优先 <code>tmpl.recognize(image)</code>，模板库为空时回退三引擎投票。
+- 运行命令：<code>~/.hermes/hermes-agent/venv/bin/python ~/.hermes/scripts/jianzhile_daily_checkin.py</code></p>
+<h2 id="_5">冷启动积累（可选，周末/未签到日执行）</h2>
+<p><code>~/.hermes/hermes-agent/venv/bin/python ~/.hermes/skills/captcha-ocr-learner/references/bootstrap_captcha_lib.py</code>
+成功一次后服务端返回"已签到"自动停止，不会重复签到。重复跑可换日积累更多样本。</p>
+<h2 id="_6">三引擎融合细节</h2>
+<p>ddddocr（英文数字好）+ cnocr（中文好）+ rapidocr（第三候选），各喂原图与 5 个预处理变体（二值化阈值 120/140/160/180 + 对比度×2）。合法候选（中/英/数，长度 3–6）按频次投票。</p>
+<h2 id="_7">关键修复（已内化进脚本，勿回退）</h2>
+<ol>
+<li>API 返回的 <code>captcha_image</code> 是 data URL，必须 <code>base64.b64decode(s.split(',',1)[1])</code> 才能给 PIL/ddddocr。</li>
+<li><code>solve()</code> 返回 str，提交 body 直接放 str，不要 <code>.encode().decode()</code>。</li>
+<li>paddleocr / easyocr 本机 CPU 指令集不兼容（非法指令崩溃），只用 ddddocr + cnocr + rapidocr。</li>
+</ol>
+<h2 id="_8">验证</h2>
+<ul>
+<li>venv 下脚本跑通：今天已签到返回 <code>ALREADY_CHECKED_IN</code>；未签到日首次成功（实测第 4 次尝试成功，获 5,000,000 额度）。</li>
+<li>模板库目录 <code>~/.hermes/data/captcha-templates/</code> 随成功提交自动增长。</li>
+</ul>
+<h2 id="cron-llm-2026-07-17">Cron 脚本任务不依赖 LLM 的要点（2026-07-17 修正）</h2>
+<ul>
+<li>Hermes cron 的 <code>script</code> 字段<strong>整行被当作文件路径</strong>，不能含参数（如 <code>cpa_hermes_model_audit.py --delay 1</code> 会报 "Script not found"）。带参数必须用 <code>.sh</code> wrapper 包裹。</li>
+<li>纯脚本任务必须 <code>no_agent=true</code>，否则 agent 模式会尝试调用 LLM provider，在模型超时时整任务失败（报 "provider timeout. Fallback chain exhausted"）。</li>
+<li>各脚本所需 python 环境不同，wrapper 里要写绝对路径：</li>
+<li><code>jianzhile_checkin_random.sh</code> / <code>x666_checkin_random.sh</code> / <code>sharedchat_claim_wrap.sh</code> → venv python（<code>/home/user/.hermes/hermes-agent/venv/bin/python</code>，含 ddddocr/cnocr/rapidocr/playwright/secretstorage）。</li>
+<li><code>cpa_hermes_audit_wrap.sh</code> → <code>/usr/bin/python3</code>（含 yaml，审计通过 SSH 读 CPA config）。</li>
+<li>sharedchat 脚本必须 <code>headless=True</code>（cron 无显示环境），原 <code>headless=False</code> 在无头服务器会卡住。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

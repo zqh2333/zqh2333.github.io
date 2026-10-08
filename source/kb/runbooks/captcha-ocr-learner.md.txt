@@ -1,0 +1,43 @@
+# 验证码 OCR 自学习 Runbook
+
+## 日期
+2026-07-16
+
+## 何时用
+用户要求自动识别站点图片验证码（签到/登录）、且要求"识别越多越精确"的自学习行为时，加载技能 `captcha-ocr-learner`。
+
+## 技能位置
+`~/.hermes/skills/captcha-ocr-learner/`
+- `SKILL.md`：原理、坑、调用约定。
+- `references/captcha_template.py`：自学习模板库（分割 + 聚类 + 最近模板匹配）。
+- `references/bootstrap_captcha_lib.py`：冷启动专用，只提交正确识别的样本扩充模板库。
+
+## 已落地脚本（调用示例）
+`~/.hermes/scripts/jianzhile_daily_checkin.py` 已集成自学习闭环：
+- 每次成功签到 → `tmpl.add_sample(image, answer)` 写入 `~/.hermes/data/captcha-templates/`。
+- 每次识别 → 优先 `tmpl.recognize(image)`，模板库为空时回退三引擎投票。
+- 运行命令：`~/.hermes/hermes-agent/venv/bin/python ~/.hermes/scripts/jianzhile_daily_checkin.py`
+
+## 冷启动积累（可选，周末/未签到日执行）
+`~/.hermes/hermes-agent/venv/bin/python ~/.hermes/skills/captcha-ocr-learner/references/bootstrap_captcha_lib.py`
+成功一次后服务端返回"已签到"自动停止，不会重复签到。重复跑可换日积累更多样本。
+
+## 三引擎融合细节
+ddddocr（英文数字好）+ cnocr（中文好）+ rapidocr（第三候选），各喂原图与 5 个预处理变体（二值化阈值 120/140/160/180 + 对比度×2）。合法候选（中/英/数，长度 3–6）按频次投票。
+
+## 关键修复（已内化进脚本，勿回退）
+1. API 返回的 `captcha_image` 是 data URL，必须 `base64.b64decode(s.split(',',1)[1])` 才能给 PIL/ddddocr。
+2. `solve()` 返回 str，提交 body 直接放 str，不要 `.encode().decode()`。
+3. paddleocr / easyocr 本机 CPU 指令集不兼容（非法指令崩溃），只用 ddddocr + cnocr + rapidocr。
+
+## 验证
+- venv 下脚本跑通：今天已签到返回 `ALREADY_CHECKED_IN`；未签到日首次成功（实测第 4 次尝试成功，获 5,000,000 额度）。
+- 模板库目录 `~/.hermes/data/captcha-templates/` 随成功提交自动增长。
+
+## Cron 脚本任务不依赖 LLM 的要点（2026-07-17 修正）
+- Hermes cron 的 `script` 字段**整行被当作文件路径**，不能含参数（如 `cpa_hermes_model_audit.py --delay 1` 会报 "Script not found"）。带参数必须用 `.sh` wrapper 包裹。
+- 纯脚本任务必须 `no_agent=true`，否则 agent 模式会尝试调用 LLM provider，在模型超时时整任务失败（报 "provider timeout. Fallback chain exhausted"）。
+- 各脚本所需 python 环境不同，wrapper 里要写绝对路径：
+  - `jianzhile_checkin_random.sh` / `x666_checkin_random.sh` / `sharedchat_claim_wrap.sh` → venv python（`/home/user/.hermes/hermes-agent/venv/bin/python`，含 ddddocr/cnocr/rapidocr/playwright/secretstorage）。
+  - `cpa_hermes_audit_wrap.sh` → `/usr/bin/python3`（含 yaml，审计通过 SSH 读 CPA config）。
+- sharedchat 脚本必须 `headless=True`（cron 无显示环境），原 `headless=False` 在无头服务器会卡住。

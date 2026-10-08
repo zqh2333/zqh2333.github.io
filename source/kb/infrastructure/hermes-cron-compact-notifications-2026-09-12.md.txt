@@ -1,0 +1,26 @@
+# Hermes Cron 精简通知规范
+
+- 日期：2026-09-12
+- 目标：Telegram cron 推送只发重要信息，不再推随机 sleep、长 JSON、完整 traceback 或大量普通日志。
+- 统一过滤器：`~/.hermes/scripts/cron_notify_filter.py`
+
+## 当前接入任务
+
+- SharedChat Codex：`sharedchat_claim_wrap.sh` → `✅ SharedChat Codex：$50 可用｜到期 ...`
+- Venlacy：`venlacy_checkin_random.sh` → `✅ Venlacy：今日已签到｜累计 ...` 或奖励。
+- 简直了：`jianzhile_checkin_random.sh` → 多账号成功数 + 总奖励。
+- 薄荷转盘：`x666_checkin_random.sh` → 奖励或今日已签到。
+- AnyRouter：`anyrouter_daily_open.sh` → 只提示余额或登录授权状态，不显示 sleep 调试行。
+
+## 规则
+
+- 成功：一行摘要，包含任务名和核心结果（余额/奖励/额度）。
+- 已签到/已激活：一行摘要；不重复输出原始 JSON。
+- 失败：一行 `⚠️` 摘要，包含关键失败原因；保留脚本退出码让 Hermes 仍能标记失败。
+- 静默优先：无意义调试信息（sleep 秒数、打开 URL 过程）不推送。
+
+## 验证
+
+- Python 编译通过：过滤器及 SharedChat/Venlacy/薄荷/简直了脚本。
+- Bash `-n` 通过：所有接入 wrapper。
+- 实际运行验证：SharedChat 输出 `✅ SharedChat Codex：$50 可用｜到期 ...`；Venlacy 输出 `✅ Venlacy：今日已签到｜累计 4`；AnyRouter 只输出一行授权状态。

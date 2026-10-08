@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>新站点自动配置优先级（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="2026-07-18">新站点自动配置优先级（2026-07-18）</h1>
+<blockquote>
+<p><strong>状态更新 2026-07-18 晚：已按用户要求停用自动设置 priority。</strong><br />
+见 [[decisions/cpa-auto-priority-disabled-2026-07-18]]。下文为历史策略。</p>
+</blockquote>
+<h2 id="_1">脚本（历史）</h2>
+<ul>
+<li><code>/root/cli-proxy-data/scripts/cpa_auto_priority.py</code></li>
+<li>曾接入：
+  1. <code>cpa_provider_watch.py</code>：检测到新站点后，同步前/后各跑一次
+  2. <code>sync_cpa_models_notify.sh</code>：定时同步前后也跑（幂等）</li>
+</ul>
+<h2 id="_2">当前</h2>
+<ul>
+<li>自动入口已禁用；脚本默认打印 DISABLED 并退出</li>
+<li>需要手动一次性分配时：<code>CPA_AUTO_PRIORITY_ENABLED=1</code> 或 <code>--force</code></li>
+<li><code>cpa_upstream_quality.py</code> 也不再写 priority（只告警）</li>
+</ul>
+<h2 id="_3">规则（历史参考）</h2>
+<ul>
+<li><strong>数字越大越优先</strong></li>
+<li>已知站点固定表：</li>
+<li>RawChat 90, temp1 80, mimo 70, snote 60, alfred 50, 薄荷/喵喵 40, 魔方 20, 简直了 10</li>
+<li>未知新站点：从 79 往下自动分配空位（79/78/...，避开已占用）</li>
+<li>固定稳定模型强制 <code>alias=""</code>（同名可故障转移）</li>
+<li>新站名加入 <code>codex-fingerprint.providers</code></li>
+</ul>
+<h2 id="_4">模型不同也能用吗？</h2>
+<p><strong>能。</strong>
+- 请求 <code>model=X</code> 时，CPA 只会在“配置了 X 的上游/凭据”里选
+- 站点 A 有 grok、站点 B 有 gpt，互不影响
+- 只有多个站都提供同一模型名时，priority + round-robin/冷却才决定先后与故障转移</p>
+<h2 id="force">手动（现需 force）</h2>
+<pre><code class="language-bash">python3 /root/cli-proxy-data/scripts/cpa_auto_priority.py --dry-run --force
+CPA_AUTO_PRIORITY_ENABLED=1 python3 /root/cli-proxy-data/scripts/cpa_auto_priority.py
+</code></pre></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

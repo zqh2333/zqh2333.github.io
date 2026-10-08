@@ -1,0 +1,31 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anki 单设备解绑按钮失效修复（2026-07-22） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="anki-2026-07-22">Anki 单设备解绑按钮失效修复（2026-07-22）</h1>
+<h2 id="_1">症状</h2>
+<p>后台激活码设备列表点击「解绑此设备」无效。</p>
+<h2 id="_2">根因</h2>
+<p>设备卡片渲染的是：</p>
+<pre><code class="language-html">onclick=&quot;deleteDevice(${device.id}, ...)&quot;
+</code></pre>
+<p>但 <code>templates/dashboard.html</code> 中对应 <code>function deleteDevice(...)</code> 被此前前端改动遗漏/删除；浏览器点击发生 <code>ReferenceError</code>，没有请求到后端。</p>
+<p>后端 <code>/api/admin/delete_device/&lt;id&gt;</code> 原本存在且可用。</p>
+<h2 id="_3">修复</h2>
+<ol>
+<li>恢复前端 <code>deleteDevice(deviceId, deviceIdentifier)</code>：确认 → <code>DELETE /api/admin/delete_device/&lt;id&gt;</code> → 成功后刷新设备弹窗与数据列表；失败显示具体 HTTP/后端信息。</li>
+<li>后端单设备解绑：
+   - 成功提示改为「设备已解绑，名额已释放」
+   - 添加 <code>AdminOperationLog</code> 审计（device id、code/device/raw id 摘要）
+   - 404 明确为「设备不存在或已解绑」
+   - 异常写日志且返回安全提示。</li>
+</ol>
+<h2 id="_4">验证</h2>
+<p>容器内临时 code/device：
+- 成功解绑 → Device 删除、ActivationCode 保留
+- 重复解绑 → 404
+- 未登录 → 302
+- 临时数据清理完成
+- <code>verify_all.py</code>: <code>success=true</code>, <code>ready=true</code></p>
+<p>备份：<code>admin.py.bak_device_unbind_20260722</code>、<code>dashboard.html.bak_device_unbind_20260722</code>。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

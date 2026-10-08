@@ -1,0 +1,13 @@
+# 一键解绑无响应 + 指纹碰撞 + 手机按钮过大（2026-07-24）
+
+## 一键解绑无响应
+- 按钮调用 `unbindAllDevices(code)`，但前端函数缺失。
+- 新增 `function unbindAllDevices` + `POST /api/admin/unbind_devices_by_code`。
+- 用 jQuery `.on('click.unbindAll')` 绑定，避免 inline onclick 转义问题。
+
+## 手机按钮过大
+- `#devicesModal` 移动端缩小「解绑此设备 / 一键解绑 / 关闭」尺寸与 padding。
+
+## 指纹碰撞
+- 同一 `device_id` 可挂在多个激活码下；无码静默时 `.first()` 会命中外码历史。
+- 现：多候选时优先按牌组名匹配；无法消歧则 **不静默匹配**，避免外码 RISK_LOCKED。

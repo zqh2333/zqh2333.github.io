@@ -1,0 +1,41 @@
+# Hermes “model provider failed after retries” 自动检测与修复（2026-07-18）
+
+## 症状
+Telegram 只显示：
+```text
+The model provider failed after retries. I kept raw provider details out of chat; check gateway logs for diagnostics.
+```
+真实原因在 `~/.hermes/logs/errors.log`。
+
+## 日志统计（errors.log）
+高频：
+- `gpt-5.6-terra`：`auth_unavailable` / `503` / `timeout_502`
+- `mimo-v2.5-pro`：`auth_unavailable` / `429`
+- `grok-4.5`：`timeout_502` / `401` / `429`
+
+含义：
+- `auth_unavailable: no auth available (providers=openai-compatible-xxx)` = CPA 该模型对应上游凭据池暂时不可用
+- `HTTP 502 timed out` = 上游/边缘代理超时（长上下文更易触发）
+- Hermes 原先 **无 fallback_providers**，单模型重试 3 次失败后直接报通用错误
+
+## 已自动修复
+### Hermes
+1. 配置 `fallback_providers`（同 CPA `8317` 跨模型）：
+   `gpt-5.5 → gpt-5.6-terra → deepseek-v4-flash → mimo-v2.5 → glm-5.2`
+2. `.env` 增加 `CPA_LOCAL_API_KEY`（供 fallback `key_env`）
+3. 新增日志 watchdog：`provider_fail_watch.py` + cron `682099dad6f0`（09:20/13:20/18:20/22:20）
+   - 有新 hard fail 才推送；健康时静默
+
+### CPA
+1. `cpa-stable-proxy` chat timeout：90s → **180s**
+2. `request-retry` → 3；`transient-error-cooldown-seconds` → 180
+3. 跑 `cpa_upstream_quality`：snote-temp/alfred-temp 仍 401 保持低优先级
+
+## 当前探针（8317）
+- grok-4.5 / gpt-5.5 / gpt-5.6-terra / mimo-v2.5 / deepseek-v4-flash → **200**
+- glm-5.2 可能仍 cooldown/429（在 fallback 末位）
+
+## 说明
+- 故障转移主责仍在 CPA 同名多上游；Hermes fallback 是**跨模型**兜底，避免整轮对话直接挂死。
+- 新 fallback 对**新会话/下一轮 agent create** 生效；长会话缓存可能需新开对话或等 idle 回收。
+- 上游 401/额度问题需修 key 或等冷却，脚本不会做 “Hello” 测活。

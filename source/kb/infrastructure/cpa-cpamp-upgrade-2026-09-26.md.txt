@@ -1,0 +1,60 @@
+# CPA / CPAMP 升级记录（2026-09-26）
+
+- 日期：2026-09-26
+- 目标：升级 CPA `cli-proxy` 与 CPAMP `cpa-manager-plus`，并同步 Hermes 模型菜单
+- 范围：仅重建两个容器；未改动 CPA `config.yaml` 内容、auth 目录、插件目录或 CPAMP 数据；未触碰 `cpa-usage-keeper`。
+
+## 升级前
+
+- CPA `cli-proxy`：`eceasy/cli-proxy-api:latest`
+  - 镜像 ID `sha256:<HASH>`
+  - runtime `v7.3.3`，commit `7bbfeaf`
+- CPAMP `cpa-manager-plus`：`seakee/cpa-manager-plus:latest`
+  - 镜像 ID `sha256:<HASH>`
+- 端口：CPA `8318 -> 8317`；CPAMP `18317 -> 18317`；Keeper `18080 -> 8080`
+
+## 备份
+
+- 目录：`/root/cpa_update_backups/20260926_081236`
+- 内容：`config.yaml`、`auth-dir.tgz`、`plugins.tgz`、`cpamp-data-consistent.tgz`（SQLite 在线 `.backup`）、`container-inspect.json`、`image-inspect.json`
+- 校验：`BACKUP_DB_INTEGRITY=ok`
+- 回滚标签：`eceasy/cli-proxy-api:rollback-20260926`、`seakee/cpa-manager-plus:rollback-20260926`
+- 已知脚本缺陷：`/tmp/cpa_cpamp_backup.sh` 末尾的 Python 校验按 `usage.sqlite` 取 tar 成员，实际成员名为 `./usage.sqlite`，因此校验步骤必然报 `KeyError`；备份文件本身是完整的，需按 `endswith("usage.sqlite")` 修正后再校验。
+
+## 升级后
+
+- CPA：`v7.3.17`，commit `9bdde54`，BuiltAt `2026-09-24T19:07:19Z`
+  - upstream digest `sha256:<HASH>`
+  - 新镜像 ID `sha256:<HASH>`
+- CPAMP：upstream digest `sha256:<HASH>`
+  - 新镜像 ID `sha256:<HASH>`
+- 插件：`cpa-key-billing v1.3.3` 与 `keeper v0.1.0` 均加载并注册。
+
+## 重建参数（与原配置一致）
+
+- `cli-proxy`：`-e TZ=Asia/Shanghai`、`-p 8318:8317`、挂载 `config.yaml`、`/root/.cli-proxy-api`、`/CLIProxyAPI/plugins`、`--restart unless-stopped`
+- `cpa-manager-plus`：`-e HTTP_ADDR=0.0.0.0:18317 -e USAGE_DATA_DIR=/data -e USAGE_DB_PATH=/data/usage.sqlite`、`-p 18317:18317`、挂载 `/root/cpa-manager-plus-data:/data`、`--restart unless-stopped`
+
+## 验证
+
+- `cli-proxy`：running，本地根路径 HTTP 200，日志无 panic/fatal/error。
+- `cpa-manager-plus`：running，`/` HTTP 307（登录重定向）、`/management.html` HTTP 200。
+- `cpa-usage-keeper`：未被触碰，healthy；`/keeper/health` HTTP 200（`/`、`/healthz` 为 404 属正常，其 healthcheck 用的是 `/keeper/healthz`）。
+- CPAMP SQLite：`PRAGMA integrity_check=ok`，52 张表。
+- CPAMP 日志：派生迁移完成、后台 worker 启动、baseURL `http://<LAN-8>:8318`、`managementKeySet=true`。
+- 挂载与端口在重建前后逐项一致。
+- 未访问 CPA 上游站点，未做上游测活或业务探测。
+
+## Hermes 模型菜单同步
+
+- 升级后 CPA 本地聚合 `/v1/models` 为 11 个模型，与 Hermes 菜单出现差异：
+  - 仅聚合有：`gpt-5.6-terra`
+  - 仅菜单有：`gpt-image-2.5-sunburst`
+- 处理：以本地聚合为源执行 `cpa_model_menu_sync.py --no-restart`，返回 `changed=true`。
+- 结果：菜单与聚合 `EQUAL=True`（11/11），`default` 保持 `global:deepseek-v4.1-flash`，`fallback_providers` 仍为空。
+- 配置备份：`/home/user/.hermes/config.yaml.bak_cpa_menu_sync`
+
+## 备注
+
+- 升级后 `global:deepseek-v4.1-flash` 已可正常调用（此前 503 `model_price_error`「尚未定价」为 Billing 缺价，非模型故障）。
+- 故障转移保持关闭，符合"所选模型即实际调用模型"的要求。

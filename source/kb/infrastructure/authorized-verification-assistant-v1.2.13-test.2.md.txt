@@ -1,0 +1,38 @@
+# Authorized Verification Assistant v1.2.13-test.2
+
+- 日期：2026-09-16
+- 产物：`authorized-verification-assistant-v1.2.13-test.2.zip`
+- 本地路径：`/home/user/artifacts/authorized-verification-assistant-v1.2.13-test.2.zip`
+- NAS：`/volume1/云/Hermes项目产物/authorized-verification-assistant/v1.2.13-test.2/`
+- 大小：83007 bytes
+- SHA-256：`<HASH>`
+
+## 新增
+
+- `shared/challenge-detector.js`
+- `NO_CHALLENGE`、`SITE_OWNED_IMAGE_CAPTCHA`、`HUMAN_REQUIRED` 三种分类
+- reCAPTCHA、Turnstile、hCaptcha、网易易盾/拼图/滑块、通用人机风险挑战识别
+- 在页面运行链中记录 `CHALLENGE_DETECTED`；真实第三方安全盾不自动破解
+- 站点自有图片验证码继续使用原 OCR、原生 input/change、提交上限和成功状态校验
+
+## 安全边界
+
+不包含：
+
+- token 伪造、重放或注入
+- 挑战状态修改
+- undetected-chromedriver/nodriver 隐身绕过
+- EzSolver/第三方打码服务
+- 真实 reCAPTCHA/易盾图片点选或拼图自动破解
+
+## 验证
+
+- 上传包全部 JavaScript 语法：通过
+- 探测器回归：通过
+- 现有内容脚本/Hassbian/契约/策略矩阵：`28 passed`
+- Google reCAPTCHA Demo：真实页面只读识别到 reCAPTCHA
+- 网易易盾 Jigsaw：真实页面只读识别到拼图控件、iframe、canvas
+- 未点击、未拖动、未提交、未生成第三方 token
+- 本机系统 Chrome 可控测试：Chrome 150 已启动，但当前测试加载参数没有出现目标扩展 Worker，因此未宣称扩展在该 Chrome 中实机通过
+- Windows Chrome/Edge：未在本机执行，需用户在 Windows 实机安装后验收
+- NAS：文件大小、SHA-256、ZIP 完整性回读通过

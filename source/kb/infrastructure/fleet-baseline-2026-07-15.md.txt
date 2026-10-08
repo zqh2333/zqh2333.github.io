@@ -1,0 +1,34 @@
+# 全体设备基线巡检与 SSH 密钥认证（2026-07-15）
+
+## 范围与方式
+- 目标：PVE、ROS、OpenWrt、Hermes、NAS、AdGuard Home、Home Assistant、宝塔。
+- 网络巡检：只读 ICMP、TCP 端口、SSH banner 和 HTTP 响应头探测。
+- SSH 验证：每台设备使用独立 RSA 4096 密钥，命令强制设置 `BatchMode=yes`、`PasswordAuthentication=no`、`KbdInteractiveAuthentication=no`，确保未回退到密码认证。
+
+## 设备状态
+
+| 设备 | 地址 | SSH | 密钥认证 | 管理服务 |
+|---|---:|---|---|---|
+| PVE | `<LAN-1>` | `22`，OpenSSH 9.2 | 已验证 | PVE API `8006` 返回 200 |
+| ROS | `<LAN-2>` | `2333`，RouterOS SSH | 已验证 | RouterOS |
+| OpenWrt | `<LAN-3>` | `22`，Dropbear | 已验证 | LuCI `80/443` 返回 200；`2333` 是 Web 重定向，非 SSH |
+| Hermes | `<LAN-4>` | `22`，OpenSSH 9.6 | 已验证 | Hermes 节点 |
+| NAS | `<LAN-5>` | `22`，OpenSSH 8.2 | 已验证 | Nginx `80/443` 返回 200；`2333` 是 Nginx Web 服务，非 SSH |
+| AdGuard Home | `<LAN-6>` | `22`，OpenSSH 8.2p1 | 已验证 | `80/443` 重定向至登录页；`3000` 未获取 HTTP 响应 |
+| Home Assistant | `<LAN-7>` | `22`，OpenSSH 10.2 | 已验证 | `8123` 可达 |
+| 宝塔面板 | `<LAN-8>` | `22`，OpenSSH 8.9p1 | 已验证 | `8080` 返回 200；`8888` 未监听 |
+
+## 密钥管理
+- 私钥目录：`~/.ssh/<SSH-KEY>`，权限 `700`。
+- 每台私钥权限：`600`。
+- 每台设备使用独立私钥，文件名与设备地址一致。
+- ROS 使用其 RouterOS 导入流程；OpenWrt 的 Dropbear 必须写入 `/etc/dropbear/authorized_keys`，而不是 `~/.ssh/authorized_keys`。
+- 未在知识库中保留密码、私钥或其他明文凭据。
+
+## 验证结果
+2026-07-15：PVE、ROS、OpenWrt、Hermes、NAS、AdGuard Home、Home Assistant、宝塔均返回 `key-auth-ok`，且验证命令禁止密码和交互认证。
+
+## CPA 约束
+CPA 站点禁止任何模型列表、健康检查、聊天或脚本探测请求；模型同步只能在用户提供离线导出的模型清单后进行。
+
+相关：[[infrastructure/ros]]、[[runbooks/ssh-key-authentication]]、[[infrastructure/hermes-memory]]

@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hermes Cron 面板签到看板升级 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="hermes-cron">Hermes Cron 面板签到看板升级</h1>
+<ul>
+<li>日期：2026-09-12</li>
+<li>文件：<code>~/.hermes/scripts/hermes_cron_panel.py</code></li>
+<li>服务：<code>hermes-cron-panel.service</code>，监听 <code>0.0.0.0:8421</code></li>
+</ul>
+<h2 id="_1">改动</h2>
+<ul>
+<li>首页增加“签到自动化看板”视觉区。</li>
+<li>新增统计：签到任务数、签到成功数、失败数、运行中、总余额/额度。</li>
+<li>从最近 cron 输出解析 <code>CHECKIN_SUCCESS</code>、<code>CHECKED_IN</code>、<code>CLAIMED</code>、<code>ALREADY_ACTIVE</code>、<code>领取成功</code>、<code>签到成功</code>。</li>
+<li>提取字段：<code>quota</code>、<code>quota_awarded</code>、<code>remainingAmount</code>、<code>balance/余额</code>，并在表格新增“签到/余额”列。</li>
+<li>美化为渐变卡片、hero 区、现代统计卡，保留青龙式左侧导航/任务表格/脚本管理。</li>
+</ul>
+<h2 id="_2">验证</h2>
+<ul>
+<li><code>python3 -m py_compile</code> 通过。</li>
+<li>systemd user 服务重启后 active。</li>
+<li><code>/api/jobs</code> 返回 dashboard：签到任务 10、签到成功 6、失败 4、总余额/额度 14.29M。</li>
+<li>浏览器登录后首页显示：<code>6 / 10</code>、<code>14.29M</code>，表格列显示各任务奖励/余额，如 SharedChat <code>剩余 50</code>、薄荷 <code>奖励 75000</code>。</li>
+<li>LAN 地址 <code>http://&lt;LAN-4&gt;:8421/</code> HTTP 200。</li>
+<li>服务日志无 traceback/error/明文 token/password 泄露。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

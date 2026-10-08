@@ -1,0 +1,33 @@
+# 新站自动规范化（2026-07-20）
+
+## 用户意图
+「可以」——以后面板新增公共站自动补稳定模板，无需每次手工设模型相关加固。
+
+## 做什么（仅本地 config）
+`cpa-new-site-normalize.service` 监听 `/root/CLIProxyAPI/config.yaml`：
+1. **公共站**（非 RawChat）：`headers.User-Agent=OpenAI/Python 1.59.0` + `Accept: application/json`
+2. **所有 models.alias 强制空**（同名 failover）
+3. **RawChat** 保持 Codex 桥 headers
+
+## 明确不做
+- 不改 base-url / api-key / 模型列表增删 / **priority**
+- 不增删站点（membership 校验）
+- **不探活**上游（无 /models、chat、health）
+- 不改 Hermes 菜单 / stable_models.json
+
+## 路径
+| 项 | 路径 |
+|---|---|
+| 脚本 | `/root/cli-proxy-data/scripts/cpa_new_site_normalize.py` |
+| watch | `cpa_new_site_normalize_watch.sh` |
+| unit | `cpa-new-site-normalize.service` |
+| 日志 | `/root/cli-proxy-data/state/cpa_new_site_normalize.log` |
+
+## 验证
+- 首次运行：`temp4:headers=openai-python`
+- 服务 `active/enabled`
+- 全公共站 UA 均为 OpenAI/Python；alias 全空
+
+## 用户加站仍需
+- 模型名用**裸名**且与现网一致（如 `grok-4.5`）才会进 failover 组
+- 新模型名要进客户端菜单时，才需改 `stable_models.json` / Hermes 菜单

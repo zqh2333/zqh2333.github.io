@@ -1,0 +1,85 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>gpt-5.5 / glm-5.2 不可用排查（2026-07-17） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="gpt-55-glm-52-2026-07-17">gpt-5.5 / glm-5.2 不可用排查（2026-07-17）</h1>
+<h2 id="_1">症状</h2>
+<ul>
+<li>经 CPA <code>8317/18317</code>：</li>
+<li><code>gpt-5.5</code> → <strong>503</strong>（<code>auth_unavailable</code> / upstream unavailable）</li>
+<li><code>glm-5.2</code> → <strong>超时</strong>（20–70s）</li>
+</ul>
+<h2 id="_2">路由</h2>
+<ul>
+<li>strategy: <code>fill-first</code></li>
+<li>同名模型靠多上游 + 空 alias 故障转移</li>
+</ul>
+<h2 id="hello">实测（直连上游，业务短请求，非 Hello 探测）</h2>
+<h3 id="gpt-55">gpt-5.5</h3>
+<table>
+<thead>
+<tr>
+<th>上游</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>魔方</strong> <code>mofas.one</code></td>
+<td><strong>503</strong> Service temporarily unavailable</td>
+</tr>
+<tr>
+<td><strong>mimo</strong></td>
+<td>配置中<strong>不一定</strong>保留该模型；曾出现 503/429；当前以配置为准</td>
+</tr>
+<tr>
+<td>CPA 汇总</td>
+<td><strong>503</strong>，日志/错误体显示无可用 auth（providers 含 魔方/mimo/codex 等）</td>
+</tr>
+</tbody>
+</table>
+<p>结论：不是 Hermes 菜单问题，是 <strong>gpt-5.5 的可用上游当前都挂/无可用凭据</strong>。</p>
+<h3 id="glm-52">glm-5.2</h3>
+<table>
+<thead>
+<tr>
+<th>上游</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>mimo</strong></td>
+<td>曾 200（~2.6s），后续多次 <strong>502 Bad Gateway</strong>（上游不稳）</td>
+</tr>
+<tr>
+<td><strong>薄荷</strong> <code>x666.me</code></td>
+<td><strong>read timeout ~40s</strong></td>
+</tr>
+<tr>
+<td><strong>喵喵</strong> <code>new-api.rugao.me</code></td>
+<td><strong>read timeout ~40s</strong></td>
+</tr>
+<tr>
+<td>CPA 汇总</td>
+<td>先打慢/挂上游时表现为 <strong>整体超时</strong>；mimo 502 时也无法稳定成功</td>
+</tr>
+</tbody>
+</table>
+<p>结论：不是固定菜单映射错误；是 <strong>glm-5.2 三家上游都不稳</strong>（一快但 502、两家慢超时），CPA 故障转移无法变出可用节点。</p>
+<h2 id="cpa">与 CPA 架构关系</h2>
+<ul>
+<li>8317 只暴露稳定裸名（含这两个）→ 名字正确</li>
+<li>故障转移只能在「至少一家上游健康」时生效</li>
+<li>当前属于 <strong>上游供给侧故障</strong>，不是本地代理白名单问题</li>
+</ul>
+<h2 id="_3">处理建议</h2>
+<ol>
+<li>等 魔方/mimo/薄荷/喵喵 恢复，或换有效 key</li>
+<li>临时从固定菜单拿掉 <code>gpt-5.5</code>/<code>glm-5.2</code>（仅隐藏入口，不修上游）</li>
+<li>上游恢复后无需改 Hermes 映射名</li>
+</ol>
+<h2 id="_4">验证命令（自有上游，短业务题）</h2>
+<p>在宝塔上对 <code>base-url + /chat/completions</code> 发 <code>计算 4 加 5，只输出整数</code>，对照各 provider 状态码/耗时。</p>
+<p>后续进阶优化见 [[decisions/cpa-advanced-failover-2026-07-17]]。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

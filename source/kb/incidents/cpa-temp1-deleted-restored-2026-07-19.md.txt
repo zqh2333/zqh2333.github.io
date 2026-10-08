@@ -1,0 +1,30 @@
+# temp1（用户称 temp 1234）被删与恢复（2026-07-19）
+
+## 用户反馈
+「temp 1234 怎么给我删了」
+
+## 核查
+- 现网/历史**没有**名为 `temp 1234` 的站点
+- 最接近、且曾在面板存在的是 **`temp1`**
+  - base: `https://sub.yxxb.eu.cc/v1`
+  - models: gpt-5.6-sol / gpt-5.5 / gpt-5.4 / gpt-5.4-mini / grok-4.5
+- 删除时间线（watch 日志）：
+  - 2026-07-17 20:17：`+['temp1']` 面板新增并同步
+  - **2026-07-18 10:27**：`providers changed +[] -['temp1']`
+    - watcher 看到磁盘上已无 temp1（更像面板 DELETE 或写回竞态后的结果）
+    - 随后 auto-priority/sync 按当时列表固化，**没有再加回**
+- 今晚操作：
+  - 23:24 按用户意图删除的是 **snote-temp / alfred-temp**，**不是 temp1**
+  - temp1 在那之前就已经不在 9 站列表里了
+
+## 已恢复
+- 从备份 `config.yaml.bak_sol_codex_isolate_20260718_090119` 恢复完整 `temp1`（含 key-entries）
+- 写回 live config，插在 `烁` 前
+- `docker restart cli-proxy`
+- 探针：`gpt-5.5` / `grok-4.5` / `gpt-5.4` → **200**
+
+## 当前 providers
+RawChat / 薄荷 / mimo / 魔方 / 喵喵 / 简直了 / **temp1** / 烁
+
+## 说明
+若你说的 `temp 1234` 不是 `temp1`（例如别的 base-url/key），把名称或地址发来，我再对一下。

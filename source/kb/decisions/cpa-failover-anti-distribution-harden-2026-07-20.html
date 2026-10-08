@@ -1,0 +1,102 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA 抗「反分发/额度/并发」间歇拒流加固（2026-07-20） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="cpa-2026-07-20">CPA 抗「反分发/额度/并发」间歇拒流加固（2026-07-20）</h1>
+<h2 id="_1">目标</h2>
+<p>在上游禁止 CPA/sub/new-api 分发、限流/额度窗口拒流的情况下，提高本地 8317 多上游 failover 成功率。<strong>不</strong>做上游定时探活。</p>
+<h2 id="_2">根因回顾</h2>
+<ul>
+<li>403 余额/全站额度/反滥用 HTML</li>
+<li>429 并发</li>
+<li>冷却 180s 后 <code>auth_unavailable</code></li>
+<li>temp2 <code>grok-4.5</code> 曾设 alias=<code>Grok 4.5</code> → 拆出 failover 组</li>
+</ul>
+<h2 id="configyaml">配置变更（config.yaml）</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>request-retry</td>
+<td>4</td>
+</tr>
+<tr>
+<td>max-retry-credentials</td>
+<td>8</td>
+</tr>
+<tr>
+<td>max-retry-interval</td>
+<td>2</td>
+</tr>
+<tr>
+<td>transient-error-cooldown-seconds</td>
+<td>90</td>
+</tr>
+<tr>
+<td>routing</td>
+<td>RR，session-affinity=false</td>
+</tr>
+<tr>
+<td>force-model-prefix</td>
+<td>false</td>
+</tr>
+<tr>
+<td>全站 openai-compat models</td>
+<td>alias 清空</td>
+</tr>
+<tr>
+<td>temp2</td>
+<td>去掉 <code>Grok 4.5</code> alias</td>
+</tr>
+<tr>
+<td>手动 priority</td>
+<td>RawChat90 byd80 super75 snow70 temp1/2 65/60 mimo55 … <strong>斑马5（降权）</strong></td>
+</tr>
+</tbody>
+</table>
+<p>edge：chat 超时 300s（此前已设）。Hermes fallback 已对齐菜单。</p>
+<h2 id="8317">验证（8317 最小业务句，加固后）</h2>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>grok-4.5 chat ×5</td>
+<td><strong>5/5 200</strong></td>
+</tr>
+<tr>
+<td>deepseek-v4-pro ×3</td>
+<td><strong>3/3</strong></td>
+</tr>
+<tr>
+<td>gpt-5.5 / terra / mimo-pro ×2</td>
+<td><strong>全 200</strong></td>
+</tr>
+<tr>
+<td>glm-5.2 ×3</td>
+<td><strong>2/3</strong>（1 次喵喵 EOF，其余 failover 成功）</td>
+</tr>
+<tr>
+<td>/responses grok + gpt-5.5</td>
+<td><strong>200</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">不能完全消灭的</h2>
+<ul>
+<li>单上游模型（claude、mimo-v2.5-pro 仅 1 站；gpt-5.4 仅 codex）</li>
+<li>全站额度窗口用完时所有相关上游同时 403</li>
+<li>上游明确封分发 IP/UA 时</li>
+</ul>
+<h2 id="_4">纪律</h2>
+<p>禁止定时探活；仅客户端真实请求触发 failover。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

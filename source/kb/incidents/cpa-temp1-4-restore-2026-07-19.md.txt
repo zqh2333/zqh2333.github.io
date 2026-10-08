@@ -1,0 +1,27 @@
+# temp1–temp4 恢复情况（2026-07-19）
+
+## 用户澄清
+「temp 1234」= **temp1、temp2、temp3、temp4** 四个站点。
+
+## 备份扫描结果
+| 名称 | 备份中是否存在 | base-url | 说明 |
+|---|---|---|---|
+| temp1 | 有 | `https://sub.yxxb.eu.cc/v1` | 已恢复，chat 200 |
+| temp2 | 仅有「临时2」等价 | `https://api.alfredng.example.org/v1` | 按 temp2 名恢复；历史上常 401 |
+| temp3 | **无任何备份** | - | 无法自动恢复 |
+| temp4 | **无任何备份** | - | 无法自动恢复 |
+
+历史另有：
+- `临时` / `snote-temp` → snote.cc（用户曾要求删 snote/alfred 时处理过）
+- 面板曾在 07-17 加到 11 站，`临时3` 等曾因写回竞态丢失且备份无 key
+
+## 当前 live
+`RawChat / 薄荷 / mimo / 魔方 / 喵喵 / 简直了 / temp1 / temp2 / 烁`
+
+## 需要用户提供（temp3/temp4）
+每个站：
+- 名称（temp3 / temp4 或面板显示名）
+- base-url
+- API key
+
+有几发几，立即加回。

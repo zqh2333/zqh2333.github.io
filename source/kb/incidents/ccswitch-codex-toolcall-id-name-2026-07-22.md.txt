@@ -1,0 +1,37 @@
+# CC Switch Codex `/responses` tool-call 格式修复（2026-07-22）
+
+## 报错
+```text
+CC Switch local proxy failed while handling Codex endpoint /responses
+Provider: cpa; model: gpt-5.6-sol; upstream_status: HTTP 400
+assistant.tool_calls 缺少有效 id 或 name
+```
+
+## 根因
+8317 `cpa_stable_models_proxy.py` 以前只清洗 Responses 顶层 `input` 的 `function_call` 缺 name；CC Switch 会在后续 `/responses` 请求中把历史 assistant message 的 `tool_calls[]` 一并带回。若某 call 缺：
+- `tool_calls[].id`
+- `tool_calls[].function.name`
+- （少见）`type`
+
+CPA 后端会在 OpenAI Chat↔Responses 转换处返回 400。由于这只发生在有工具调用历史的会话，所以体感为“有时可用、有时不可用”。与上游额度/模型健康无关。
+
+## 修复
+8317 边缘新增**浅层、类型限定**修复：
+- assistant `input[].tool_calls[]` 仅缺失时补 `id=call_<sha1>`、`type=function`、`function.name`
+- Responses 顶层 call 项仅缺失时补 `call_id`、`name`
+- 工具输出 `function_call_output`、Chat `role=tool`、普通 content 绝不修改（避免历史 422 ModelInput）
+- 不做上游请求/探活；只在真实 CC Switch 请求经过 8317 时生效。
+
+## 验证
+纯本地 sanitizer 回归（无 HTTP/上游调用）：
+1. CC Switch assistant `tool_calls` 缺 id/name → 自动补齐
+2. Responses `function_call` 缺 call_id/name → 自动补齐
+3. 合法已带 id/name call 不变
+4. `role=tool` 输出不变
+
+输出：`CPA_TOOL_CALL_SANITIZER_REGRESSION_OK`
+
+服务：`cpa-stable-proxy active`，重启后 MainPID=1962446。
+
+## 使用
+CC Switch 仍走 `http://<LAN-8>:8317/v1`。出现此类旧会话 tool-call 错误时，重新发送即可；若客户端持有已损坏的历史 tool-call 结构，新开会话也可消除旧历史。

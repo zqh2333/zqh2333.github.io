@@ -1,0 +1,35 @@
+# elysiver (烁) leak protection 与 CPA 路由
+
+## 现象
+- 日志：`leak protection blocked request: matched gitleaks rule generic-api-key`
+- 请求 ID 形如 `20260802...268d9d6...`
+- 站点：`https://elysiver.h-e.top`（CPA 站点名「烁」）
+
+## 根因
+这是 **上游 New API 站点自身的 gitleaks 防泄漏**，不是 CPA 本地 `privacyfilter`。
+
+触发条件：请求 body（含 messages/历史上下文）里出现疑似 API Key 字符串，例如：
+- 用户在对话中粘贴的 token
+- 工具结果/脚本输出里的密钥
+- Hermes 长会话回灌的历史 secrets
+
+CPA 侧确认：
+- `plugins.configs.privacyfilter.enabled: false`（本地脱敏已关）
+- 拦截发生在上游 `elysiver.h-e.top` 返回前
+
+## 处理（2026-08-02）
+1. **CPA 路由降权**：`烁 / elysiver` 的 `priority` 从 `60` → `5`  
+   - 同模型时优先走其他上游，减少被 gitleaks 误伤  
+   - **未删除站点、未探活、未改 alias**
+2. 备份：`/root/CLIProxyAPI/config.yaml.bak_elysiver_prio_20260802_122922`
+3. 本地 privacyfilter 保持关闭
+
+## 用户侧规避
+- 不要在对话里粘贴 API Key / Token / 私钥
+- 长会话若已污染密钥：`/new` 开新会话再聊
+- 若必须用 elysiver：到站点后台关闭「防泄漏 / leak protection / gitleaks」（需站点管理员权限）
+- 公共站点通常无法由我们远端改 option；只能降权或换上游
+
+## 相关
+- CPA privacyfilter CPU：`ops-knowledge-base/references/cpa-privacyfilter-cpu.md`
+- 站点列表权威在面板；priority 手动

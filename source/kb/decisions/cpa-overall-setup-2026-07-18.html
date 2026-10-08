@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA 整体配置与问题凭证治理（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="cpa-2026-07-18">CPA 整体配置与问题凭证治理（2026-07-18）</h1>
+<h2 id="_1">问题</h2>
+<ol>
+<li>管理中心「认证文件管理」报 <code>timeout of 30000ms exceeded</code>，筛选「问题」显示 0。</li>
+<li>用户要求整体把 CPA 配置好，并自动删除问题凭证。</li>
+</ol>
+<h2 id="_2">根因</h2>
+<ul>
+<li>auth-dir 中有 <strong>3250</strong> 个 xAI oauth 文件，其中 <strong>2582</strong> 个 <code>expired</code> 已过期。</li>
+<li>面板拉 <code>/v0/management/auth-files</code> 需汇总大量凭证，客户端 30s 超时。</li>
+<li>并非面板“删光了”，而是问题凭证过多导致超时/显示异常。</li>
+</ul>
+<h2 id="_3">已处理</h2>
+<h3 id="1">1. 清理问题凭证</h3>
+<ul>
+<li>删除 expired/disabled/no_token 凭证 <strong>2582</strong></li>
+<li>保留有效 <strong>668</strong></li>
+<li>快照：<code>/root/cli-proxy-data/state/auth_before_purge_*.txt</code></li>
+</ul>
+<h3 id="2">2. 自动删除</h3>
+<ul>
+<li>脚本：<code>/root/cli-proxy-data/scripts/cpa_auth_cleanup.py</code></li>
+<li>cron：</li>
+<li><code>20 4 * * *</code> 每日</li>
+<li><code>25 3,9,15,21 * * *</code> 每 6 小时（对齐同步窗口后）</li>
+<li>日志：<code>/root/cli-proxy-data/state/auth_cleanup.log</code></li>
+</ul>
+<h3 id="3-cpa">3. CPA 整体配置核对/固化</h3>
+<ul>
+<li>路由：<code>fill-first</code></li>
+<li>冷却：<code>transient-error-cooldown-seconds=300</code>，<code>request-retry=2</code>，<code>max-retry-credentials=3</code></li>
+<li><code>privacyfilter=false</code>（防长上下文 CPU 爆）</li>
+<li>固定 10 模型空 alias 故障转移</li>
+<li>上游优先级：RawChat1 / snote2 / alfred3 / mimo4 / 薄荷喵喵6 / 魔方8 / 简直了9</li>
+<li>服务 active：<code>cpa-stable-proxy</code> <code>cpa-provider-watch</code> RawChat 桥</li>
+<li>对外 8317 仅 10 稳定模型；CPA 容器 18317</li>
+</ul>
+<h2 id="_4">验证</h2>
+<ul>
+<li>clients：677 = 668 auth + 1 codex + 8 openai-compat</li>
+<li><code>/v1/models</code> = 10</li>
+<li>chat：<code>grok-4.5</code>/<code>mimo-v2.5</code> 200</li>
+<li><code>cpa_health_check</code> HEALTH_OK</li>
+<li>Hermes 菜单 missing_in_cpa=[]</li>
+</ul>
+<h2 id="_5">用户侧</h2>
+<p>管理中心点「刷新」后，认证文件数量应约 <strong>668</strong>，不再被 3000+ 过期文件拖超时。
+若仍超时，再查公网到 18317/面板反向代理超时设置。</p>
+<p>相关：[[decisions/cpa-local-model-sync]]、[[decisions/cpa-advanced-failover-2026-07-17]]、[[decisions/auto-fix-on-errors]]</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

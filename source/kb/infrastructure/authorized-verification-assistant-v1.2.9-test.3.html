@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Authorized Verification Assistant v1.2.9-test.3 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="authorized-verification-assistant-v129-test3">Authorized Verification Assistant v1.2.9-test.3</h1>
+<ul>
+<li>本地 ZIP：<code>/home/user/artifacts/authorized-verification-assistant-v1.2.9-test.3.zip</code></li>
+<li>NAS：<code>/volume1/云/Hermes项目产物/authorized-verification-assistant/v1.2.9-test.3/</code></li>
+<li>SHA-256：<code>&lt;HASH&gt;</code></li>
+<li>大小：25238 bytes</li>
+</ul>
+<h2 id="_1">本次闭环</h2>
+<ul>
+<li>Chrome 官方 CDP <code>Extensions.loadUnpacked</code> 成功加载固定 ID：<code>mgpembebkeoiciopndiciehcokojeldf</code>。</li>
+<li>真实 Worker <code>chrome-extension://.../background.js</code> 已出现。</li>
+<li><code>DEVICE_INFO</code> 返回 deviceId、64 位 SHA-256 deviceFingerprint、扩展 ID和版本。</li>
+<li>本地靶场 <code>/api/license/activate</code> 收到并记录 device_fingerprint；validate 返回 valid=true。</li>
+<li>本地真实插件五类测试通过：reCAPTCHA 模拟 <code>RECAPTCHA_TEST_PASS</code>、易盾 <code>YIDUN_TEST_PASS</code>、拼图/滑块 <code>PUZZLE_TEST_PASS</code>、图片选择 <code>IMAGE_SELECT_TEST_PASS</code>、风险挑战 <code>RISK_TEST_CONFIRMED</code>。</li>
+<li>源码检查：JavaScript/Python 语法通过；既有回归 <code>28 passed</code>。</li>
+<li>靶场仅限 loopback 和显式 <code>data-authorized-simulation=true</code>，不连接第三方 provider，不伪造或重放真实 token。</li>
+<li>ZIP 内不含 secrets、数据库、私钥、缓存和临时测试文件；版本为 1.2.9。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

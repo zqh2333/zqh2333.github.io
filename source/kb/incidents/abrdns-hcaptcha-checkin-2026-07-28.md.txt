@@ -1,0 +1,27 @@
+# ABRDNS 福利站签到失败 NEED_CHECKIN → hCaptcha（2026-07-28）
+
+## 现象
+cron `1856c16b45bd` 输出 `[abrdns] NEED_CHECKIN` exit 1。
+
+## 根因
+1. 登录会话 `checkin_session` **有效**（能看到当前余额）。
+2. 签到表单 `POST /checkin` **强制 hCaptcha**（sitekey `332a8f5a-…`），提交按钮默认 disabled。
+3. 旧脚本空 body POST，页面仍返回未签到 → 误报 `NEED_CHECKIN`。
+4. 主站 `https://new-api.abrdns.com/api/user/checkin` 返回 **「签到功能未启用」**，令牌/会话都不能代替福利站。
+5. 用户 ID 实际为 **9732**（历史消息写 9372 会 token mismatch）。
+6. headless/headed 自动点 hCaptcha 会进入「请点击正在变大的形状」挑战，**禁止自动打码**。
+
+## 修复
+- 脚本识别 `HCAPTCHA_REQUIRED`，无人值守不再空 POST。
+- `ABRDNS_INTERACTIVE=1`：本机弹出 Chrome，人工完成验证后点签到。
+- secrets：`abrdns.env` 存主站 token + 正确 UID（不进 KB 明文）。
+
+## 日常
+- cron 在站点开启 hCaptcha 期间会失败并提示交互命令——属预期。
+- 每日可本机跑一次交互签到；或等站点关闭 captcha / 提供无 captcha API。
+
+## 继续修复 2026-07-28（下午）
+- 交互脚本：`~/.hermes/scripts/abrdns_checkin_interactive.sh`
+- 支持 `ABRDNS_CDP` 附着真实 Chrome；默认不自动点 hCaptcha 勾选（避免升级拖拽题）
+- 验证通过后脚本自动点「签到领取奖励」
+- 无人值守仍只能 `HCAPTCHA_REQUIRED`（合规边界，非脚本逻辑错误）

@@ -1,0 +1,44 @@
+# CPA 抗反分发 + 稳定输出攻克（2026-07-20）
+
+## 目标
+解决上游明确禁止 CPA/sub/new-api 分发导致的「一会儿行一会儿不行」，追求稳定输出。
+
+## 根因（已验证）
+1. **边缘透传客户端指纹**：CC Switch / Stainless / agent UA 原样转发 → 易被识别为分发/agent。
+2. **公共站被伪装成 Codex CLI**：多个 openai-compat 站 `headers.User-Agent=codex_cli_rs...` + `codex-fingerprint.providers` 含全站/`any` → 触发 **`ua_blocked`**（super code 明文：客户端 User-Agent 不被允许）。
+3. **冷却雪崩**：一站 403/ua_blocked/quota 写入 `.cds` cooling → 同模型池空 → 体感 `auth_unavailable` 间歇断。
+4. **真实额度/并发**：byd quota、公益时段额度、mimo 上游 502 等无法单靠配置抹掉。
+
+## 已落地（无定时探活）
+| 层 | 措施 |
+|---|---|
+| 8317 edge | 只转发 auth/content-type；剥离 UA/referer/stainless/x-title 等客户端指纹 |
+| 公共站 headers | 统一 `OpenAI/Python 1.59.0`（**不再** codex_cli_rs） |
+| RawChat/codex | 保留 Codex 桥 headers + fingerprint **仅 RawChat** |
+| fingerprint 插件 | `providers: [RawChat]`，去掉 `any` 与全站列表 |
+| alias | 全站空 alias，同名 failover |
+| priority | 好站高、斑马低 |
+| retry/cool | retry5 / cred10 / cool 30–60s；可清 `.cds` 解池 |
+| edge 超时 | chat 300s |
+| Hermes | default `grok-4.5`；fallback 对齐菜单 |
+
+## 验证（本地 8317，伪造 CC Switch agent 头）
+| 模型 | 结果 |
+|---|---|
+| **grok-4.5** chat ×6 + /responses | **全 200（稳定）** |
+| gpt-5.5 / terra / glm / deepseek / mimo-pro | 仍受上游额度/不可用/单站冷却影响，非菜单挂死 |
+
+## 稳定输出用法（用户侧）
+1. Base 固定 `http://<LAN-8>:8317/v1`
+2. **主用 `grok-4.5`**（多上游 + 已验证最稳）
+3. 裸名；新开对话；勿钉 sol/前缀
+4. gpt/claude 作备用；单上游模型（claude、mimo-pro）本身无法 failover
+5. 出现 auth_unavailable：等 cool 结束或清对应 `.cds`（运维）——不要定时探活
+
+## 不能承诺 100% 的
+- 上游全站额度窗口 / 余额为 0 / 明确封分发 IP
+- 单上游模型
+- 上游服务 502/503 本身
+
+## 纪律
+禁止对 CPA 上游定时 `/models`、health、大报文 agent 探活。

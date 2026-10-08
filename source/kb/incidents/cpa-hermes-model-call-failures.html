@@ -1,0 +1,85 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA/Hermes 模型调用失败诊断 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="cpahermes">CPA/Hermes 模型调用失败诊断</h1>
+<h2 id="_1">日期</h2>
+<p>2026-07-15</p>
+<h2 id="_2">症状</h2>
+<p>Telegram Gateway 可能只显示通用错误：</p>
+<pre><code class="language-text">The model provider failed after retries.
+</code></pre>
+<p>其原始上游细节不会回显到聊天，必须检查 Hermes CLI 输出、Gateway 日志与 CPA <code>cli-proxy</code> 日志。</p>
+<p>另一个确定性错误：</p>
+<pre><code class="language-text">HTTP 502: unknown provider for model &lt;model-alias&gt;
+</code></pre>
+<h2 id="_3">已确认的错误分类</h2>
+<table>
+<thead>
+<tr>
+<th>外部表现</th>
+<th>实际含义</th>
+<th>处理原则</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>503</code></td>
+<td>某上游暂时不可用、认证池无可用凭据、限流或上游服务故障</td>
+<td>不删除模型；保留并让 CPA 路由/重试处理。</td>
+</tr>
+<tr>
+<td><code>500</code></td>
+<td>CPA/上游适配或请求处理失败</td>
+<td>检查 CPA 主日志和容器日志；不以一次失败删除模型。</td>
+</tr>
+<tr>
+<td><code>502 unknown provider for model &lt;alias&gt;</code></td>
+<td>CPA 无法解析请求的客户端模型别名到已配置上游</td>
+<td>检查 CPA <code>config.yaml</code> 的模型 <code>alias</code>、Hermes <code>CPA Local Config</code> 列表，以及模型名是否含前缀。</td>
+</tr>
+<tr>
+<td>Telegram 通用 provider failure</td>
+<td>Gateway 对用户隐藏原始 provider 响应</td>
+<td>从 <code>~/.hermes/logs/</code>、<code>journalctl --user -u hermes-gateway.service</code> 及 CPA <code>main.log</code> 关联时间戳诊断。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_4">关联发现</h2>
+<ul>
+<li><code>君の的公益</code> 已配置于 CPA，端点为 <code>https://muyuan.do/v1</code>，模型同步后有 7 个登记模型。</li>
+<li>标准模型名与上游专属别名不同：若 Hermes 菜单没有某个专属别名，却直接请求它，会导致 <code>unknown provider for model</code>。</li>
+<li>CPA <code>cli-proxy</code> 对模型调用可返回 <code>200</code>、<code>500</code>、<code>503</code>；<code>500/503</code> 属于不可判定的暂时性失败，不能作为自动剔除依据。</li>
+<li>CPA 内 RawChat 的 Codex 适配链已验证可以被 Hermes 调用；模型菜单仍应只暴露标准模型名，内部路由处理多上游。</li>
+</ul>
+<h2 id="_5">诊断步骤</h2>
+<ol>
+<li>记录失败时间、模型名、Hermes CLI/Gateway 的完整错误类别。</li>
+<li>检查 CPA 主日志：<code>/root/CLIProxyAPI/root/.cli-proxy-api/logs/main.log</code>。</li>
+<li>检查容器日志：<code>docker logs --tail 200 cli-proxy</code>。</li>
+<li>对 <code>unknown provider</code>，读取 CPA 本地配置中对应模型的 <code>name</code> 和 <code>alias</code>，以及 Hermes 命名 provider 的 <code>models</code>。</li>
+<li>对 <code>500/503</code>，保留模型并记录上游状态；只有明确的 <code>model not found</code>、<code>unsupported model</code> 或 <code>unknown provider</code> 才作为菜单剔除候选。</li>
+<li>完成修复后，使用真实正常业务请求验证，并在本页追加验证结论。</li>
+</ol>
+<h2 id="_6">安全</h2>
+<ul>
+<li>不在本文档保存 API Key、Token、Cookie 或请求正文。</li>
+<li>当用户禁止主动测试时，不发起额外模型请求；只读取本地日志和配置进行诊断。</li>
+</ul>
+<h2 id="sharedchat-codex-2026-07-17">SharedChat Codex 领取状态（2026-07-17）</h2>
+<ul>
+<li>"RawChat领取权益" = sharedchat codex 任务（cron <code>bcff58ebbb8d</code>，venv python + playwright）。</li>
+<li>脚本已改为：点击"领取 Codex 权益"后若 <code>.el-dialog</code> 不出现（公益套餐 isActive=false / 已过期），返回 <code>NO_ACTION</code> 而非超时报错。</li>
+<li>API 端点：<code>POST /frontend-api/vibe-code/codex/claim</code>（需 cookie + reason≥10字 + 浏览器验证）；<code>GET /frontend-api/vibe-code/quota</code> 查状态。</li>
+<li>当前状态（2026-07-17）：codex 公益 每日50刀，remainingAmount=50.0，isActive=false，expireTime=2026-07-17T00:00:00。今日无可用领取项 → NO_ACTION。</li>
+<li>纯 API claim 返回"当前浏览器无法完成验证"——需 playwright 浏览器环境（指纹校验），故保留 playwright 路径。</li>
+</ul>
+<h2 id="sharedchat-codex-2026-07-17_1">SharedChat Codex 领取已验证成功（2026-07-17 修正）</h2>
+<ul>
+<li>领取弹窗是 <code>.el-message-box</code>（不是 <code>.el-dialog</code>），确认按钮是 <code>.el-button--primary</code>（或 name="领取"）。</li>
+<li>claim API：<code>POST /frontend-api/vibe-code/codex/claim</code>，body 需 <code>{eventId, reason(&gt;=10字且不重复), fingerprintCollectFailed, fingerprintCollectError, collectedAt}</code>。fingerprint 由前端静默收集并存入 localStorage <code>rawchat:fingerprint:visitor</code>。</li>
+<li>领取成功后 <code>subscriptions.isActive</code> 变 true、按钮消失（当日不可再领）；<code>periodResetTime</code> 次日 00:00 重置。</li>
+<li>验证：2026-07-17 多次 playwright 测试后 quota 显示 <code>isActive=true, remainingAmount=50.0</code>——当日已成功领取。脚本修复后逻辑正确，次日按钮重现即自动领取。</li>
+<li>纯 curl claim 会返回"当前浏览器无法完成验证"（缺 fingerprint/eventId），故保留 playwright 路径。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA / CPAMP / cpa-key-billing 升级记录 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="cpa-cpamp-cpa-key-billing">CPA / CPAMP / cpa-key-billing 升级记录</h1>
+<ul>
+<li>日期：2026-09-11</li>
+<li>目标：升级 CPA（CLIProxyAPI）、CPA Manager Plus 和 <code>haowang02/cpa-plugin-key-billing</code>。</li>
+<li>安全边界：未探测 CPA 上游；仅访问本地 CPA 聚合 <code>/v1/models</code>、本地管理/插件页面和 Docker 状态。未恢复已删站点/旧自动化。</li>
+</ul>
+<h2 id="_1">备份</h2>
+<ul>
+<li>预检查备份：<code>/root/cpa_update_backups/20260911_083757</code></li>
+<li>升级前完整备份：<code>/root/cpa_update_backups/20260911_083926</code></li>
+<li>内容包括 CPA <code>config.yaml</code>、auth-dir、CPAMP <code>/data</code>、容器 inspect、容器内 Billing 插件状态。</li>
+</ul>
+<h2 id="_2">关键处理</h2>
+<ul>
+<li>发现 CPA 容器旧部署仅挂载 <code>config.yaml</code> 与 auth-dir，Billing 插件状态位于容器内 <code>/CLIProxyAPI/plugins</code>，若直接重建容器会丢状态。</li>
+<li>先将容器内 <code>/CLIProxyAPI/plugins</code> 复制到宿主机 <code>/root/CLIProxyAPI/plugins</code>，再以 bind mount 方式重新创建 <code>cli-proxy</code>，使插件与 Billing SQLite 状态持久化。</li>
+<li>运行官方 <code>cpa-plugin-key-billing</code> install.sh 更新插件文件。</li>
+<li>拉取并重建：<code>eceasy/cli-proxy-api:latest</code>、<code>seakee/cpa-manager-plus:latest</code>。</li>
+</ul>
+<h2 id="_3">验证结果</h2>
+<ul>
+<li>CPA 镜像：<code>eceasy/cli-proxy-api:latest</code>，镜像 ID <code>9dc67d84b1f6</code>，容器 <code>cli-proxy</code> Up。</li>
+<li>CPAMP 镜像：<code>seakee/cpa-manager-plus:latest</code>，镜像 ID <code>287ef6c3b8b3</code>，容器 <code>cpa-manager-plus</code> Up。</li>
+<li>CPA 版本：<code>v7.2.157</code>，commit <code>09a29bd</code>。</li>
+<li>Billing 插件：<code>cpa-key-billing</code> version <code>1.3.3</code> loaded + registered，路径 <code>plugins/linux/amd64/cpa-key-billing-v1.3.3.so</code>。</li>
+<li>Keeper 插件：version <code>0.1.0</code> loaded + registered；独立 <code>cpa-usage-keeper</code> 容器 healthy。</li>
+<li>本地 CPA 聚合 <code>/v1/models</code> HTTP 200，模型数 22（本地聚合验证，非上游探测）。</li>
+<li>CPAMP <code>/management.html</code> HTTP 200。</li>
+<li>Billing UI <code>/v0/resource/plugins/cpa-key-billing/ui</code> HTTP 200。</li>
+<li>provider 名称仍为 3 个：薄荷、烁、Lanln；未从备份复活旧站点。</li>
+</ul>
+<h2 id="_4">注意</h2>
+<ul>
+<li>宿主机持久化插件目录现在是 <code>/root/CLIProxyAPI/plugins</code>，必须保留在 <code>cli-proxy</code> 挂载中。</li>
+<li>旧 dangling 镜像仍存在，可在确认稳定后按需 <code>docker image prune</code> 清理。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

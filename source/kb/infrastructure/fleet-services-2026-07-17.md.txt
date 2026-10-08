@@ -1,0 +1,273 @@
+# 全设备服务扫描清单（2026-07-17 13:59）
+
+在 [[infrastructure/fleet-topology-2026-07-17]] 拓扑巡检之上，对 8 台设备做了**监听端口 / 系统服务 / 容器 / 关键进程**扫描。
+
+采集方式：各设备独立 SSH 密钥 + `BatchMode`；不写入任何密码/API Key。  
+原始数据：`/tmp/fleet_service_scan.json`
+
+---
+
+## 总览：谁在跑什么
+
+| 设备 | 角色 | 关键对外服务 | 容器/虚拟化 |
+|---|---|---|---|
+| **PVE** `.1` | 宿主机 | SSH 22、PVE Web 8006、SPICE 3128 | 无 docker；承载全部 VM/LXC |
+| **ROS** `.2` | 主路由 | SSH **2333**、Winbox 8291（仅内网） | CHR VM；PPPoE + L2TP/IPsec 服务 |
+| **OpenWrt** `.3` | 旁路/IPTV/代理 | LuCI 80/443、Clash 7890–7895/9090、Samba、NFS、WG | `wg-easy`、`gecoos-ac` |
+| **Hermes** `.4` | Agent 桌面机 | SSH 22、RDP 3389、gateway 本机 8420 | 无 docker；Hermes gateway 用户服务 |
+| **NAS** `.5` | 存储/监控 | DSM 5000/5001、HTTPS 443、SMB 445、NFS 2049、RTSP 554 | 套件为主（Surveillance 等） |
+| **AdGuard** `.6` | DNS | **53/853**、管理 80/443 | 无 docker；`AdGuardHome.service` |
+| **HA** `.7` | 智能家居 | UI 8123（宿主机侧）、SSH/ttyd 插件 | Node-RED、Mosquitto、Samba、Filebrowser、Zigbee2MQTT |
+| **宝塔** `.8` | 应用/CPA | 面板 11322、CPA 8317/18317、Vaultwarden 8080、青龙 5700 等 | 14 个 docker + BT 全家桶 |
+
+---
+
+## 分设备服务清单
+
+### 1) PVE `<LAN-1>`
+**系统服务（运行中）**  
+`pveproxy` / `pvedaemon` / `pve-cluster` / `pvestatd` / `pve-firewall` / `spiceproxy` / `ssh` / `chrony` / `cron` / `zfs-zed` 等。
+
+**监听（摘）**  
+- `22` sshd  
+- `8006` PVE Web（管理）  
+- `3128` spiceproxy  
+- `25` 本机 postfix  
+- rpcbind/statd（NFS 相关）
+
+**虚拟机/容器状态**
+
+| ID | 名称 | 状态 | 备注 |
+|---:|---|---|---|
+| 100 | winserver2022 | running | Win Server |
+| 101 | centos | stopped | |
+| 102 | hermes | running | Hermes 主机 |
+| 200/201 | ROS/istore 旧盘 | stopped | 旧实例 |
+| 202 | win10 | running | 桌面 |
+| 203 | ubuntu-c | stopped | LXC |
+| 204 | HA | running | Home Assistant |
+| 205 | NAS | running | Synology |
+| 206 | ad | running | AdGuard LXC |
+| 207 | ROS | running | 主路由 |
+| 208 | istore | running | OpenWrt |
+| 211 | bt | running | 宝塔 LXC |
+
+**资源观察**  
+- 宿主机可见 `./CLIProxyAPI` 高 CPU 线程（实际跑在 bt LXC 内，宿主机 top 会显示）  
+- hermes / win10 KVM 进程常驻 CPU 前列（正常虚拟化开销）
+
+---
+
+### 2) ROS `<LAN-2>:2333`
+**启用服务**  
+- SSH `2333`  
+- Winbox `8291`（限制 `<LAN-0>/24` + `<LAN-200>/32`）  
+- **禁用**：telnet/ftp/www/www-ssl/api/api-ssl（安全面较好）
+
+**网络服务**  
+- `pppoe-out1`：**Running**（主出口）  
+- `pppoe-out2`：Disabled  
+- L2TP server：**enabled**（含 IPsec）  
+- DHCP server `dhcp1` on `lan`  
+- 定时脚本：`5000`（更新 hairpin address-list）、`pcc-failover`（当前 schedule 禁用）
+
+**安全提醒（重要）**  
+巡检输出中出现 **PPPoE/IPsec 明文敏感字段**。知识库不保存明文。建议：  
+1. 轮换相关口令/预共享密钥  
+2. 限制导出脚本权限，避免配置明文落盘到日志  
+
+---
+
+### 3) OpenWrt / iStoreOS `<LAN-3>`
+**核心服务/进程**  
+| 服务 | 端口/特征 | 用途 |
+|---|---|---|
+| uhttpd | 80/443 | LuCI |
+| dropbear | 22 | SSH |
+| dnsmasq | 53 | 本地 DNS（含 docker/IPTV 侧） |
+| **OpenClash (clash)** | 7890–7895、9090、7874 | 代理 |
+| Samba (smbd) | 139/445 | 文件共享 |
+| NFS | 2049 + mountd | 网络文件系统 |
+| ttyd | 7681 | Web 终端 |
+| sunpanel | 3002 | 导航面板 |
+| lucky | 16601 | 工具面板 |
+| rtp2httpd | 2222 | 流媒体相关 |
+| adb | 5037 | Android 调试桥 |
+| dockerd | - | 容器引擎 |
+
+**Docker**  
+- `wg-easy`：WireGuard UI `51821/tcp` + `51820/udp`  
+- `gecoos-ac`：AC 控制器镜像  
+
+**开机启用（节选）**  
+`openclash`、`passwall_server`、`dockerd`、`samba4`、`nfsd`、`lucky`、`uhttpd`、`firewall`、`dnsmasq` 等。
+
+---
+
+### 4) Hermes `<LAN-4>`
+**关键服务**  
+| 服务 | 状态 | 说明 |
+|---|---|---|
+| `hermes-gateway.service`（user） | running | 消息网关 |
+| `node ... gateway/server.ts` | running | 网关前端/桥 |
+| `python -m hermes_cli.main gateway run` | running | Hermes Agent |
+| SSH | 22 | 已支持 user 密钥 |
+| GNOME Remote Desktop | **3389** | RDP |
+| CUPS | 631 本机 | 打印 |
+| rygel | 1900/DLNA | 媒体发现 |
+
+**无 Docker。** 本质是 Ubuntu 桌面 + Hermes 控制面。
+
+---
+
+### 5) NAS `<LAN-5>`（Synology）
+**对外服务**  
+| 端口 | 服务 |
+|---:|---|
+| 80/443 | nginx / DSM Web |
+| 5000/5001 | DSM |
+| 445/139 | SMB |
+| 2049/111/892 | NFS |
+| 554 | RTSP（Surveillance） |
+| 2333 | nginx（Web，不是 SSH） |
+
+**高占用进程（套件）**  
+- Surveillance Station（`sscamerad` / `ssrtmpserverd` / `ssrtspserverd`）  
+- CloudSync  
+- 本地 Python uvicorn `:12345`（自定义服务）  
+- redis / snmpd  
+
+**根分区 70%** 仍是容量风险点。
+
+---
+
+### 6) AdGuard `<LAN-6>`
+| 服务 | 端口 |
+|---|---|
+| AdGuardHome | **53/tcp+udp**、**853**、80、443 |
+| SSH | 22 |
+| postfix | 25 本机 |
+
+进程：`/opt/AdGuardHome/AdGuardHome -s run`  
+无业务 docker。DNS 中枢角色清晰。
+
+---
+
+### 7) Home Assistant `<LAN-7>`
+**Core**  
+- HAOS 镜像 `qemux86-64-homeassistant`  
+- 版本 **2025.5.1**（有更新到 2026.7.x 可用）  
+- UI 端口 **8123**（宿主机侧；SSH 插件网络为 `172.30.32.0/23`）
+
+**已启动插件**  
+| 插件 | 状态 | 备注 |
+|---|---|---|
+| Node-RED | started | 有更新 |
+| Mosquitto broker | started | MQTT |
+| Samba share | started | 文件共享 |
+| Filebrowser | started | 文件管理 |
+| Zigbee2MQTT | started | Zigbee |
+
+SSH 插件侧监听：`22`、`ttyd 8099`。
+
+---
+
+### 8) 宝塔 `<LAN-8>`（服务最密集）
+
+#### 系统 / 面板
+| 端口 | 服务 |
+|---:|---|
+| 11322 | BT-Panel |
+| 21 | pure-ftpd |
+| 3306/33060 | MySQL |
+| 22 | SSH |
+| 25/587 | sendmail 本机 |
+
+PHP-FPM：74/80/81/82/83 均在跑。
+
+#### CPA 栈（systemd 全 active）
+| 服务 | 端口 | 作用 |
+|---|---:|---|
+| `cpa-stable-proxy` | **8317** | 对外稳定 10 模型菜单 |
+| `cli-proxy` docker | **18317→8317** | CPA 核心 |
+| `rawchat-codex-proxy` | 18417 | RawChat Codex |
+| `rawchat-openai-bridge` | 18418 | OpenAI 兼容桥 |
+| `muyuan-openai-bridge` | 18420 | 君の/muyuan 桥 |
+| `cpa-provider-watch` | - | 新增上游立刻同步 |
+
+健康检查：**HEALTH_OK**（CLIProxyAPI CPU warn ~44%，业务负载）
+
+#### Docker 业务容器
+| 容器 | 端口 | 用途（推断） |
+|---|---|---|
+| cli-proxy | 18317 | 模型聚合 |
+| vaultwarden | 8080 | 密码库 |
+| qinglong | 5700 | 青龙面板 |
+| anki_server-* | 5778 等 | Anki 服务栈 |
+| localscan-docker | 38127 | 本地扫描 |
+| allinone | 35455 | 聚合/影视相关 |
+| php-epg | 5678 | EPG |
+| iptv | - | IPTV 频道 |
+| powercontrol | - | 电源控制 |
+
+---
+
+## 按功能域汇总（跨设备）
+
+### 网络出口与接入
+- PPPoE 主出口：ROS  
+- 旁路代理：OpenWrt OpenClash  
+- VPN：ROS L2TP/IPsec；OpenWrt WireGuard（wg-easy）  
+- IPTV：OpenWrt eth2 + 静态路由；宝塔 iptv/php-epg  
+
+### DNS
+- 权威过滤：AdGuard `.6`（DHCP 下发）  
+- 备份：ROS DNS / 公共 DNS  
+
+### 存储与文件
+- NAS：SMB/NFS/DSM/监控录像  
+- OpenWrt：Samba/NFS  
+- HA：Samba share / Filebrowser  
+
+### AI / 自动化
+- Hermes：gateway + agent  
+- 宝塔 CPA：模型代理与桥接  
+- HA：Node-RED + Zigbee2MQTT + MQTT  
+- 青龙：定时任务  
+
+### 远程管理
+- PVE 8006  
+- ROS Winbox 8291（内网）  
+- Hermes RDP 3389  
+- OpenWrt ttyd 7681  
+- 宝塔面板 11322  
+
+---
+
+## 风险与建议
+
+1. **ROS 配置中的明文凭据**  
+   巡检命令输出含敏感字段 → 建议轮换，并避免把完整 `/interface print detail` 落到不可信日志。
+
+2. **暴露面梳理**  
+   - OpenWrt：Clash/WG/ttyd/sunpanel 等端口多，确认仅内网或有 ACL  
+   - 宝塔：FTP 21、面板 11322、多个 Web 端口  
+   - Hermes：RDP 3389 是否需要长期开着  
+
+3. **HA 有多项插件更新**  
+   Core 与 Node-RED/Mosquitto/Samba/Filebrowser 均可升级（非紧急）。
+
+4. **NAS 根分区 70% + 监控套件常驻 CPU**  
+   容量与录像策略建议复查。
+
+5. **PVE 单点**  
+   路由/DNS/存储/应用几乎全虚拟化在一台 PVE → 备份与 UPS 优先级最高。
+
+---
+
+## 与拓扑文档的关系
+- 拓扑与连通性：[[infrastructure/fleet-topology-2026-07-17]]  
+- 前次健康巡检：[[infrastructure/fleet-inspect-2026-07-17]]  
+- 本文：服务/端口/容器**清单**（回答“跑了哪些服务”）
+
+相关：[[infrastructure/ros]]、[[decisions/cpa-local-model-sync]]

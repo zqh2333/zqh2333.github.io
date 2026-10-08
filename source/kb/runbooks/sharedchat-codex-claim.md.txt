@@ -1,0 +1,36 @@
+# SharedChat Codex 每日权益领取
+
+## 任务
+- cron: `bcff58ebbb8d` / `5 0 * * *`
+- wrapper: `~/.hermes/scripts/sharedchat_claim_wrap.sh`
+- script: `~/.hermes/scripts/sharedchat_codex_claim.py`
+- secrets: `~/.hermes/secrets/sharedchat.env` (600)
+
+## 失败特征
+- `FAILED: no confirmation`：弹窗点了领取，但 claim API/toast/quota 都没被旧逻辑判成功。
+
+## 根因
+1. 确认按钮点击后有时不触发/捕获不到 `vibe-code/codex/claim` 响应。
+2. Vue textarea 仅 `fill()` 可能未触发 v-model，导致按钮看似点了但未真正提交。
+3. 成功判定过窄：只认 claim API `claimed=true` 或 toast；未把 **quota.isActive** / **rolling-limit enabled** 当作成功源。
+4. 套餐 UI 可能短暂显示「已过期/领取按钮仍在」，而 API 已是 active。
+
+## 修复（2026-07-18）
+- 凭据迁到 secrets，不再依赖脚本内硬编码为主路径。
+- 等待 fingerprint localStorage。
+- Vue textarea 用 native value setter + input/change 事件。
+- 确认按钮优先 `get_by_role(领取)`，并解除 disabled。
+- 成功判定扩展：
+  - claim API claimed
+  - toast 领取成功
+  - quota `isActive`
+  - rolling-limit `enabled` / 有 subscribeId
+- 无领取按钮且已 active → `ALREADY_ACTIVE` exit 0（避免误报失败）。
+
+## 验证
+- 实跑：`ALREADY_ACTIVE ... remainingAmount: 50` exit 0
+- wrapper 同步 exit 0
+
+## 运维
+- 手动：`~/.hermes/scripts/sharedchat_claim_wrap.sh`
+- 仅当真正领取失败（未 active 且无 claim 证据）才 exit 1 告警

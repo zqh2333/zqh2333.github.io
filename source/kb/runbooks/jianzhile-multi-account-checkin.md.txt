@@ -1,0 +1,21 @@
+# 简直了多账号每日签到
+
+## 账号
+- 主账号: github_10641 (uid 10641)
+- 副账号: user (uid 4042)
+- 凭据: ~/.hermes/secrets/jianzhile.env (600)
+  - JIANZHILE_ACCOUNTS=user1:pass1,user2:pass2
+  - 兼容旧单账号 JIANZHILE_USERNAME/PASSWORD
+
+## 脚本
+- ~/.hermes/scripts/jianzhile_daily_checkin.py（支持多账号 + 单账号过滤参数）
+- wrapper: jianzhile_checkin_random.sh（08:00 起随机 0-30min）
+- cron: ad9a8ca09987，no_agent=true
+
+## 用法
+- 全部账号: python jianzhile_daily_checkin.py
+- 指定账号: python jianzhile_daily_checkin.py user
+
+## 验证（2026-07-17）
+- user 补签成功: CHECKIN_SUCCESS uid=4042 quota=5000000
+- 双账号复跑: 两者 ALREADY_CHECKED_IN

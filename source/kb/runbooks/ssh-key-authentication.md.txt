@@ -1,0 +1,24 @@
+# SSH 公钥免密登录
+
+## 前置检查
+1. 检查主机网络与目标 SSH 端口连通。
+2. 使用 `ssh-keyscan` 固定目标主机指纹。
+3. 为每台设备生成独立密钥，保存到 `~/.ssh/<SSH-KEY>`，目录权限 `700`、私钥权限 `600`。
+
+## 标准验证
+使用下列参数验证，确保测试未回退到密码认证：
+
+```bash
+ssh -F /dev/null -i <private-key> -p <port> \
+  -o BatchMode=yes -o PasswordAuthentication=no \
+  -o KbdInteractiveAuthentication=no <user>@<host> <command>
+```
+
+## RouterOS 导入
+1. 通过 SCP 上传 RSA 公钥文件。
+2. 使用密码认证仅执行一次导入：`/user ssh-keys import user=<user> public-key-file=<file>`。
+3. 删除上传的 `.pub` 文件。
+4. 以“标准验证”方式执行 RouterOS 命令。
+
+## 已验证目标
+- [[infrastructure/ros]]

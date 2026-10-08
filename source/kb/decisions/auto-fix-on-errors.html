@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>失败/报错自动修复（用户硬规则，全范围） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="_1">失败/报错自动修复（用户硬规则，全范围）</h1>
+<h2 id="2026-07-18">规则（2026-07-18 强化）</h2>
+<p><strong>不仅是脚本</strong>——所有问题都适用：</p>
+<p>只要出现失败、报错、异常、不可用、配置不兼容、服务挂掉、cron 失败、认证失效、网络/设备异常等：
+1. <strong>自动排查并修复</strong>到可验证通过
+2. <strong>不要</strong>只诊断汇报、停在“建议你手动…”
+3. <strong>不要</strong>等用户催促后再修
+4. 修完后<strong>实跑验证</strong>（exit 0 / 功能可用 / 健康检查通过）
+5. 结论<strong>主动沉淀</strong>到知识库（<code>~/.hermes/knowledge-base/</code>）</p>
+<h2 id="_2">适用范围（全链路）</h2>
+<ul>
+<li>Hermes cron / 签到 / 同步 / 菜单脚本</li>
+<li>CPA 配置、桥接、auth、proxy、docker/systemd</li>
+<li>家庭实验室设备巡检可修复项（SSH、服务、磁盘告警处置等）</li>
+<li>依赖缺失、权限、端口、跳板连通</li>
+<li>本会话内工具失败导致的任务阻塞</li>
+<li>其他非脚本类配置/服务/网络问题</li>
+</ul>
+<h2 id="_3">工作方式</h2>
+<p>复现 → 定位根因 → 直接修复 → 验证 → 知识库沉淀</p>
+<h2 id="_4">例外（仍要说明，但先尽量找替代路径）</h2>
+<ul>
+<li>缺用户专有凭据/密钥且无备份无法恢复</li>
+<li>明确需人工决策的破坏性操作（大规模删数据等）</li>
+<li>上游第三方站点本身不可用且无本地替代</li>
+</ul>
+<p>相关：[[runbooks/cron-auto-repair-sharedchat-hermes-menu]]、[[decisions/cpa-local-model-sync]]</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

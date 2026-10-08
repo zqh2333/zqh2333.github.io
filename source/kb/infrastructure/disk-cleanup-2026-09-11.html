@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Disk cleanup record - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="disk-cleanup-record">Disk cleanup record</h1>
+<ul>
+<li>Date: 2026-09-11</li>
+<li>Target: local <code>/home/user</code> filesystem cleanup.</li>
+<li>Action: removed rebuildable pip, Playwright, Chrome, Electron, Go, node-gyp, Mesa, thumbnail, npm, and Python bytecode caches; emptied the user Trash.</li>
+<li>Protected: <code>~/.hermes/config.yaml</code>, <code>state.db</code>, sessions, skills, scripts, secrets, browser profile, and the Hermes runtime virtualenv.</li>
+<li>Verification: root filesystem changed from 36G used / 20G free (65%) to 30G used / 26G free (54%); measured free-space increase was 6,321,541,120 bytes (5.89 GiB). Hermes core paths and secrets permissions remained intact.</li>
+<li>Caveat: <code>uv</code> was not available in PATH, so the remaining <code>~/.cache/uv</code> cache was not pruned.</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

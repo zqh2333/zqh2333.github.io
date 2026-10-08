@@ -1,0 +1,21 @@
+# 后台卡「正在加载数据，最多等待 10 秒」（2026-07-25）
+
+## 症状
+Dashboard 一直显示加载骨架：`正在加载数据，最多等待 10 秒...`
+
+## 排查
+- `/api/admin/data` 正常 200（约 1470 条）
+- 全部 inline script `node --check` 通过（不是语法错误）
+- 根因更偏运行时启动顺序：恢复「编辑全站公告」时插入了**顶层** `$().on(...)` 绑定
+- 若该段在 boot 前异常，会阻断后续 `DOMContentLoaded` 中的 `refreshData()`，骨架屏不消失
+
+## 修复
+1. 将公告预览输入绑定改为 `bindAnnouncementPreviewInputs()`，放到 DOM ready 内调用
+2. boot 加固：`DOMContentLoaded` 中**最先** `refreshData(1)`，并 try/catch 包裹后续 UI 初始化
+3. 暴露 `window.refreshData`
+4. 增加 failsafe：2.5s/6s 仍见骨架则自动重试加载
+
+## 验证
+- 主数据接口 success=true
+- dashboard scripts node --check OK
+- verify_all ready=true

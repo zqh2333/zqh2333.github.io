@@ -1,0 +1,22 @@
+# ROS（MikroTik）
+
+- 地址：`<LAN-2>`
+- SSH 端口：`2333`
+- 登录用户：`admin`
+- 认证方式：SSH RSA 4096 公钥
+- 私钥路径：`~/.ssh/<SSH-KEY><LAN-2>`
+- 公钥指纹：`SHA256:ZLiig0BmHC45Kl40cLot15KZ3llrzkKa/kR8P2Uid9E`
+
+## 验证
+2026-07-15：以 `BatchMode=yes`、禁用密码认证的方式连接成功，并执行 `/system resource print`。
+
+## 注意
+- 使用隔离 SSH 配置以绕过宿主机 `/etc/ssh/ssh_config` 的无效项：`ssh -F /dev/null ...`。
+- 不记录设备密码；后续操作优先使用上述专用私钥。
+
+相关：[[runbooks/ssh-key-authentication]]
+
+## 拓扑角色（2026-07-17）
+- 作为 `<LAN-0>/24` **主路由**：PPPoE 出口、DHCP（gateway=本机，dns=<LAN-6>）。
+- 终端默认网关为 `<LAN-2>`；PVE 主机自身网关为 `<LAN-3>`（OpenWrt 旁路）。
+- 详见 [[infrastructure/fleet-topology-2026-07-17]]。

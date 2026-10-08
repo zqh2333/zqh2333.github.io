@@ -1,0 +1,21 @@
+# 全站公告排版优化（2026-07-26）
+
+## 内容结构
+1. 标题：使用必读 / 无人工答疑
+2. 教程链接按钮文案：查看教程（必看）
+3. 下载渠道：夸克可用、百度不可用
+4. 故障三步：删卡牌 → 删笔记模板 → 夸克重下导入
+5. 底部：按步骤必成功 + 更新至 v141+
+
+## 技术约束
+`sanitize_announcement_html` 会剥离复杂样式（padding/margin/background/border-radius 等），因此排版只能用白名单内联样式：
+`color` / `text-align` / `font-size` / `font-weight` + `div/span/a/b/br`。
+
+## 同步发布
+- 激活公告：`show=true`，居中深色文字层级
+- 顶部横幅：`marquee_show=true`，4 秒，深红色底
+- 文件：`/www/anki_server/app/routes/announcement.json`
+- 历史：`/www/anki_server/data/announcement_ops/announcement_history.jsonl`
+
+## 注意
+写 `announcement.json` 必须原子替换；错误重定向曾导致空文件，需从 history 恢复。

@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TencentDB Memory 未配置 Embedding 时无法 Hybrid 召回 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="tencentdb-memory-embedding-hybrid">TencentDB Memory 未配置 Embedding 时无法 Hybrid 召回</h1>
+<h2 id="_1">症状</h2>
+<p><code>POST /recall</code> 返回：<code>Recall strategy "hybrid" requires EmbeddingService but it is not available.</code></p>
+<h2 id="_2">根因</h2>
+<p>独立部署默认采用 <code>hybrid</code> 召回，但没有配置远程 embedding 服务。</p>
+<h2 id="_3">修复</h2>
+<p>在 <code>~/.memory-tencentdb/memory-tdai/tdai-gateway.json</code> 设置：</p>
+<pre><code class="language-json">{
+  &quot;memory&quot;: {
+    &quot;recall&quot;: {
+      &quot;strategy&quot;: &quot;keyword&quot;
+    }
+  }
+}
+</code></pre>
+<p>随后重启：</p>
+<pre><code class="language-bash">systemctl --user restart tencentdb-memory-gateway.service
+</code></pre>
+<h2 id="_4">验证</h2>
+<p>2026-07-15：健康检查返回 <code>ok</code>；关键词召回返回 <code>code: 0</code>；真实 Hermes 对话可被自动捕获并通过对话搜索检出。</p>
+<p>相关：[[infrastructure/hermes-memory]]</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

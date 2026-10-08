@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hermes Cron 精简通知规范 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="hermes-cron">Hermes Cron 精简通知规范</h1>
+<ul>
+<li>日期：2026-09-12</li>
+<li>目标：Telegram cron 推送只发重要信息，不再推随机 sleep、长 JSON、完整 traceback 或大量普通日志。</li>
+<li>统一过滤器：<code>~/.hermes/scripts/cron_notify_filter.py</code></li>
+</ul>
+<h2 id="_1">当前接入任务</h2>
+<ul>
+<li>SharedChat Codex：<code>sharedchat_claim_wrap.sh</code> → <code>✅ SharedChat Codex：$50 可用｜到期 ...</code></li>
+<li>Venlacy：<code>venlacy_checkin_random.sh</code> → <code>✅ Venlacy：今日已签到｜累计 ...</code> 或奖励。</li>
+<li>简直了：<code>jianzhile_checkin_random.sh</code> → 多账号成功数 + 总奖励。</li>
+<li>薄荷转盘：<code>x666_checkin_random.sh</code> → 奖励或今日已签到。</li>
+<li>AnyRouter：<code>anyrouter_daily_open.sh</code> → 只提示余额或登录授权状态，不显示 sleep 调试行。</li>
+</ul>
+<h2 id="_2">规则</h2>
+<ul>
+<li>成功：一行摘要，包含任务名和核心结果（余额/奖励/额度）。</li>
+<li>已签到/已激活：一行摘要；不重复输出原始 JSON。</li>
+<li>失败：一行 <code>⚠️</code> 摘要，包含关键失败原因；保留脚本退出码让 Hermes 仍能标记失败。</li>
+<li>静默优先：无意义调试信息（sleep 秒数、打开 URL 过程）不推送。</li>
+</ul>
+<h2 id="_3">验证</h2>
+<ul>
+<li>Python 编译通过：过滤器及 SharedChat/Venlacy/薄荷/简直了脚本。</li>
+<li>Bash <code>-n</code> 通过：所有接入 wrapper。</li>
+<li>实际运行验证：SharedChat 输出 <code>✅ SharedChat Codex：$50 可用｜到期 ...</code>；Venlacy 输出 <code>✅ Venlacy：今日已签到｜累计 4</code>；AnyRouter 只输出一行授权状态。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

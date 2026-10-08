@@ -1,0 +1,194 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA 本地配置同步与低频模型审计 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="cpa">CPA 本地配置同步与低频模型审计</h1>
+<h2 id="_1">服务位置</h2>
+<ul>
+<li>CPA 控制面：宝塔主机 <code>&lt;LAN-8&gt;</code>。</li>
+<li>容器：<code>cli-proxy</code>（<code>eceasy/cli-proxy-api</code>）。</li>
+<li>本地配置：<code>/root/CLIProxyAPI/config.yaml</code>。</li>
+<li>本机代理地址：<code>http://&lt;LAN-8&gt;:8317/v1</code>。</li>
+</ul>
+<h2 id="_2">安全约束</h2>
+<ul>
+<li>禁止调用任何上游的 <code>/models</code>、<code>/health</code> 或其他探测接口。</li>
+<li>原有 <code>/root/cli-proxy-data/scripts/sync_cpa_models.py</code> 会访问上游 <code>/models</code>，保持不运行。</li>
+<li>模型列表仅从 CPA 的本地配置文件经 SSH 离线读取。</li>
+</ul>
+<h2 id="_3">自动化</h2>
+<ul>
+<li>审计脚本：<code>/root/cli-proxy-data/scripts/cpa_safe_model_audit.py</code>（CPA 主机）。</li>
+<li>同步脚本：<code>~/.hermes/scripts/cpa_audit_and_sync.py</code>（Hermes 主机）。</li>
+<li>systemd timer：<code>cpa-model-audit-sync.timer</code>，每天 <code>03:15</code> 运行并额外随机延迟最多 20 分钟。</li>
+<li>每次模型请求使用低频、确定性算术业务题，不使用 <code>你好</code>、<code>Hello</code>、<code>health</code>、<code>ping</code> 或 <code>/models</code>。</li>
+<li>仅收到明确的“model not found / unsupported model”等响应才会从 CPA 本地配置移除模型；超时、限流、认证或上游错误均标记为不可判定并保留。</li>
+<li>Hermes 供应商：<code>custom:cpa-local-config</code>；<code>discover_models: false</code> 阻止 Hermes 模型选择器访问 CPA <code>/models</code>。</li>
+</ul>
+<h2 id="_4">首轮结果</h2>
+<p>2026-07-15：
+- CPA 本地配置中 8 个上游、241 个登记模型。
+- 业务请求审计：241 个测试，47 个有效响应，194 个不可判定，0 个明确不可用并删除。
+- Hermes 离线同步得到 221 个去重后的可选模型；默认模型保持 <code>gpt-5.6-terra</code>。
+- <code>cpa-model-audit-sync.service</code> 最近一次执行成功。</p>
+<h2 id="_5">操作注意</h2>
+<p>Gateway 读取模型配置于进程启动时；配置更新后需通过 Telegram <code>/restart</code> 重新加载模型菜单。</p>
+<p>相关：[[infrastructure/fleet-baseline-2026-07-15]]、[[infrastructure/hermes-memory]]</p>
+<h2 id="jianzhile2026-07-16">简直了（jianzhile）同步排除（2026-07-16）</h2>
+<ul>
+<li>用户要求 CPA 同步时<strong>跳过简直了的模型拉取和端点拉取</strong>。</li>
+<li>改动：宝塔主机 <code>/root/cli-proxy-data/scripts/sync_cpa_models.py</code> 第 54 行：
+  <code>MODEL_SYNC_EXCLUDED_PROVIDERS = {"RawChat"}</code> → <code>{"RawChat", "简直了"}</code>。</li>
+<li>效果：<code>sync_cpa_models.py</code> 对所有上游不再请求简直了的 <code>/models</code>（fetched=0），并清空其之前同步进 config 的 models 列表。</li>
+<li>备份：<code>/root/cli-proxy-data/scripts/sync_cpa_models.py.bak-20260716</code>。</li>
+<li>注意：简直了（jianzhile.vip）是用户自有站点，但其验证码签到走独立脚本 <code>~/.hermes/scripts/jianzhile_daily_checkin.py</code>，与 CPA 模型同步无关，互不影响。</li>
+<li>SSH 私钥真实文件名是 <code>baota-&lt;LAN-8&gt;</code>（与 <code>.pub</code> 配对），但本机 <code>ls</code> 显示被脱敏为 <code>baota-[IP]</code>；用 <code>baota-&lt;LAN-8&gt;</code> 可直连。</li>
+</ul>
+<h2 id="hermes-2026-07-16">自动增删上游模型 + 刷新 Hermes 菜单（2026-07-16 落实）</h2>
+<ul>
+<li><strong>目标</strong>：CPA 定时从各上游拉取 <code>/models</code>，自动增删模型；简直了（jianzhile）除外；Hermes 只显示经实测可用的模型。</li>
+<li><strong>上游增删</strong>：宝塔 cron <code>10 3 * * *</code> 跑 <code>sync_cpa_models.py</code>（已含 <code>--remove-missing</code>，自动增删；<code>MODEL_SYNC_EXCLUDED_PROVIDERS={"RawChat","简直了"}</code> 跳过这俩）。运行即写 <code>/root/CLIProxyAPI/config.yaml</code>，CPA file watcher 热重载，不重启容器。</li>
+<li><strong>Hermes 菜单刷新</strong>：Hermes cron <code>33e1fa74d8b8</code> 每日 <code>03:30</code> 跑 <code>cpa_hermes_model_audit.py --delay 1 --timeout 45</code>。它 SSH 读 CPA config 全部模型 → 对 CPA 本地 <code>8317</code> 发低频业务题测活 → 写回 <code>~/.hermes/config.yaml</code> 的 <code>models</code>（discover_models:false），剔除明确 absent 的模型。</li>
+<li><strong>职责分离</strong>：sync 只改 CPA（不碰 Hermes）；audit 只改 Hermes 菜单（不碰 CPA 配置）。两者均不调用上游 <code>/health</code> 或探测词。</li>
+<li><strong>当前状态</strong>：实跑 sync 后 CPA config 简直了 <code>models: []</code>；audit 跑通（287 源模型，287 接受，0 absent）；Hermes 菜单 268 项，无简直了模型。</li>
+<li>注意审计脚本 <code>KEY</code> 路径写的 <code>baota-[IP]</code>（脱敏显示），真实私钥文件名为 <code>baota-&lt;LAN-8&gt;</code>，脚本运行环境可正常解析。</li>
+</ul>
+<h2 id="2026-07-16">简直了不自动拉取也不测活（双重保险，2026-07-16）</h2>
+<ul>
+<li>第一层（上游增删）：<code>sync_cpa_models.py</code> 的 <code>MODEL_SYNC_EXCLUDED_PROVIDERS</code> 含 <code>"简直了"</code>，不请求其 <code>/models</code>、不请求端点，并清空其 <code>models</code> 列表（CPA config 已落盘 <code>models: []</code>）。</li>
+<li>第二层（Hermes 测活）：<code>cpa_hermes_model_audit.py</code> 的 <code>EXPORT</code> 块新增 <code>SKIP_PROVIDERS={"简直了","jianzhile"}</code>，遍历 CPA config 时跳过该 provider——即使未来手动给 简直了 加模型，也不会被拉入 Hermes 测活或菜单。</li>
+<li>验证：EXPORT 跳过逻辑下 303 个模型、0 个含 jianzhile；Hermes 菜单（config.yaml）无 jianzhile 模型。</li>
+</ul>
+<h2 id="hermes-2026-07-17">Hermes 菜单：只同步、不测活（2026-07-17）</h2>
+<ul>
+<li>用户要求：更新 Hermes 后<strong>不做测活</strong>；故障转移由 CPA 多上游路由完成。</li>
+<li>菜单范围仅限家族：<code>gpt</code> / <code>claude</code> / <code>grok</code> / <code>glm</code> / <code>mimo</code> / <code>deepseek</code>。</li>
+<li>只写标准模型名（canonical <code>name</code>），排除 <code>mimo/xxx</code> 等 provider 前缀别名。</li>
+<li>跳过 <code>简直了</code> / <code>RawChat</code>（不同步、不测活）。</li>
+<li>脚本：<code>~/.hermes/scripts/cpa_hermes_model_audit.py</code>（现已改为 pure sync，无 probe）；cron <code>33e1fa74d8b8</code> 03:30 仍用 <code>cpa_hermes_audit_wrap.sh</code>。</li>
+<li>本次结果：Hermes 菜单 77 个模型，families={glm:6, deepseek:16, gpt:14, grok:33, mimo:8, claude:0}；default 保持 <code>grok-4.5</code>。</li>
+</ul>
+<h2 id="cpa-2026-07-17">CPA 定时增删同步（2026-07-17 确认）</h2>
+<ul>
+<li>宝塔 cron：<code>10 3 * * *</code> 跑 <code>sync_cpa_models.py --remove-missing --allow-large-delete</code>。</li>
+<li>排除上游：<code>MODEL_SYNC_EXCLUDED_PROVIDERS={"RawChat","简直了"}</code>（不拉 /models、不增删其模型）。</li>
+<li>日志：<code>/root/cli-proxy-data/state/sync_cron.log</code>；状态：<code>cpa_model_sync_state.json</code>；配置备份：<code>config.yaml.bak_model_sync_*</code>。</li>
+<li>热重载：写 <code>/root/CLIProxyAPI/config.yaml</code> 后由 CPA file watcher 生效，不重启容器。</li>
+<li>Hermes 侧：每天 03:30 <code>cpa_hermes_audit_wrap.sh</code> 仅同步家族标准名到菜单，不测活；故障转移由 CPA 完成。</li>
+</ul>
+<h2 id="hermes-cpa-2026-07-17">固定 Hermes 菜单 + CPA 独立增删（2026-07-17）</h2>
+<ul>
+<li><strong>CPA</strong>：每 6 小时（03/09/15/21:10）<code>sync_cpa_models.py --remove-missing --allow-large-delete</code> 从上游增删模型；<code>MODEL_SYNC_EXCLUDED_PROVIDERS=set()</code>（不排除 RawChat/简直了）。</li>
+<li>RawChat 的 <code>/models</code> 返回 501（Codex 代理不支持 GET models），简直了当前 <code>/models</code> 可能为 0；同步允许 zero-model provider，不因它们中止整次同步。</li>
+<li><strong>Hermes</strong>：不再跟随 CPA 全量目录。固定常用菜单 17 个标准名，<code>discover_models:false</code>，默认 <code>grok-4.5</code>。</li>
+<li>固定菜单：gpt-5.6-terra/sol/luna、gpt-5.5、gpt-5.4、gpt-5.4-mini、grok-4.5/4.3/4.20-fast、glm-5.2/5.1、deepseek-v4-flash/pro、deepseek-chat、mimo-v2.5-pro/v2.5/pro。</li>
+<li>故障转移：Hermes 只发标准模型名到 CPA <code>8317</code>；同名多上游由 CPA 内部路由/failover。</li>
+<li>Hermes cron <code>33e1fa74d8b8</code> 改为每天 03:40 维护固定菜单（不测活、不全量同步）。</li>
+</ul>
+<h2 id="2026-07-17">上游异名自动映射（2026-07-17）</h2>
+<ul>
+<li>在 <code>sync_cpa_models.py</code> 增加 <code>MODEL_NAME_MAP</code> + <code>canonicalize_model_id()</code>。</li>
+<li>同步写入/增删时把上游 vendor id 归一为标准名，例如：</li>
+<li><code>xai-grok-4.5</code> / <code>grok-4.5-latest</code> / <code>grok-latest</code> → <code>grok-4.5</code></li>
+<li><code>GLM-5.2</code> / <code>glm-5-2-260617</code> → <code>glm-5.2</code></li>
+<li><code>deepseek-ai/deepseek-v4-flash</code> / <code>deepseek-v4-flash-free</code> / <code>*-260425</code> → <code>deepseek-v4-flash</code> / <code>deepseek-v4-pro</code></li>
+<li><code>mimo-v2.5-free</code> → <code>mimo-v2.5</code></li>
+<li>同 provider 内同一标准名去重，避免双挂。</li>
+<li>Hermes 固定菜单继续只暴露标准名；CPA 多上游同名即可故障转移。</li>
+<li>验证：vendor leftovers 为空；<code>grok-4.5</code>/<code>glm-5.2</code>/<code>deepseek-v4-flash</code> 已出现在对应上游。</li>
+</ul>
+<h2 id="2026-07-17_1">排除带日期后缀的模型（2026-07-17）</h2>
+<ul>
+<li><code>sync_cpa_models.py</code> 的 <code>should_keep()</code> / remap 增加 <code>is_dated_model_id()</code>。</li>
+<li>规则：模型名含日期后缀则排除，例如：</li>
+<li><code>deepseek-v4-flash-260425</code>、<code>glm-4-5-air-20250728</code>、<code>deepseek-v3-241226</code></li>
+<li><code>deepseek-r1-250120</code>、<code>grok-4.20-0309</code>、<code>gpt-4-0613</code></li>
+<li>稳定名保留：<code>gpt-5.6-terra</code>、<code>grok-4.5</code>、<code>glm-5.2</code>、<code>deepseek-v4-flash</code> 等。</li>
+<li>验证：同步后 dated remaining = 0。</li>
+</ul>
+<h2 id="cpa-2026-07-17_1">CPA 只保留稳定名（2026-07-17）</h2>
+<ul>
+<li><code>sync_cpa_models.py</code> 增加 <code>is_unstable_model_id()</code>，<code>should_keep()</code> / remap 统一过滤。</li>
+<li>排除：</li>
+<li>日期后缀：<code>-20250728</code> / <code>-260425</code> / <code>-241226</code> / <code>-0309</code> 等</li>
+<li>噪音 token：<code>free</code> / <code>preview</code> / <code>latest</code> / <code>beta</code> / <code>alpha</code> / <code>openai-compact</code> / <code>highspeed</code> / <code>terminus</code> / <code>evolving</code> / <code>non-reasoning</code> 等</li>
+<li>过深路径名（<code>a/b/c</code>）</li>
+<li>保留稳定产品名：<code>gpt-5.6-terra</code>、<code>grok-4.5</code>、<code>glm-5.2</code>、<code>deepseek-v4-flash</code>、<code>mimo-v2.5-pro</code> 等。</li>
+<li>实跑：mimo 78→58，去掉 highspeed/free/preview/latest/compact/dated；<code>unstable remaining=0</code>；总模型 85。</li>
+<li>Hermes 固定菜单继续独立，不跟 CPA 全量目录同步。</li>
+</ul>
+<h2 id="2026-07-17_2">十项优化落地（2026-07-17）</h2>
+<ol>
+<li><strong>mimo 大删除二次确认</strong>：<code>MODEL_SYNC_TWO_PASS_DELETE_PROVIDERS={"mimo"}</code>，即使 <code>--allow-large-delete</code>，也需连续两次相同删除签名才真正删。</li>
+<li><strong>RawChat 不拉 /models</strong>：<code>MODEL_SYNC_NO_FETCH_PROVIDERS={"RawChat"}</code>，保留已有模型配置，避免 501 噪音与误清空。</li>
+<li><strong>简直了/RawChat 空列表不覆盖</strong>：<code>MODEL_SYNC_NO_EMPTY_WIPE_PROVIDERS</code>，上游 0 模型时保留现有 models。</li>
+<li><strong>映射增强</strong>：<code>canonicalize_model_id</code> 支持 path 去前缀、<code>GLM-*</code> 小写化、剥 <code>-latest</code>，外加 <code>MODEL_NAME_MAP</code>。</li>
+<li><strong>稳定名过滤</strong>：日期后缀 + free/preview/latest/highspeed/openai-compact 等噪音剔除。</li>
+<li><strong>同步频率</strong>：每 6 小时 <code>10 3,9,15,21 * * *</code>，<code>--backup-keep 30 --quiet-if-unchanged</code>。</li>
+<li><strong>Hermes 固定菜单精简为 10 个</strong>：gpt-5.6-terra/gpt-5.5/gpt-5.4/grok-4.5/glm-5.2/deepseek-v4-flash/pro/deepseek-chat/mimo-v2.5-pro/mimo-v2.5。</li>
+<li><strong>存在性校验（不测活）</strong>：SSH 读 CPA config，报告 <code>missing_in_cpa</code>；菜单仍固定。</li>
+<li><strong>签到任务统一</strong>：全部 <code>no_agent=true</code> + wrapper 绝对 python（venv 或 /usr/bin/python3）。</li>
+<li><strong>回滚</strong>：宝塔 <code>restore_cpa_config_backup.py</code>；本机 <code>~/.hermes/scripts/restore_cpa_config_backup.py</code> SSH 调用。</li>
+</ol>
+<h3 id="_6">职责分离（钉死）</h3>
+<ul>
+<li>CPA = 上游增删 + 映射 + 稳定名 + 故障转移</li>
+<li>Hermes = 固定常用菜单 + 存在性校验（不 probe）</li>
+<li>禁止对敏感站 <code>/health</code>、Hello 探测</li>
+</ul>
+<h2 id="2026-07-17_3">其他工具看到的是过滤后的稳定模型（2026-07-17）</h2>
+<ul>
+<li>问题：CPA <code>config.yaml</code> 已同步为稳定名（~78），但 <code>/v1/models</code> 仍返回上游实时聚合目录（213），含日期/free/preview 等噪音。</li>
+<li><code>excluded-models</code> 字段对实时上游聚合目录无效。</li>
+<li>修复：在 <code>plugins/scripts/codex_fingerprint.js</code> 的响应钩子中过滤 <code>/v1/models</code>：</li>
+<li>去掉日期后缀模型</li>
+<li>去掉 free/preview/latest/highspeed/openai-compact 等</li>
+<li>去掉 gpt-image/dall-e/tts/whisper/embedding</li>
+<li>验证：<code>/v1/models</code> 从 213 → ~60+ 稳定名，<code>unstable_remaining=0</code>。</li>
+<li>Hermes 固定菜单仍独立（10 个常用模型），不跟 CPA 全量目录同步。</li>
+</ul>
+<h2 id="hermes-2026-07-17_1">其他工具与 Hermes 同菜单（2026-07-17 最终）</h2>
+<ul>
+<li>需求纠正：CPA 给其他工具也应只返回与 Hermes 相同的少量稳定标准名，不能暴露 213 全量，也不能拆成 provider 前缀多入口（否则无法同名故障转移）。</li>
+<li>实现：
+  1. CPA 容器改为只监听 <code>18317</code>（内部）
+  2. 边缘代理 <code>cpa-stable-proxy.service</code> 监听 <code>8317</code>，透传 chat/completions，但对 <code>/v1/models</code> 仅返回 Hermes 固定 10 名：
+     <code>gpt-5.6-terra, gpt-5.5, gpt-5.4, grok-4.5, glm-5.2, deepseek-v4-flash, deepseek-v4-pro, deepseek-chat, mimo-v2.5-pro, mimo-v2.5</code>
+  3. 固定模型在各上游 <code>alias=""</code>，保证裸名多上游 failover</li>
+<li>验证：<code>8317/v1/models</code> count=10 且 exact match；chat/completions 经 8317 返回 200。</li>
+<li>脚本：<code>/root/cli-proxy-data/scripts/cpa_stable_models_proxy.py</code></li>
+</ul>
+<h2 id="2026-07-17_4">新增上游后立即同步（2026-07-17）</h2>
+<ul>
+<li>服务：<code>cpa-provider-watch.service</code>（inotify 监听 <code>/root/CLIProxyAPI/config.yaml</code>）</li>
+<li>脚本：<code>/root/cli-proxy-data/scripts/cpa_provider_watch.py</code></li>
+<li>触发条件：openai-compatibility 的 <strong>provider 拓扑</strong>变化（名称新增/删除、base-url 变、api-key 指纹变）</li>
+<li>不因：仅 models 列表被 sync 改写 而重复狂刷（用 topology signature + ignore_until）</li>
+<li>动作：调用 <code>sync_cpa_models_notify.sh</code>；锁忙时最多重试约 60s</li>
+<li>验证：写入 <code>watch-test-dummy2</code> 后约 2s 日志出现 <code>trigger immediate sync</code></li>
+<li>定时 6h 同步仍保留作兜底</li>
+</ul>
+<h2 id="privacyfilter-cpu2026-07-17">privacyfilter 与高 CPU（2026-07-17）</h2>
+<ul>
+<li>Hermes 长会话请求 body 可达 700KB+；privacyfilter 对每条 message 做 gitleaks 式扫描会导致 CLIProxyAPI CPU 打满。</li>
+<li>生产默认：<code>privacyfilter.enabled=false</code>。需要脱敏时再开，并用 <code>skip_models</code> 排除长会话模型。</li>
+<li><code>codex-fingerprint.log_hits</code> 建议 false，避免刷日志。</li>
+</ul>
+<h2 id="2026-07-17_5">性能默认（2026-07-17 续）</h2>
+<ul>
+<li><code>privacyfilter.enabled=false</code>（长会话必关）</li>
+<li><code>logging-to-file=false</code></li>
+<li><code>usage-statistics-enabled=false</code></li>
+<li><code>commercial-mode=true</code>（降低高开销 request logging/middleware）</li>
+<li><code>codex-fingerprint.log_hits=false</code></li>
+<li>巡检：<code>cpa_health_check.py</code> 将 privacy 误开、8317 非 10、CPU&gt;=80 视为 FAIL；CPU 40–80 为 warn。</li>
+</ul>
+<h2 id="cpa-2026-07-17_2">站点权威：以 CPA 面板为准（2026-07-17）</h2>
+<ul>
+<li><strong>站点增删</strong>：CPA 管理面板 / 磁盘 <code>openai-compatibility</code> 是唯一权威；脚本必须跟随（可增也可删）。</li>
+<li><strong>模型增删</strong>：脚本对现有站点拉 <code>/models</code> 同步 models（映射/过滤/deny 规则仍生效）。</li>
+<li><strong>禁止</strong>：脚本用“开始时的站点快照”整表覆盖，导致面板中途新增被盖掉、或已删除站点被复活。</li>
+<li><strong>实现</strong>：<code>sync_cpa_models.py</code> 写盘前 re-read live config；<code>merge_providers_from_cpa(live, synced)</code> 以 live 站点列表为准合并 models；live 没有的站不保留。</li>
+<li>因此：面板删站 → 下次同步/写回后保持删除；面板加站 → 保留并在后续 tick 拉模型。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

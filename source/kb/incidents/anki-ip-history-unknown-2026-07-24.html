@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anki IP 历史「未知」修复（2026-07-24） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="anki-ip-2026-07-24">Anki IP 历史「未知」修复（2026-07-24）</h1>
+<h2 id="_1">症状</h2>
+<p>设备详情 IP 历史显示：<code>&lt;PUBLIC-IP&gt; (未知) - 未知</code>。</p>
+<h2 id="_2">根因（三层查询全失败）</h2>
+<ol>
+<li><strong>Vore</strong>：容器内 DNS 解析失败 <code>api.vore.top</code></li>
+<li><strong>IPShudi</strong>：HTML 中 <code>&lt;td&gt;</code> 与 <code>&lt;span&gt;</code> 之间有换行/空白，旧正则过严导致匹配失败；超时过短</li>
+<li><strong>本地 ip2region xdb</strong>：<code>utf-8</code> 解码抛 <code>UnicodeDecodeError</code>，异常被吞掉后返回 None</li>
+</ol>
+<p>结果：<code>get_ip_location</code> 返回默认「未知」，worker 写入历史后一直停在未知。</p>
+<h2 id="_3">修复</h2>
+<ul>
+<li>放宽 IPShudi 正则（允许 td/span 空白换行）</li>
+<li>增加 <strong>ip-api.com</strong> 兜底源（<code>[IPAPI]</code>）</li>
+<li>本地 xdb 多编码解码 + 垃圾结果过滤</li>
+<li>查询顺序：IPShudi → IPAPI → Vore → Local</li>
+<li>缓存 key 升级到 <code>ip_loc_v52</code>（避免永久缓存旧「未知」）</li>
+<li>回填已有「未知/查询中」历史：共 12 条，其中目标 IP 1 条</li>
+</ul>
+<h2 id="ip">目标 IP 结果</h2>
+<ul>
+<li><code>&lt;PUBLIC-IP&gt;</code> → <code>中国 河南省 郑州市 [IPShudi]</code> / ISP <code>教育网</code></li>
+<li>设备 id=1115 历史已回填</li>
+</ul>
+<h2 id="_4">验证</h2>
+<ul>
+<li><code>verify_all.py</code> success=true ready=true</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

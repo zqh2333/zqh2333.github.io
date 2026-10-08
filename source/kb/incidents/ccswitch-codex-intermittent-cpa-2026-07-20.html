@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CC Switch + Codex 经 CPA 间歇失败（2026-07-20） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="cc-switch-codex-cpa-2026-07-20">CC Switch + Codex 经 CPA 间歇失败（2026-07-20）</h1>
+<h2 id="_1">症状</h2>
+<ul>
+<li>CC Switch 开 Codex 模式走 CPA 时，一会儿能用一会儿不能用</li>
+<li>上游站控制台看模型列表正常</li>
+<li>上游公告：禁止 CPA/sub/new-api 等分发工具、禁止 agent 大报文</li>
+</ul>
+<h2 id="_2">根因（日志 + 本地验证，未做上游探活）</h2>
+<p>间歇失败<strong>不是</strong> 8317 白名单/服务挂掉，而是<strong>上游业务拒绝 + 冷却后池空</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>错误</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>auth_unavailable: no auth available</code></td>
+<td>该模型可用上游凭据都在冷却/不可用</td>
+</tr>
+<tr>
+<td><code>403 insufficient balance</code></td>
+<td>上游余额不足</td>
+</tr>
+<tr>
+<td><code>403 全站额度已用完，请 18:00 后再试</code></td>
+<td>公益站全站窗口额度（Codex/gpt-5.4）</td>
+</tr>
+<tr>
+<td><code>403</code> 带 HTML 诊断页</td>
+<td>上游反滥用/配额拒绝</td>
+</tr>
+<tr>
+<td><code>429 concurrency/rate limit</code></td>
+<td>上游并发或限流</td>
+</tr>
+<tr>
+<td><code>502 timed out</code></td>
+<td>长会话或上游慢</td>
+</tr>
+<tr>
+<td>UI 选 Grok 却报 <code>model: gpt-*</code></td>
+<td>CC Switch 会话/映射，非 edge 归一</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">已做修复</h2>
+<ol>
+<li>Hermes fallback 对齐菜单：grok-4.5 → gpt-5.5 → gpt-5.6-terra → glm-5.2 → deepseek-v4-pro → mimo-v2.5-pro</li>
+<li>abrdns 模型名大小写归一到裸名</li>
+<li>cpa-stable-proxy chat 超时 180s → 300s</li>
+<li>RawChat 桥与 stable-proxy 均为 active</li>
+</ol>
+<h2 id="8317">验证（本地 8317 最小业务句）</h2>
+<ul>
+<li>grok-4.5 chat + /responses → 200</li>
+<li>gpt-5.5 → 503 池暂不可用</li>
+<li>gpt-5.4 → 403 时段额度</li>
+<li>gpt-5.6-terra → 403 余额</li>
+</ul>
+<h2 id="cc-switch">CC Switch 用法</h2>
+<p>Base <code>http://&lt;LAN-8&gt;:8317/v1</code>；裸名；新开对话；额度满时间歇失败是上游策略。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

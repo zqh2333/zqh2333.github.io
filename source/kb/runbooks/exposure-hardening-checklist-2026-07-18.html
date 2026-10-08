@@ -1,0 +1,91 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>家实暴露面收敛清单（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><h1 id="2026-07-18">家实暴露面收敛清单（2026-07-18）</h1>
+<p>原则：外网只留必要反代；管理面默认仅内网；改前先备份。</p>
+<h2 id="_1">高优先级</h2>
+<table>
+<thead>
+<tr>
+<th>设备</th>
+<th>端口/服务</th>
+<th>风险</th>
+<th>建议动作</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hermes <LAN-4></td>
+<td>RDP 3389</td>
+<td>远程桌面暴露</td>
+<td>仅内网/VPN；或关 GNOME Remote Desktop</td>
+<td>待办</td>
+</tr>
+<tr>
+<td>宝塔 <LAN-8></td>
+<td>面板 11322 / FTP 21</td>
+<td>管理面+弱协议</td>
+<td>FTP 禁用或仅内网；面板仅内网或加 IP 白名单</td>
+<td>待办</td>
+</tr>
+<tr>
+<td>OpenWrt <LAN-3></td>
+<td>LuCI 80/443、ttyd 7681、sunpanel 3002、lucky 16601、wg-easy 51821</td>
+<td>旁路工具面板多</td>
+<td>管理端口绑定 lan；外网只留 WG</td>
+<td>待办</td>
+</tr>
+<tr>
+<td>ROS <LAN-2></td>
+<td>Winbox 8291、L2TP/IPsec</td>
+<td>已限内网较好</td>
+<td>轮换 VPN 凭据；巡检脚本脱敏</td>
+<td>待办</td>
+</tr>
+<tr>
+<td>AdGuard <LAN-6></td>
+<td>53/853/80/443</td>
+<td>DNS 中枢</td>
+<td>管理 UI 仅内网；53 对局域网</td>
+<td>基本合理</td>
+</tr>
+<tr>
+<td>HA <LAN-7></td>
+<td>8123 + 插件</td>
+<td>智能家居</td>
+<td>仅内网/反代鉴权</td>
+<td>待办确认</td>
+</tr>
+<tr>
+<td>Anki 5778→公网 2333</td>
+<td>业务口</td>
+<td>需要公网</td>
+<td>保持；确保强密码/HTTPS</td>
+<td>维持</td>
+</tr>
+<tr>
+<td>CPA 8317</td>
+<td>模型 API</td>
+<td>业务口</td>
+<td>内网优先；公网需 key</td>
+<td>维持</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_2">中优先级</h2>
+<ul>
+<li>宝塔 Docker 各面板（青龙 5700、vaultwarden 8080 等）确认是否仅内网</li>
+<li>PVE 8006 仅内网</li>
+<li>关闭未用的 FTP/telnet/旧 API</li>
+</ul>
+<h2 id="_3">验收</h2>
+<ul>
+<li>外网扫描仅见预期业务端口</li>
+<li>管理端口 <code>ss -lntp</code> 绑定 10.10.10.x 或需 VPN</li>
+<li>变更写入本文件状态列</li>
+</ul>
+<h2 id="_4">不在本次自动执行的原因</h2>
+<p>收敛涉及可能中断你远程管理路径（RDP/面板），需按你在线窗口逐步做。脚本与清单已就绪，下一次可按表逐项执行。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

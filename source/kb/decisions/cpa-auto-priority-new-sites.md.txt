@@ -1,0 +1,35 @@
+# 新站点自动配置优先级（2026-07-18）
+
+> **状态更新 2026-07-18 晚：已按用户要求停用自动设置 priority。**  
+> 见 [[decisions/cpa-auto-priority-disabled-2026-07-18]]。下文为历史策略。
+
+## 脚本（历史）
+- `/root/cli-proxy-data/scripts/cpa_auto_priority.py`
+- 曾接入：
+  1. `cpa_provider_watch.py`：检测到新站点后，同步前/后各跑一次
+  2. `sync_cpa_models_notify.sh`：定时同步前后也跑（幂等）
+
+## 当前
+- 自动入口已禁用；脚本默认打印 DISABLED 并退出
+- 需要手动一次性分配时：`CPA_AUTO_PRIORITY_ENABLED=1` 或 `--force`
+- `cpa_upstream_quality.py` 也不再写 priority（只告警）
+
+## 规则（历史参考）
+- **数字越大越优先**
+- 已知站点固定表：
+  - RawChat 90, temp1 80, mimo 70, snote 60, alfred 50, 薄荷/喵喵 40, 魔方 20, 简直了 10
+- 未知新站点：从 79 往下自动分配空位（79/78/...，避开已占用）
+- 固定稳定模型强制 `alias=""`（同名可故障转移）
+- 新站名加入 `codex-fingerprint.providers`
+
+## 模型不同也能用吗？
+**能。**
+- 请求 `model=X` 时，CPA 只会在“配置了 X 的上游/凭据”里选
+- 站点 A 有 grok、站点 B 有 gpt，互不影响
+- 只有多个站都提供同一模型名时，priority + round-robin/冷却才决定先后与故障转移
+
+## 手动（现需 force）
+```bash
+python3 /root/cli-proxy-data/scripts/cpa_auto_priority.py --dry-run --force
+CPA_AUTO_PRIORITY_ENABLED=1 python3 /root/cli-proxy-data/scripts/cpa_auto_priority.py
+```

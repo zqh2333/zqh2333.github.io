@@ -1,0 +1,49 @@
+# Anki 后台全功能审计（2026-07-22）
+
+## 范围
+宝塔 LXC 211 的 `/www/anki_server`：容器栈、数据库/缓存、公开 API、管理后台路由/鉴权、卡牌协议、配置中心、文案、发布/备份相关只读功能、安全基线、资源与日志。
+
+## 基线
+| 项 | 结果 |
+|---|---|
+| Compose | nginx/web/worker/monitor/db/redis 全部 Up；db/redis healthy |
+| `/api/status` | `ok=true`；db/redis true；v136.7 |
+| `/www` 磁盘 | 34% 使用（16G/50G） |
+| 资源 | web ~347MiB、db ~445MiB，CPU 低 |
+| `verify_all.py` | `success=true`、`ready=true` |
+
+## 路由/功能验收
+### 公开端
+`/api/status`、`/api/ping`、`/api/protocol`、`/api/release_manifest`、`/api/error_catalog`、`/api/announcement.json` 全部 200；协议含 `cardText/cardTexts`。
+
+### 后台只读功能
+容器内直接执行已移除管理装饰器的 handler（避免使用或泄露管理员凭据），以下均成功：
+- 数据/牌组、配置/配置中心/健康
+- 每日统计、错误字典/统计、失败聚合、搜索、风控
+- monitor/ops/打包预检、发布预检/发布矩阵
+- 最近失败、回收站、支持工作台/排障报告
+- validation diagnostics、验收状态、workbench
+- 卡牌文案配置/合成探针、下载检查
+
+### 鉴权
+未登录浏览器请求所有抽查的破坏性后台端点均 302 到登录：生成/导入激活码、保存文案/公告/配置/密码、恢复备份、删全部激活码/牌组。\
+管理 token 端点 `protocol_status`、`download_config`、`support_lookup` 缺 token 均 401。
+
+## 修复
+1. **弱默认管理令牌源代码残留**
+   - `api.py` 原有 `SuperAdmin2026_ChangeMe`。
+   - 改为空 legacy sentinel + `INSECURE_DEFAULT_TOKENS`；未设置或弱 token 均 fail closed。
+2. **裸 except**
+   - 当前 `api.py` / `admin.py` / `services.py` 的 bare `except:` 全部替换为 `except Exception:`，保留原业务降级语义。
+3. 前一轮文案审计已修 `/api/protocol` 下发 `cardText/cardTexts`；本轮验证仍正常。
+
+修改后：Python 编译通过、web/worker 重启、`FULL_ANKI_AUDIT_OK`、`verify_all ready=true`。
+
+## 非问题说明
+- `/announcement.json` 是不存在的旧路径，404 正常；实际公开路径为 `/api/announcement.json`，200。
+- 审计/verify 触发的空 `/api/validate` 会写 `BAD_JSON` INFO 诊断记录，这是测试请求，不是生产异常。
+- Dashboard JS 静态检查因环境无 node 显示 warn；运行中的服务和页面/API 正常。
+
+## 可复用审计脚本
+- web 容器：`/tmp/anki_full_audit.py`
+- 可搬到项目 `data/` 后按需复跑；只读/鉴权验证，不执行删除、恢复、发布或改业务数据。

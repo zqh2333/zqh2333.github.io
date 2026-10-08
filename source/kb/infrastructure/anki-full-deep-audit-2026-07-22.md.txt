@@ -1,0 +1,47 @@
+# Anki 全功能深度审计（2026-07-22）
+
+> 本轮按用户要求复审“全部功能”。破坏性接口仅验证未授权拒绝，不执行删除、恢复、发布、修改密码或备份恢复。
+
+## 基线
+- 6 容器全 Up；MySQL/Redis healthy；Redis AOF enabled；RQ `default` 队列可用。
+- `/api/status`: `ok=true`，DB/Redis=true，协议/配置 `v136.7`。
+- 数据库：MySQL 8.0.46；`foreign_key_checks=ON`；迁移 `0099206037c0`；schema drift=0。
+- 资源：web ~363MiB、worker ~82MiB、db ~454MiB，CPU 低；根盘 34%。
+- 现行 Python compileall 与 `verify_all.py`：`success=true`, `ready=true`。
+
+## 路由审计
+### 未认证矩阵
+- 枚举并实际请求路由：后台 session 保护 **99** 个、token 保护 **4** 个、后台页面 **6** 个、公开端 **9** 个。
+- Session 保护端均 302/401；token 端缺 token 均 401/503；无越权。
+- 全部公开端实际 200：status/ping/protocol/release_manifest/error_catalog/announcement。
+
+### 内部后台只读 handler
+在 web 容器中调用解除装饰器后的 handler（无管理员凭据），**51 个无参数 GET 后台接口全部 200**：数据/牌组/配置中心、统计、监控、发布、回收站、备份只读、支持/排障、卡牌文案、下载配置等。
+
+## 卡牌/配置
+- protocol 含 `cardText`/`cardTexts`，与 validate 兼容字段一致。
+- 文案配置、合成探针、预览、导入预览、导出、开关隔离上一轮均已端到端通过。
+- 配置库键：`admin_password_hash`、`admin_session_epoch`、`ANKI_CARD_TEXT_CONFIG`、`ANKI_PACKAGE_DOWNLOAD_URL`；未记录明文。
+
+## 数据完整性判定
+- `deck_key_meta` 与 `decks` 不设外键，存在 1473 个历史 meta（active/idle/superseded）。样本均为清理/重建牌组后的 release metadata，**设计性保留**，不可当“孤儿”直接删除。
+- `activation_events` 是审计日志，旧激活码删后仍保留事件；未匹配记录属历史审计/测试验证，**设计性保留**。
+- devices 对 code 的实际缺失关联 = 0。
+
+## 安全/代码卫生
+- `DEFAULT_ADMIN_TOKEN` 为空 sentinel；`INSECURE_DEFAULT_TOKENS` 失败关闭；旧可用默认值不再赋值。
+- `api.py/admin.py/services.py` active source bare `except:` = 0。
+- active source 无 `eval`/`pickle.loads`；`shell=True` 只在恢复后的重启辅助，且先判断 `ANKI_RESTART_COMMAND`。当前 env 未配置该命令，常规路径走 Gunicorn SIGHUP/失败关闭。
+- Nginx 公开端有 `X-Frame-Options: SAMEORIGIN`、`X-Content-Type-Options: nosniff`、no-store；CORS 与 Anki 客户端兼容。
+
+## 非问题
+- 本轮无 body 的 `/api/validate` 会记录 BAD_JSON 测试日志，属于审计探针，不是生产错误。
+- Dashboard JS 静态检查因未安装 node 仅 warn；运行、编译和 API 验收均通过。
+
+## 可复用审计脚本
+| 脚本 | 范围 |
+|---|---|
+| `/tmp/anki_route_integrity_audit.py` | 路由授权矩阵 + DB 关联诊断 |
+| `/tmp/anki_all_admin_get_audit.py` | 全部无参数后台 GET handler |
+| `/tmp/anki_orphan_diagnose.py` | 历史 meta/event 只读判定 |
+| `/tmp/anki_final_static_db_audit.py` | token/裸 except/DB/迁移静态收口 |

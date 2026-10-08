@@ -1,0 +1,41 @@
+# 家实优化包落地（2026-07-18）
+
+按建议顺序已落地：
+
+## 1. CC Switch /responses
+- 8317 `cpa_stable_models_proxy.py` **深度递归**清洗 `input[].name`（含嵌套 content/tools） / tools 缺名
+- jshandler 同步清洗（直连 18317 也尽量覆盖）
+- 说明：`/root/cli-proxy-data/state/ccswitch_cpa_endpoint.md`
+- **推荐 CC Switch Base URL = `http://<LAN-8>:8317/v1`**（不要 18317）
+- 复测：缺 name 不再是 `name is required`；上游额度满时会 429/408（另一问题）
+
+## 2. xAI 凭证清理防误伤
+- 根因：`expired` 是 **access_token 过期时间戳字符串**，不是整号作废
+- 有 `refresh_token` 时**不再删除**
+- 复测：`kept=668 removed=0 xai_kept=668`
+
+## 3. 401/慢上游告警 + 自动降权
+- 脚本：`cpa_upstream_quality.py`
+- 状态：`state/upstream_alerts.json` + `upstream_priority_state.json`
+- sticky 降权：401 → floor-40；慢/5xx → floor-20；健康可回升
+- `cpa_auto_priority.py` 会尊重 quality 降权
+- 当前：snote-temp / alfred-temp 因 401 降权
+
+## 4. NAS 磁盘告警
+- 脚本：`~/.hermes/scripts/nas_disk_watch.py` + wrap
+- cron：`6d0b17e1d2a9` 每天 09:30 / 21:30
+- 当前：`NAS_DISK_OK worst=/ 70%`
+
+## 5. Anki 公告增强
+- 一键清除内联颜色
+- 发布后自动客户端校验 `/api/announcement.json`
+- 需浏览器强刷后台
+
+## 6. 暴露面收敛
+- 清单：[[runbooks/exposure-hardening-checklist-2026-07-18]]
+- 未自动关端口（防锁死远程管理），按清单择机执行
+
+## 验证
+- CPA HEALTH_OK
+- 8317 models=10
+- auth cleanup 不误删

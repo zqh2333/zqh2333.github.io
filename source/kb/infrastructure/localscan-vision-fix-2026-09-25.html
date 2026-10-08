@@ -1,0 +1,48 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LocalScan 正反面矫正与背景边缘修复 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="localscan">LocalScan 正反面矫正与背景边缘修复</h1>
+<p>日期：2026-09-25</p>
+<h2 id="_1">用户反馈</h2>
+<ul>
+<li>正面透视矫正后仍有轻微倾斜。</li>
+<li>反面校正后四周仍有拍摄背景残留。</li>
+</ul>
+<h2 id="_2">根因</h2>
+<p>原 Worker 在透视后使用固定像素裁剪，且检测四边形直接用于透视，导致：</p>
+<ul>
+<li>角点误差被放大后形成视觉倾斜；</li>
+<li>不同分辨率下固定裁剪不足；</li>
+<li>反面背景边缘在校正后仍被保留。</li>
+</ul>
+<h2 id="_3">修复</h2>
+<p>源码 <code>/www/localscan-docker</code>：</p>
+<ul>
+<li><code>DocumentTypeProfile</code> 新增 <code>trimRatio</code>。</li>
+<li>四边形透视前按中心向内收缩，减少检测边界误差。</li>
+<li>透视后裁边同时使用分辨率比例内缩和类型 <code>edgeTolerance</code>。</li>
+<li>顶部/底部/左右采用对称安全裁边，不再使用固定顶部额外 15px。</li>
+<li>身份证/银行卡 trimRatio=1.2%，驾驶证/社保卡=1.4%，护照=1%，其他证明文件=0.8%。</li>
+<li>Worker 将 <code>trimRatio</code> 传入透视处理。</li>
+</ul>
+<h2 id="_4">验证</h2>
+<ul>
+<li><code>vue-tsc --noEmit &amp;&amp; vite build</code>：通过。</li>
+<li>Docker 镜像构建：通过。</li>
+<li>容器重建：成功。</li>
+<li><code>/healthz</code>：<code>ok</code>。</li>
+<li>主页：HTTP 200。</li>
+<li>真实浏览器上传页：正常。</li>
+<li>生产主 bundle 静态检查：<code>documentType</code>、<code>targetRatio</code>、<code>edgeTolerance</code>、<code>trimRatio</code> 均存在。</li>
+<li>备份：<code>/root/localscan-backups/20260925_vision_fix/</code>。</li>
+</ul>
+<h2 id="2026-09-25">真实样本回归补充（2026-09-25）</h2>
+<ul>
+<li>正面原图：<code>img_b87caeff6161.jpg</code>，1080×721，包含织物背景和轻微透视。</li>
+<li>反面原图：<code>img_4e15c6ead996.jpg</code>，1080×741，四边四角可见，包含织物背景和轻微透视。</li>
+<li>通过真实浏览器上传入口同时上传正反面，处理页同时显示正面与反面“已矫正/精确检测”，控制台无 page error。</li>
+<li>视觉验收：正面四边基本平直、织物背景基本去除、四角完整；反面四边平直、背景基本去除、四角完整。</li>
+<li>仍存在轻微像素级角度/透视残留和原图柔化，但已不再是原先的明显歪斜或背景残边问题。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

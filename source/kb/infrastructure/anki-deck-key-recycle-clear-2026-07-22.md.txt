@@ -1,0 +1,15 @@
+# 牌组密钥回收站：清空功能（2026-07-22）
+
+## 新增
+后台「牌组专属密钥管理 → 密钥回收站」增加 **清空回收站**。
+
+- UI：红色「清空回收站」按钮。
+- 前端只需一次 `confirm` 确认，**无需输入确认词**（2026-07-22 按用户要求去掉）。
+- 后端：`DELETE /api/admin/deck_key_recycle/clear`（不再校验确认词）。
+- 未登录仍被管理鉴权拦截。
+- 清空为**永久删除**，只影响 `deck_key_recycle` 记录；不会删除当前有效 `decks` 或 `deck_key_meta` 历史元数据。
+- 写入 `AdminOperationLog`：`deck_key_recycle_clear` / `critical`。
+
+## 验证
+- 无确认词请求：事务内真实清空路径成功并回滚。
+- `verify_all.py`: `success=true`, `ready=true`。

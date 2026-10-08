@@ -1,0 +1,32 @@
+# 0xPsyche Welfare 每日签到（2026-07-21）
+
+## 站点
+- 个人页：`https://welfare.0xpsyche.me/profile`
+- API base：`https://welfare.0xpsyche.me`
+- 账号：id=22120 / display_name=Zqh2333
+
+## 认证
+New API 风格：
+```text
+Authorization: <access token>
+New-Api-User: 22120
+```
+凭据仅在 `~/.hermes/secrets/psyche.env`（600），不记入本文档。
+
+## 接口
+| 方法 | 路径 | 用途 |
+|---|---|---|
+| GET | `/api/user/self` | 验证令牌、读取 quota |
+| GET | `/api/user/checkin` | 读取 `checked_in_today` |
+| POST | `/api/user/checkin` | 执行签到 |
+
+## 自动化
+| 项 | 路径 |
+|---|---|
+| 脚本 | `~/.hermes/scripts/psyche_daily_checkin.py` |
+| wrapper | `psyche_checkin_random.sh`（08:00 起随机 0–30 分钟） |
+| cron | `0xPsyche福利站每日签到（08:00-08:30随机）`，`no_agent=true` |
+
+## 验证
+- 2026-07-21：已签到，奖励 `12500000` quota
+- 脚本 dry-run：`ALREADY_CHECKED_IN`，exit 0

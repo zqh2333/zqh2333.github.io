@@ -1,0 +1,74 @@
+# 全体设备巡检（2026-07-17）
+
+## 范围
+PVE / ROS / OpenWrt / Hermes / NAS / AdGuard Home / Home Assistant / 宝塔  
+方式：ICMP + TCP/SSH 端口 + 独立密钥 `BatchMode` 免密验证 + 管理 HTTP + 宝塔 CPA 健康检查。
+
+## 总览
+
+| 设备 | 地址 | Ping | SSH 密钥 | 管理服务 | 备注 |
+|---|---:|---|---|---|---|
+| PVE | <LAN-1> | OK | OK (`root`) | `8006` 200 | load ~7.5；9 个 VM running；`bt` VM CPU 高 |
+| ROS | <LAN-2>:2333 | OK | OK (`admin`) | RouterOS 7.15.2 | uptime ~2d；内存充足 |
+| OpenWrt | <LAN-3> | OK | OK (`root`) | `80/443` 200 | iStoreOS；rootfs 27% |
+| Hermes | <LAN-4> | OK | OK（**应用 `root` 密钥**） | gateway 进程在跑 | `user` 用户公钥失败；本机即此节点 |
+| NAS | <LAN-5> | OK | OK (`root`) | `80/443` 200 | Synology；`/` 70% |
+| AdGuard Home | <LAN-6> | OK | OK（重试成功） | `80/443` 200 | 首次并发偶发 `Connection reset`；hostname `ad` |
+| Home Assistant | <LAN-7> | OK | OK (`root`) | `8123` 200 | HAOS；rootfs 31% |
+| 宝塔 | <LAN-8> | OK | OK (`root`) | `8080` 200 | CPA 栈 HEALTH_OK；清理卡死补丁进程后负载下降 |
+
+## SSH 密钥
+- 目录 `~/.ssh/<SSH-KEY>`（700），私钥 600
+- 验证均 `BatchMode=yes PasswordAuthentication=no KbdInteractiveAuthentication=no`
+- Hermes 节点应使用用户 **`root@<LAN-4>`** + `hermes-<LAN-4>`（不是 user）
+
+## 发现问题与处理
+
+### 1. 宝塔卡死补丁进程（已处理）
+多个遗留进程占满 CPU：
+- `/tmp/patch_cpa_stable_only.py` × 多份
+- 孤儿 `python3 -u -`
+
+已 `kill -9` 清理。清理后 load 从 ~7.8 降到 ~5 并继续回落。  
+`CLIProxyAPI` 仍偏高 CPU（容器主进程），属观察项。
+
+### 2. Hermes 用户名
+- `user@<LAN-4>` → Permission denied
+- `root@<LAN-4>` → key-auth-ok
+
+### 3. AdGuard SSH 偶发 reset
+并行巡检时首次可能 `Connection reset by peer`，立即重试成功。Web 管理始终 200。
+
+### 4. PVE/宝塔负载
+- PVE：`bt` VM CPU ~82%（宝塔所在 VM）
+- 清理卡死 python 后宝塔侧应缓解；若持续高负载需再查 CLIProxyAPI
+
+## 宝塔 CPA 栈
+- `cli-proxy` Up（映射 18317）
+- `cpa-stable-proxy` active（8317）
+- `cpa-provider-watch` active
+- `rawchat-codex-proxy` / `rawchat-openai-bridge` active（18417/18418）
+- `cpa_health_check.py` → **HEALTH_OK**
+
+## 磁盘关注
+- NAS `/` **70%**（需留意）
+- Hermes `/` 58%
+- 其余 <40%
+
+## 验证命令原则
+与 [[runbooks/ssh-key-authentication]] 相同：隔离 `ssh -F /dev/null` + 禁止密码回退。
+
+相关：[[infrastructure/fleet-baseline-2026-07-15]]、[[infrastructure/ros]]、[[decisions/cpa-local-model-sync]]
+
+## 后续处理（同日 1+3）
+
+### 宝塔 CLIProxyAPI 高 CPU
+- 根因：`privacyfilter` 插件对 Hermes 超大上下文（`body_len` 约 70 万字节、数百条 messages）逐条扫描脱敏，日志刷屏 `privacy filter: redacted entities in messages[N]`，进程 CPU 常年 90%+。
+- 处理：`plugins.configs.privacyfilter.enabled=false`；`codex-fingerprint.log_hits=false`；`docker restart cli-proxy`。
+- 结果：容器 CPU 回落至空闲 ~0–7%；`cpa_health_check=HEALTH_OK`；8317 仍 10 模型。
+- 备份：`config.yaml.bak_privacy_cpu_*`。若以后要重新开启，仅对小上下文模型使用，或配置 `skip_models` 跳过长会话模型。
+
+### Hermes user 公钥
+- 原因：`/home/user/.ssh/authorized_keys` 为空文件。
+- 处理：写入 `hermes-<LAN-4>.pub`，权限 600、属主 user。
+- 验证：`ssh -i hermes-<LAN-4> user@<LAN-4>` → `ZQH_OK`。

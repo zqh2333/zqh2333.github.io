@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Authorized Verification Assistant v1.2.9-test.5 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="authorized-verification-assistant-v129-test5">Authorized Verification Assistant v1.2.9-test.5</h1>
+<h2 id="_1">实测</h2>
+<ul>
+<li>真实 Chrome 扩展 ID：<code>mgpembebkeoiciopndiciehcokojeldf</code></li>
+<li>Worker：已确认</li>
+<li>授权：有效，<code>VALIDATE=true</code></li>
+<li>设备指纹：64 位 SHA-256，已持久化并提交授权服务</li>
+<li><code>captcha7/8</code>：真实 Canvas OCR 填充成功，验证码字段长度 4；未提交未知账号密码</li>
+<li>使用授权测试账号后，<code>captcha1–6</code> 动态挑战识别为：</li>
+<li>captcha1：<code>GEETEST_SLIDER</code></li>
+<li>captcha2/3：<code>GEETEST_IMAGE_ORDER</code></li>
+<li>captcha4：<code>GEETEST_TEXT_ORDER</code></li>
+<li>captcha5：<code>GEETEST_SPATIAL_REASONING</code></li>
+<li>captcha6：<code>GEETEST_IMAGE_SELECT</code></li>
+<li>真实 Geetest、Google reCAPTCHA、网易易盾挑战不伪造 token、不篡改状态，插件输出 <code>HUMAN_REQUIRED</code>。</li>
+</ul>
+<h2 id="_2">回归与产物</h2>
+<ul>
+<li><code>GEETEST_DETECTION_CONTRACT_PASS</code></li>
+<li><code>CANVAS_SCRAPE_CENTER_SELECTOR_PASS</code></li>
+<li><code>28 passed</code></li>
+<li>ZIP：<code>/home/user/artifacts/authorized-verification-assistant-v1.2.9-test.5-extension.zip</code></li>
+<li>ZIP SHA-256：<code>&lt;HASH&gt;</code></li>
+<li>ZIP 大小：<code>17109 bytes</code></li>
+<li>NAS：<code>/volume1/云/Hermes项目产物/authorized-verification-assistant/v1.2.9-test.5-extension/</code></li>
+<li>NAS 哈希回读：一致</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

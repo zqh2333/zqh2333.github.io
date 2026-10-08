@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA 同步脚本竞态导致面板新增上游丢失（2026-07-17） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="cpa-2026-07-17">CPA 同步脚本竞态导致面板新增上游丢失（2026-07-17）</h1>
+<h2 id="_1">用户反馈</h2>
+<ul>
+<li>曾加到约 10 个站点；<code>临时3</code> 及后续新增站点不见了</li>
+<li>怀疑脚本误删站点</li>
+</ul>
+<h2 id="_2">脚本审查结论</h2>
+<p><code>sync_cpa_models.py</code> <strong>没有</strong>“按名称删除整个 provider”的业务逻辑。<br />
+它只对<strong>已存在</strong>的 <code>openai-compatibility[]</code> 项增删 <strong>models</strong>。</p>
+<p>但存在 <strong>load-then-dump 竞态</strong>：
+1. 同步开始时 <code>cfg = load_yaml(config)</code>，<code>providers = cfg["openai-compatibility"]</code>
+2. 运行中只改内存里的 <code>providers[*].models</code>
+3. 结束时 <code>cfg["openai-compatibility"] = providers</code> 后 <strong>整文件写回</strong>
+4. 若管理面板在 2–3 之间 <code>PUT</code> 新增了 <code>临时3</code> 等，写回会用<strong>旧 provider 列表</strong>覆盖磁盘，新站点消失
+5. 原 <code>validate_config_shape</code> 要求 <code>len(providers) == original_provider_count</code>（开始时的数量），<strong>不能阻止“写回时比磁盘现有更少”</strong> 以外的并发新增丢失（磁盘已变多、内存仍是旧数量时，校验按开始数量通过）</p>
+<p>容器日志旁证（CST）：
+- 11:21–13:51 面板 PUT 使 OpenAI-compat 到 9→10→11
+- 之后重载/写回回到 8
+- 全量备份中<strong>无 <code>临时3</code> 明文</strong>，无法自动恢复 key/base-url</p>
+<p>另：<code>临时</code>/<code>临时2</code> 被十项优化<strong>改名</strong>为 <code>snote-temp</code>/<code>alfred-temp</code>，不是删除。</p>
+<h2 id="_3">修复（已落地）</h2>
+<p><code>sync_cpa_models.py</code>：
+1. 写盘前 <strong>重新读取</strong> 磁盘 config
+2. <code>merge_providers_preserve_new(live, synced)</code>：保留磁盘上多出来的 provider，只覆盖同步负责的 models/priority 等
+3. 若合并结果会丢掉 start∪live 中的站名 → <strong>拒绝写入</strong>
+4. validate：允许 provider <strong>变多</strong>，禁止 <strong>变少</strong></p>
+<p>备份：<code>sync_cpa_models.py.bak_fix_provider_race_*</code></p>
+<h2 id="_4">恢复</h2>
+<p>无法从备份恢复 <code>临时3</code> 凭据；需用户在面板或提供 base-url/key 后重加。</p>
+<p>相关：[[incidents/cpa-temp3-providers-lost-2026-07-17]]、[[decisions/cpa-local-model-sync]]</p>
+<h2 id="_5">用户纠正（同日）</h2>
+<p>站点必须以 CPA 为准，脚本跟随 CPA 的增加<strong>和删除</strong>，不能只增不减。<br />
+已把 merge 策略改为 <code>merge_providers_from_cpa</code>：以写盘时 live 站点列表为权威，删除的站不复活，新增的站不覆盖丢。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

@@ -1,0 +1,36 @@
+# ABRDNS 福利站每日签到（2026-07-20）
+
+## 站点
+- 签到：`https://checkin.new-api.abrdns.com/checkin`
+- 登录：仅 Linux DO OAuth（主站用户名密码不能直接签到）
+
+## 实现
+| 项 | 路径 |
+|---|---|
+| 脚本 | `~/.hermes/scripts/abrdns_daily_checkin.py` |
+| wrapper | `~/.hermes/scripts/abrdns_checkin_random.sh` |
+| 会话 | `~/.hermes/secrets/abrdns_session_cookies.json` |
+| Linux DO cookie | `~/.hermes/secrets/linuxdo_cookies.json` |
+| cron | 08:00 起随机 0–30min，`no_agent=true` |
+
+## 流程
+1. 有 `checkin_session` → GET `/checkin` 判断是否已签到  
+2. 失效 → 从本机 Chrome 解密 `linux.do` cookie（用户已手动过 CF/登录）  
+3. Playwright 打开 OAuth，点「允许」，刷新福利站 session  
+4. **不**自动过 Cloudflare；CF 挡下时输出 `CF_BLOCKED`
+
+## 验证（2026-07-20）
+- 本机 Chrome 已登录 Linux DO `@user`
+- OAuth 授权成功 → 签到页显示 **今日已签到 · $5.19 x3**
+- 脚本 dry-run：`[abrdns] ALREADY_CHECKED_IN: reward=$5.19 x3` exit 0
+
+## 维护
+- 若 cron 报 `NO_LINUXDO_SESSION`：本机 Chrome 打开 https://linux.do 保持登录后再跑  
+- 若 `CF_BLOCKED`：本机浏览器过一次 Cloudflare 后重试  
+- 密码不进知识库/memory，只在用户浏览器会话里
+
+## 更新 2026-07-28
+- 福利站加 hCaptcha；空 POST 无效。
+- 正确诊断码：`HCAPTCHA_REQUIRED`。
+- 交互：`ABRDNS_INTERACTIVE=1` + 本机 Chrome。
+- 主站 API 签到未启用；UID=9732。

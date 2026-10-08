@@ -1,0 +1,48 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA / CPAMP 升级记录 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="cpa-cpamp">CPA / CPAMP 升级记录</h1>
+<ul>
+<li>日期：2026-09-15</li>
+<li>目标：升级 CPA <code>cli-proxy</code> 与 CPAMP <code>cpa-manager-plus</code></li>
+<li>范围：仅重建两个容器；未修改 CPA <code>config.yaml</code>、auth 目录、插件目录或 CPAMP 数据。</li>
+</ul>
+<h2 id="_1">升级前</h2>
+<ul>
+<li>CPA 镜像容器：<code>cli-proxy</code>，旧镜像 ID <code>sha256:&lt;HASH&gt;</code></li>
+<li>CPAMP 旧镜像 ID <code>sha256:&lt;HASH&gt;</code></li>
+<li>CPA 宿主端口：<code>8318 -&gt; 8317</code></li>
+<li>CPAMP 宿主端口：<code>18317 -&gt; 18317</code></li>
+</ul>
+<h2 id="_2">备份</h2>
+<ul>
+<li>目录：<code>/root/cpa_update_backups/20260915_145822</code></li>
+<li>包含：<code>config.yaml</code>、auth-dir、plugins、CPAMP SQLite 在线一致性备份、容器 inspect、镜像 inspect。</li>
+<li>CPAMP 备份校验：<code>PRAGMA integrity_check = ok</code></li>
+<li>CPAMP 备份归档 SHA-256：<code>&lt;HASH&gt;</code></li>
+</ul>
+<h2 id="_3">升级后</h2>
+<ul>
+<li>CPA：<code>eceasy/cli-proxy-api:latest</code></li>
+<li>upstream digest：<code>sha256:&lt;HASH&gt;</code></li>
+<li>runtime：<code>v7.3.3</code>，commit <code>7bbfeaf</code></li>
+<li>CPAMP：<code>seakee/cpa-manager-plus:latest</code></li>
+<li>upstream digest：<code>sha256:&lt;HASH&gt;</code></li>
+<li>CPA Billing：<code>cpa-key-billing v1.3.3</code> 仍加载并注册。</li>
+<li>Keeper 插件：<code>v0.1.0</code> 仍加载并注册。</li>
+</ul>
+<h2 id="_4">验证</h2>
+<ul>
+<li><code>cli-proxy</code>：running，重启次数 0；本地根路径 HTTP 200。</li>
+<li><code>cpa-manager-plus</code>：running，重启次数 0；管理页面 HTTP 307（登录重定向，符合预期）。</li>
+<li><code>cpa-usage-keeper</code>：running healthy，keeper health HTTP 200。</li>
+<li>端口 <code>8318</code>、<code>18317</code>、<code>18080</code> 均已监听/可访问。</li>
+<li>当前 CPA <code>config.yaml</code> SHA-256 与升级前备份一致，确认 <code>CONFIG_UNCHANGED=1</code>。</li>
+<li>当前 CPAMP SQLite <code>PRAGMA integrity_check = ok</code>。</li>
+<li>三个容器的持久化挂载保持不变。</li>
+<li>未访问 CPA 上游站点、未执行上游测活或业务探测。</li>
+</ul>
+<h2 id="_5">回滚</h2>
+<p>如需回滚，停止并删除当前两个容器后，用备份的容器参数重新运行旧镜像；配置、auth、plugins 和 CPAMP 数据均保留在原宿主路径。旧镜像未删除。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

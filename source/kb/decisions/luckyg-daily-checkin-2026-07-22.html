@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>luckyg 每日签到（2026-07-22） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="luckyg-2026-07-22">luckyg 每日签到（2026-07-22）</h1>
+<h2 id="_1">站点</h2>
+<ul>
+<li>个人页：<code>https://luckyg.131518.xyz/profile</code></li>
+<li>API base：<code>https://luckyg.131518.xyz</code></li>
+<li>账号：id=966 / display_name=Zqh2333</li>
+</ul>
+<h2 id="_2">认证</h2>
+<p>New API 风格：</p>
+<pre><code class="language-text">Authorization: &lt;token&gt;
+New-Api-User: 966
+</code></pre>
+<h2 id="_3">接口</h2>
+<ul>
+<li><code>GET /api/user/self</code></li>
+<li><code>GET /api/user/checkin</code>（状态）</li>
+<li><code>POST /api/user/checkin</code>（签到）</li>
+</ul>
+<h2 id="_4">落地</h2>
+<ul>
+<li>secrets：<code>~/.hermes/secrets/luckyg.env</code>（600）</li>
+<li>脚本：<code>~/.hermes/scripts/luckyg_daily_checkin.py</code></li>
+<li>wrapper：<code>luckyg_checkin_random.sh</code>（08:00–08:30 随机 sleep）</li>
+<li>cron：<code>luckyg每日签到（08:00-08:30随机）</code>，<code>no_agent=true</code></li>
+</ul>
+<h2 id="_5">今日验证</h2>
+<ul>
+<li>首次 POST 签到成功：<code>quota_awarded=3147838</code>（date=2026-07-22）</li>
+<li>脚本复跑：<code>ALREADY_CHECKED_IN</code></li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

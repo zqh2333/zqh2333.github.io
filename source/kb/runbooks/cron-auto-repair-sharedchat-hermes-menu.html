@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cron 自动修复：SharedChat + Hermes 菜单 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><h1 id="cron-sharedchat-hermes">Cron 自动修复：SharedChat + Hermes 菜单</h1>
+<h2 id="sharedchat-codex">SharedChat Codex 领取 ()</h2>
+<h3 id="_1">症状</h3>
+<p>exit 1</p>
+<h3 id="_2">根因</h3>
+<ul>
+<li>弹窗领取后 claim API/toast 捕获不稳</li>
+<li>Vue textarea 未正确触发 v-model</li>
+<li>成功判定过窄（忽略 quota.isActive / rolling-limit）</li>
+</ul>
+<h3 id="_3">修复</h3>
+<ul>
+<li>重写：secrets、指纹等待、Vue 输入、扩展成功源</li>
+<li>实跑： exit 0</li>
+</ul>
+<h2 id="hermes">Hermes 固定菜单 ()</h2>
+<h3 id="_4">症状</h3>
+<h3 id="_5">根因</h3>
+<p>宝塔 SSH 偶发拒绝；脚本无跳板/无本地降级。</p>
+<h3 id="_6">修复</h3>
+<ul>
+<li>直连 baota → 失败则 PVE </li>
+<li>remote python 走 base64 临时脚本，避免 heredoc 转义炸裂</li>
+<li>远程不可用时仍写固定菜单并 exit 0（不因 SSH 误报失败）</li>
+</ul>
+<h2 id="_7">验证</h2>
+<ul>
+<li>SharedChat wrapper exit 0</li>
+<li>Hermes menu wrapper exit 0</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

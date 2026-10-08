@@ -1,0 +1,41 @@
+# CPA 同步脚本竞态导致面板新增上游丢失（2026-07-17）
+
+## 用户反馈
+- 曾加到约 10 个站点；`临时3` 及后续新增站点不见了
+- 怀疑脚本误删站点
+
+## 脚本审查结论
+`sync_cpa_models.py` **没有**“按名称删除整个 provider”的业务逻辑。  
+它只对**已存在**的 `openai-compatibility[]` 项增删 **models**。
+
+但存在 **load-then-dump 竞态**：
+1. 同步开始时 `cfg = load_yaml(config)`，`providers = cfg["openai-compatibility"]`
+2. 运行中只改内存里的 `providers[*].models`
+3. 结束时 `cfg["openai-compatibility"] = providers` 后 **整文件写回**
+4. 若管理面板在 2–3 之间 `PUT` 新增了 `临时3` 等，写回会用**旧 provider 列表**覆盖磁盘，新站点消失
+5. 原 `validate_config_shape` 要求 `len(providers) == original_provider_count`（开始时的数量），**不能阻止“写回时比磁盘现有更少”** 以外的并发新增丢失（磁盘已变多、内存仍是旧数量时，校验按开始数量通过）
+
+容器日志旁证（CST）：
+- 11:21–13:51 面板 PUT 使 OpenAI-compat 到 9→10→11
+- 之后重载/写回回到 8
+- 全量备份中**无 `临时3` 明文**，无法自动恢复 key/base-url
+
+另：`临时`/`临时2` 被十项优化**改名**为 `snote-temp`/`alfred-temp`，不是删除。
+
+## 修复（已落地）
+`sync_cpa_models.py`：
+1. 写盘前 **重新读取** 磁盘 config
+2. `merge_providers_preserve_new(live, synced)`：保留磁盘上多出来的 provider，只覆盖同步负责的 models/priority 等
+3. 若合并结果会丢掉 start∪live 中的站名 → **拒绝写入**
+4. validate：允许 provider **变多**，禁止 **变少**
+
+备份：`sync_cpa_models.py.bak_fix_provider_race_*`
+
+## 恢复
+无法从备份恢复 `临时3` 凭据；需用户在面板或提供 base-url/key 后重加。
+
+相关：[[incidents/cpa-temp3-providers-lost-2026-07-17]]、[[decisions/cpa-local-model-sync]]
+
+## 用户纠正（同日）
+站点必须以 CPA 为准，脚本跟随 CPA 的增加**和删除**，不能只增不减。  
+已把 merge 策略改为 `merge_providers_from_cpa`：以写盘时 live 站点列表为权威，删除的站不复活，新增的站不覆盖丢。

@@ -1,0 +1,25 @@
+# 禁止 CPA 上游定时探活（2026-07-20）
+
+## 用户规则
+CPA 上游站点禁止定时探活：不得定时请求 `/health`、`/models`、chat/completions 或发送其他探测报文。频繁请求、尤其大报文 agent 调用可能触发封号。
+
+## 已清理
+- 本机 user systemd：删除 `cpa-model-audit-sync.service` / `.timer`
+  - 原任务：`cpa_upstream_sync_then_hermes_audit.py`，会同步上游并作业务模型审计。
+- 删除现网对应 audit/sync 脚本与 pycache；历史归档不执行。
+- CPA 宝塔：未发现活动的 sync/health/probe/quality/watch timer、service 或 cron。
+- `cpa-provider-watch` 不存在/未运行。
+
+## 保留范围
+- `cpa-stable-proxy`：仅是 8317 入站边缘转发与固定 `/v1/models` 菜单；**不主动请求上游**。
+- RawChat 桥：仅在客户端真实业务调用时转发，不定时探活。
+- 用户明确建立的每日签到 cron 保留；它们是针对指定签到站的单次业务操作，不是 CPA 上游模型探测。
+
+## 验证
+- 本机 `cpa-model-audit-sync.timer`：`not-found`
+- 本机无 active CPA sync/audit/probe 脚本引用
+- 宝塔仅 `cpa-stable-proxy.service` active；无 active provider-watch / probe / health / sync unit
+
+## 后续纪律
+- 未经用户明确许可，不创建或恢复 CPA 上游 `/models`、chat、health、质量审计或模型同步定时任务。
+- 需要验证模型时先让用户明确授权，并用低频、最小真实业务请求；禁止大报文 agent 工作负载。

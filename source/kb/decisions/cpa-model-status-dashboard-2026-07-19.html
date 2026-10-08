@@ -1,0 +1,73 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA 本地模型状态面板（简直了风格）（2026-07-19） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="cpa-2026-07-19">CPA 本地模型状态面板（简直了风格）（2026-07-19）</h1>
+<h2 id="_1">目标</h2>
+<p>仿「简直了」模型状态页，对本地 CPA <code>http://&lt;LAN-8&gt;:8317/v1</code> 做真实 chat 探测，展示成功率/延迟/近24小时柱状图。</p>
+<h2 id="_2">实现</h2>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>路径</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>探针+HTTP 服务</td>
+<td><code>~/.hermes/scripts/cpa_model_status.py</code></td>
+</tr>
+<tr>
+<td>探针 wrapper</td>
+<td><code>~/.hermes/scripts/cpa_model_status_probe.sh</code></td>
+</tr>
+<tr>
+<td>服务 wrapper</td>
+<td><code>~/.hermes/scripts/cpa_model_status_serve.sh</code></td>
+</tr>
+<tr>
+<td>状态数据</td>
+<td><code>~/.hermes/state/cpa_model_status.json</code></td>
+</tr>
+<tr>
+<td>systemd user</td>
+<td><code>~/.config/systemd/user/cpa-model-status.service</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">行为</h2>
+<ul>
+<li>探测：<code>POST /v1/chat/completions</code>，<code>max_tokens=8</code>，业务短句 <code>Reply with exactly: OK</code>（非 Hello 测活词）</li>
+<li>模型名单：优先 <code>stable_models.json</code>，否则 Hermes <code>custom_providers</code> 的 11 个固定名</li>
+<li>API 兼容简直了：</li>
+<li><code>GET /api/model_probe/status</code></li>
+<li><code>POST /api/model_probe/trigger</code></li>
+<li>页面：<code>http://&lt;LAN-4&gt;:8787/</code>（本机也可 <code>127.0.0.1:8787</code>）</li>
+<li>默认每 600s 自动探测一轮；页面可「立即探测 / 自动刷新」</li>
+</ul>
+<h2 id="_4">运维</h2>
+<pre><code class="language-bash">systemctl --user status cpa-model-status
+systemctl --user restart cpa-model-status
+# 单轮探针
+~/.hermes/scripts/cpa_model_status_probe.sh
+</code></pre>
+<h2 id="2026-07-19">首次验证（2026-07-19）</h2>
+<ul>
+<li>service: active + enabled</li>
+<li>端口: <code>0.0.0.0:8787</code></li>
+<li>summary 示例：available 6 / unavailable 5（429 额度/cooldown 等上游原因）</li>
+<li>html 200，API 200</li>
+</ul>
+<h2 id="_5">关于「简直了」自带页</h2>
+<ul>
+<li>接口：<code>/api/model_probe/status</code>（可读）、<code>/api/model_probe/trigger</code>（需管理员）</li>
+<li>当前 <code>github_10641</code> role=1，<strong>无权限开启/触发</strong>官方探测</li>
+<li>需管理员在「监控设置」里打开模型探测</li>
+</ul>
+<h2 id="_6">说明</h2>
+<ul>
+<li>不改 CPA config，不依赖已删除的 CPA 运维脚本</li>
+<li>上游 429/cooldown 会显示为异常，属真实可用性，不是面板 bug</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>家实优化包落地（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="2026-07-18">家实优化包落地（2026-07-18）</h1>
+<p>按建议顺序已落地：</p>
+<h2 id="1-cc-switch-responses">1. CC Switch /responses</h2>
+<ul>
+<li>8317 <code>cpa_stable_models_proxy.py</code> <strong>深度递归</strong>清洗 <code>input[].name</code>（含嵌套 content/tools） / tools 缺名</li>
+<li>jshandler 同步清洗（直连 18317 也尽量覆盖）</li>
+<li>说明：<code>/root/cli-proxy-data/state/ccswitch_cpa_endpoint.md</code></li>
+<li><strong>推荐 CC Switch Base URL = <code>http://&lt;LAN-8&gt;:8317/v1</code></strong>（不要 18317）</li>
+<li>复测：缺 name 不再是 <code>name is required</code>；上游额度满时会 429/408（另一问题）</li>
+</ul>
+<h2 id="2-xai">2. xAI 凭证清理防误伤</h2>
+<ul>
+<li>根因：<code>expired</code> 是 <strong>access_token 过期时间戳字符串</strong>，不是整号作废</li>
+<li>有 <code>refresh_token</code> 时<strong>不再删除</strong></li>
+<li>复测：<code>kept=668 removed=0 xai_kept=668</code></li>
+</ul>
+<h2 id="3-401">3. 401/慢上游告警 + 自动降权</h2>
+<ul>
+<li>脚本：<code>cpa_upstream_quality.py</code></li>
+<li>状态：<code>state/upstream_alerts.json</code> + <code>upstream_priority_state.json</code></li>
+<li>sticky 降权：401 → floor-40；慢/5xx → floor-20；健康可回升</li>
+<li><code>cpa_auto_priority.py</code> 会尊重 quality 降权</li>
+<li>当前：snote-temp / alfred-temp 因 401 降权</li>
+</ul>
+<h2 id="4-nas">4. NAS 磁盘告警</h2>
+<ul>
+<li>脚本：<code>~/.hermes/scripts/nas_disk_watch.py</code> + wrap</li>
+<li>cron：<code>6d0b17e1d2a9</code> 每天 09:30 / 21:30</li>
+<li>当前：<code>NAS_DISK_OK worst=/ 70%</code></li>
+</ul>
+<h2 id="5-anki">5. Anki 公告增强</h2>
+<ul>
+<li>一键清除内联颜色</li>
+<li>发布后自动客户端校验 <code>/api/announcement.json</code></li>
+<li>需浏览器强刷后台</li>
+</ul>
+<h2 id="6">6. 暴露面收敛</h2>
+<ul>
+<li>清单：[[runbooks/exposure-hardening-checklist-2026-07-18]]</li>
+<li>未自动关端口（防锁死远程管理），按清单择机执行</li>
+</ul>
+<h2 id="_1">验证</h2>
+<ul>
+<li>CPA HEALTH_OK</li>
+<li>8317 models=10</li>
+<li>auth cleanup 不误删</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

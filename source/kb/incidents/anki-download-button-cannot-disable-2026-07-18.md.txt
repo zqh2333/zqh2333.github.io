@@ -1,0 +1,56 @@
+# Anki 下载按钮关闭不了（2026-07-18）
+
+## 用户反馈
+卡牌显示与反应控制 → 下载按钮设为关闭，但卡牌仍显示下载按钮。
+
+## 根因
+1. 管理页 `syncFormToJson()` 把 boolean 开关写成字符串 `"false"`。
+2. API 多条错误路径按“下载地址存在 / 错误码 showDownload”强制设置 `downloadAvailable/showDownload=true`，忽略 `reactionEffects.enableDownloadButton`。
+3. validate 缓存可能继续返回旧的下载标志。
+
+## 修复
+### 后端 `app/routes/api.py`
+- 新增 `_bool_value` / `_download_button_enabled`。
+- 新增 `_apply_download_master_switch`，作为下载按钮总开关。
+- Blueprint `after_request` 最终过滤所有 JSON 响应（含缓存）：关闭时强制：
+  - `downloadButtonEnabled=false`
+  - `downloadAvailable=false`
+  - `showDownload=false`
+  - `downloadConfigured=false`
+  - `downloadUrl=''`
+  - `errorDictionary.showDownload=false`
+- legacy package error / error dictionary / frontend config 均服从总开关。
+
+### 管理页 `app/routes/admin.py`
+- 布尔字段保存为真实 bool，不再写字符串。
+- 开关解析兼容 `false/0/off/no/关闭`。
+- 保存后回读验证，提示「下载按钮：已关闭/已开启」。
+
+## 实际设置
+已把 `reactionEffects.enableDownloadButton` 设为 `false`，并清缓存。
+
+## 验证
+- DB raw: `False`
+- API config: `False`
+- frontend: `downloadButtonEnabled=false`
+- `/api/status`, `/api/protocol`, `/api/release_manifest` 全部返回：
+  `downloadConfigured=false`, `downloadAvailable=false`, `showDownload=false`, URL 空。
+- unit: 全字段最终抑制通过。
+
+## 用户侧
+管理后台强制刷新；卡牌需重新打开/重新联网验证，旧 WebView 内存中的已渲染按钮不会自动消失。
+
+## 误伤恢复（同日）
+首次关闭下载按钮时，已保存配置中其余 `reactionEffects` 和 overlay 开关也处于 false，导致动画/失败遮罩/弱网重试/水印一起关闭。
+
+已恢复为默认开启：
+- enableEntryTransition
+- enableSuccessBanner
+- enableFailureOverlay
+- enableWeakNetworkRetry
+- weakNetworkAutoRetry
+- weakNetworkShowCountdown
+- enableWatermark
+- overlay.enabled / blockContent
+
+**仅** `enableDownloadButton=false` 保持关闭；已验证 API frontendConfig 同步。

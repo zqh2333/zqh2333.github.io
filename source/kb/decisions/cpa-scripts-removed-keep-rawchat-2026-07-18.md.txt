@@ -1,0 +1,54 @@
+# 删除 CPA 自动化脚本并恢复原状（保留 RawChat）（2026-07-18）
+
+## 用户要求
+删除所有有关 CPA 的脚本，恢复原状；**仅保留已攻克的 RawChat 设置**。
+
+## 范围解释（已执行）
+### 删除 / 停用
+**宝塔 CPA 主机：**
+- 归档全部 CPA 运维脚本到  
+  `/root/cli-proxy-data/scripts_archive_restore_20260718_233926/`
+  （含 `sync_cpa_models*`、`cpa_*`、`muyuan_*`、`restore_*` 等 66 项）
+- 清除 root crontab 中全部 CPA 相关任务（9 条）
+- 停用并移走 unit：
+  - `cpa-stable-proxy`
+  - `cpa-provider-watch`
+  - `muyuan-openai-bridge`
+- 容器从 `18317->8317` 恢复为 **`8317:8317` 直连**
+
+**Hermes 本机：**
+- 归档 `~/.hermes/scripts` 下 CPA 自动化脚本到  
+  `~/.hermes/scripts_archive_cpa_restore_*`
+- 删除 cron：
+  - Hermes固定常用模型菜单维护
+  - CPA运维告警推送
+  - Hermes模型失败检测
+
+### 保留（RawChat 攻克成果）
+- 脚本：`rawchat_codex_proxy.py`、`rawchat_openai_bridge.py`（及 rawchat 备份）
+- systemd：
+  - `rawchat-codex-proxy` (18417) **active/enabled**
+  - `rawchat-openai-bridge` (18418) **active/enabled**
+- CPA config 中 `RawChat`：
+  - `base-url: http://127.0.0.1:18418/v1`
+  - priority 90
+
+## 恢复后运行态
+| 项 | 状态 |
+|---|---|
+| docker `cli-proxy` | `0.0.0.0:8317->8317` |
+| 18317 / 8317 边缘代理 | 已取消 |
+| `/v1/models` | 200（上游全量，约 71） |
+| chat 探针 `mimo-v2.5` | 200 |
+| RawChat 桥 | 18417/18418 监听 |
+
+## 影响说明
+- 不再有自动同步 / 自动 priority / 质量降权 / 稳定菜单过滤 / provider watch
+- 8317 再次暴露 CPA **全量模型列表**（不是 10/11 固定菜单）
+- Hermes 菜单仍是本地 `config.yaml` 固定列表（不会再被审计脚本改写）
+- 面板站点增删由 CPA 面板自己负责，无脚本侧写盘守卫
+
+## 回滚（如需）
+1. 从 `scripts_archive_restore_20260718_233926` 移回脚本  
+2. 恢复 `.disabled_20260718_233926` 的 systemd unit  
+3. 视需要把 docker 再改回 `18317` + `cpa-stable-proxy:8317`

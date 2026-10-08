@@ -1,0 +1,30 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>简直了多账号每日签到 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><h1 id="_1">简直了多账号每日签到</h1>
+<h2 id="_2">账号</h2>
+<ul>
+<li>主账号: github_10641 (uid 10641)</li>
+<li>副账号: user (uid 4042)</li>
+<li>凭据: ~/.hermes/secrets/jianzhile.env (600)</li>
+<li>JIANZHILE_ACCOUNTS=user1:pass1,user2:pass2</li>
+<li>兼容旧单账号 JIANZHILE_USERNAME/PASSWORD</li>
+</ul>
+<h2 id="_3">脚本</h2>
+<ul>
+<li>~/.hermes/scripts/jianzhile_daily_checkin.py（支持多账号 + 单账号过滤参数）</li>
+<li>wrapper: jianzhile_checkin_random.sh（08:00 起随机 0-30min）</li>
+<li>cron: ad9a8ca09987，no_agent=true</li>
+</ul>
+<h2 id="_4">用法</h2>
+<ul>
+<li>全部账号: python jianzhile_daily_checkin.py</li>
+<li>指定账号: python jianzhile_daily_checkin.py user</li>
+</ul>
+<h2 id="2026-07-17">验证（2026-07-17）</h2>
+<ul>
+<li>user 补签成功: CHECKIN_SUCCESS uid=4042 quota=5000000</li>
+<li>双账号复跑: 两者 ALREADY_CHECKED_IN</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

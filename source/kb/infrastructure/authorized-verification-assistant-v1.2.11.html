@@ -1,0 +1,161 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Authorized Verification Assistant v1.2.11 + 靶场 v1.0.2 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="authorized-verification-assistant-v1211-v102">Authorized Verification Assistant v1.2.11 + 靶场 v1.0.2</h1>
+<ul>
+<li>日期：2026-09-26</li>
+<li>项目：<code>/home/user/projects/verification-extension</code></li>
+<li>扩展：<code>authorized-verification-assistant</code> <code>1.2.10 → 1.2.11</code></li>
+<li>靶场：<code>verification-challenge-lab</code> <code>1.0.1 → 1.0.2</code></li>
+<li>固定扩展 ID：<code>mgpembebkeoiciopndiciehcokojeldf</code></li>
+</ul>
+<h2 id="_1">本轮目标</h2>
+<p>在<strong>真实系统 Chrome</strong> 中对本地授权靶场做端到端验证，并让「通过」这件事本身可信——
+先确认测试套件没有假绿，再谈插件是否通过。</p>
+<h2 id="_2">关键发现：测试套件此前是假绿的</h2>
+<p>三条独立的收集/断言缺陷，使真实 E2E <strong>从未真正运行过</strong>：</p>
+<ol>
+<li><code>tests/direct_chrome_extension_e2e.py</code> 类名 <code>DirectChromeExtensionE2E</code> 不以 <code>Test</code>
+   开头 → pytest 不收集。</li>
+<li><code>*_e2e.py</code> 文件名不匹配 pytest 默认的 <code>python_files = test_*.py</code> → 4 个真实 E2E
+   全部游离在套件之外（<code>direct_chrome_extension_e2e</code>、<code>real_chrome_lab_e2e</code>、
+   <code>admin_license_ui_e2e</code>、<code>hassbian_fixture_e2e</code>）。</li>
+<li>契约测试断言的符号 <code>detectLocalChallenge</code> <strong>在实现里根本不存在</strong>（实际是
+   <code>localSimulation</code>/<code>localKind</code>/<code>localChallenge</code>），且硬编码版本号已过期。</li>
+</ol>
+<p>处置：重命名为 <code>test_*.py</code>、类名改 <code>Test*</code>、靶场 E2E 包成 TestCase（<code>main(argv=None)</code>
+以便从 pytest 调用）、无 Chrome/DISPLAY 时 <code>skipTest</code>；契约测试改为断言真实符号，
+版本断言改为<strong>自洽校验</strong>（源 <code>manifest.json</code> 必须与打包 CRX 内一致）。</p>
+<h2 id="_3">三个真实缺陷（非测试问题）</h2>
+<h3 id="1-chrome-153-load-extension">1. Chrome 153 已彻底禁用 <code>--load-extension</code>（致命）</h3>
+<p>实测结论：<code>--load-extension</code> / <code>--disable-extensions-except</code> 在 Chrome 153 上完全无效，
+扩展<strong>根本没有注册进 profile</strong>——即此前任何「加载成功」的说法都不成立。</p>
+<p>改用 CDP <code>Extensions.loadUnpacked</code>。因 manifest 含固定 <code>key</code>，扩展 ID 稳定为
+<code>mgpembebkeoiciopndiciehcokojeldf</code>，无需 pipe。</p>
+<h3 id="2-canvas-ocr">2. 自研 Canvas OCR 链路无限挂起（致命）</h3>
+<p><code>gifHoldFrameFromBlob</code> 用 <code>new ImageDecoder({type:'image/svg+xml'})</code> 构造<strong>不抛错</strong>，
+但 <strong><code>decoder.completed</code> 对不支持的类型永不 settle</strong>（<code>tracks.ready</code> 会 reject，
+<code>completed</code> 不会）。旧代码 <code>await decoder.completed.catch(()=&gt;{})</code> 因此无限挂起，
+整条 OCR 链路卡死。</p>
+<p>定位证据：靶场访问日志（<code>LAB_REQ</code>）证明 <code>POST /api/ocr/solve</code> <strong>从未发出</strong>，状态在
+<code>OCR_STARTED</code> 卡了整整 48s。</p>
+<p>修复：MIME 白名单（仅 <code>gif/png/webp/avif/apng</code>）+ 新增 <code>withTimeout(promise, ms, fallback)</code>
+对所有 <code>ImageDecoder</code> await 做有界兜底 + 超时上报
+<code>IMAGE_READ_TIMEOUT</code> / <code>CAPTCHA_IMAGE_UNREADABLE</code>，不再静默挂起。</p>
+<h3 id="3-provider">3. 靶场页面被误判成真实 provider</h3>
+<p><code>detectProvider()</code> 按 URL 子串匹配，且在 <code>localChallenge()</code> <strong>之前</strong>执行，
+<code>/challenge/recaptcha</code>、<code>/challenge/yidun</code> 被抢先判成真实站点 → 直接 <code>HUMAN_REQUIRED</code>。</p>
+<p>修复：显式授权的本地模拟（回环 host + <code>data-authorized-simulation</code> 标记）<strong>优先于</strong>
+子串猜测。真实站点无该标记，仍走检测 + 审计 + <code>HUMAN_REQUIRED</code>，<strong>安全语义未削弱</strong>。</p>
+<h3 id="_4">附带修复</h3>
+<ul>
+<li>靶场 <code>ThreadingTCPServer</code> 默认 <code>allow_reuse_address=False</code> → TIME_WAIT 下重跑即
+  <code>EADDRINUSE</code>；改用 <code>LabServer</code> 子类 + <code>daemon_threads</code>。</li>
+<li>靶场 <code>/api/learning/report</code> 审计记录补 <code>state</code>/<code>detail</code>；<code>/health</code> 增加
+  <code>version</code>/<code>pages</code>；新增 <code>LAB_REQ</code> 访问日志。</li>
+</ul>
+<h2 id="_5">验收证据（第一手）</h2>
+<p>真实 Chrome 153 + 真实未打包 MV3 扩展 + 本地授权靶场，<code>pytest tests -q</code>：</p>
+<pre><code class="language-text">24 passed in 43.37s
+</code></pre>
+<p>靶场 E2E 报告 <code>artifacts/real-chrome-lab-e2e-report.json</code>：<code>pass=true</code>、
+<code>all_kinds_pass=true</code>、<strong>17/17 checks 全 true</strong>。</p>
+<pre><code class="language-text">recaptcha    LOCAL_WIDGET_CONFIRMED    RECAPTCHA_TEST_PASS
+turnstile    LOCAL_WIDGET_CONFIRMED    RECAPTCHA_TEST_PASS
+hcaptcha     LOCAL_WIDGET_CONFIRMED    RECAPTCHA_TEST_PASS
+yidun        LOCAL_PUZZLE_DONE         YIDUN_TEST_PASS        滑块=100
+image        SUBMITTED                 IMAGE_TEST_PASS        答案=A7K9
+image-select LOCAL_IMAGE_SELECT_DONE   IMAGE_SELECT_TEST_PASS 选中=[0,4,8]
+jigsaw       LOCAL_PUZZLE_DONE         PUZZLE_TEST_PASS       滑块=100
+risk         LOCAL_RISK_CONFIRMED      RISK_TEST_CONFIRMED
+对照页        HUMAN_REQUIRED / RECAPTCHA_DETECTED  未自动求解 ✓
+</code></pre>
+<p>基础设施检查含：固定 ID、真实 MV3 service worker、版本回读、激活、64 位设备指纹、
+指纹非 device_id、靶场侧记录、validate 通过、审计覆盖全部 8 类挑战、靶场版本自洽。</p>
+<h2 id="nas">产物与 NAS 归档</h2>
+<p>分开交付（插件包 / 靶场包互不包含）：</p>
+<table>
+<thead>
+<tr>
+<th>产物</th>
+<th>字节</th>
+<th>SHA-256</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>authorized-verification-assistant-v1.2.11.zip</code></td>
+<td>19496</td>
+<td><code>&lt;HASH&gt;</code></td>
+</tr>
+<tr>
+<td><code>verification-challenge-lab-v1.0.2.zip</code></td>
+<td>7061</td>
+<td><code>&lt;HASH&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>NAS（回读校验：哈希与本机一致，权限 664）：</p>
+<pre><code class="language-text">/volume1/云/Hermes项目产物/verification-extension/1.2.11/
+/volume1/云/Hermes项目产物/verification-challenge-lab/1.0.2/
+</code></pre>
+<p>包内均无 <code>.pem</code> / <code>.crx</code> / <code>.key</code>；扩展包 9 文件，靶场包 4 文件
+（<code>server.py</code>/<code>smoke.py</code>/<code>start-windows.cmd</code>/<code>README.md</code>）。靶场包已实测<strong>独立解压可运行</strong>
+（<code>/health</code> → <code>version 1.0.2</code>、<code>pages 8</code>；8 类页面全 200）。</p>
+<h2 id="_6">未验证 / 边界</h2>
+<ul>
+<li>全部验证在 <strong>Linux 本地授权靶场</strong>完成；<strong>Windows Chrome/Edge 实机未验证</strong>。</li>
+<li>真实 Geetest / reCAPTCHA / 易盾仍只做识别、分类、审计，<code>HUMAN_REQUIRED</code>，不自动求解。</li>
+<li><code>tests/api_e2e.py</code>、<code>tests/device_limit_ui_e2e.py</code> 仍是脚本式（无 <code>TestCase</code>），
+  未纳入 pytest 套件；需授权服务在跑才能执行。</li>
+</ul>
+<h2 id="_7">真实站点识别验证（授权公开测试页）</h2>
+<p>靶场通过只证明「能过自己造的题」。另跑 <code>tests/live_provider_detection_probe.py</code>
+（真实系统 Chrome + 真实未打包扩展 + 本地许可服务激活），访问两个授权公开测试页：</p>
+<table>
+<thead>
+<tr>
+<th>目标</th>
+<th>结果</th>
+<th>状态</th>
+<th>自动求解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>google.com/recaptcha/api2/demo</code></td>
+<td><code>RECAPTCHA_DETECTED</code></td>
+<td><code>HUMAN_REQUIRED</code></td>
+<td>否</td>
+</tr>
+<tr>
+<td><code>dun.163.com/trial/jigsaw</code></td>
+<td><code>YIDUN_DETECTED</code></td>
+<td><code>HUMAN_REQUIRED</code></td>
+<td>否</td>
+</tr>
+</tbody>
+</table>
+<p><code>CHECKS</code> 全 true：<code>all_targets_human_required</code>、<code>no_target_auto_solved</code>、
+<code>all_targets_audited</code>（本地服务审计链收到 <code>provider_challenge</code>/<code>detect</code> 记录且带真实 host）。
+报告：<code>artifacts/live-provider-detection-report.json</code>。</p>
+<p><strong>该探针刻意不进默认 pytest 套件</strong>（依赖公网，不能让它卡住离线套件）。</p>
+<h2 id="_8">能过 / 不能过（一句话边界）</h2>
+<ul>
+<li><strong>能自动完成</strong>：本地授权靶场 8 类全通过；站点自有 Canvas 图片验证码走自有 OCR 填写。</li>
+<li><strong>按设计不自动完成</strong>：真实 Geetest / 易盾 / reCAPTCHA / Turnstile / hCaptcha ——
+  只识别、分类、审计，终止于 <code>HUMAN_REQUIRED</code>。这是安全边界，不是缺陷。</li>
+</ul>
+<h2 id="_9">可复用教训</h2>
+<ol>
+<li><strong>测试"通过"之前先证明测试在跑</strong>：pytest 静默不收集是假绿的头号来源——
+   <code>--collect-only</code> 数一遍，比对文件清单。</li>
+<li><strong>浏览器自动化的加载方式会随版本失效</strong>：Chrome 137+ 弃用 <code>--load-extension</code>，
+   以 CDP <code>Extensions.loadUnpacked</code> 为准；固定 <code>key</code> 可让 ID 稳定。</li>
+<li><strong>Web API 的 promise 可能永不 settle</strong>：<code>ImageDecoder.completed</code> 对不支持类型如此；
+   凡 await 第三方/平台 promise，一律加有界超时，别只加 <code>try/catch</code>。</li>
+<li><strong>判定顺序即安全语义</strong>：显式授权的本地模拟必须优先于启发式 provider 猜测，
+   否则靶场页会被当成真实挑战，掩盖真实行为。</li>
+</ol></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

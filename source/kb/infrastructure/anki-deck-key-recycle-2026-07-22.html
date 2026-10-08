@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>牌组专属密钥回收站（2026-07-22） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="2026-07-22">牌组专属密钥回收站（2026-07-22）</h1>
+<h2 id="_1">需求</h2>
+<p>在「牌组专属密钥管理」增加与激活码类似的软删除回收站：删除可恢复，永久删除才真正清除。</p>
+<h2 id="_2">实现</h2>
+<h3 id="_3">模型</h3>
+<ul>
+<li><code>DeckKeyRecycle</code> 表 <code>deck_key_recycle</code></li>
+<li><code>deck_id</code> / <code>deck_name</code> / <code>snapshot(JSON)</code> / <code>delete_reason</code> / <code>deleted_at</code></li>
+<li>快照含 <code>deck_key</code>、原 meta 状态等，恢复时写回 <code>decks</code> + <code>deck_key_meta</code></li>
+</ul>
+<h3 id="_4">删除路径全部改为软删</h3>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>原因码</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单删 <code>/api/admin/decks/&lt;id&gt;</code></td>
+<td><code>single_delete</code></td>
+</tr>
+<tr>
+<td>批量 <code>/api/admin/delete_decks</code></td>
+<td><code>bulk_delete</code></td>
+</tr>
+<tr>
+<td>全清 <code>/api/admin/delete_all_decks</code></td>
+<td><code>delete_all</code></td>
+</tr>
+<tr>
+<td>按日期</td>
+<td><code>delete_by_date</code></td>
+</tr>
+<tr>
+<td>智能清理历史版</td>
+<td><code>cleanup_old</code></td>
+</tr>
+</tbody>
+</table>
+<p>删除时：写入回收站 → 主表 <code>decks</code> 移除 → <code>deck_key_meta.status=recycle</code>（保留历史，不硬删 meta）。</p>
+<h3 id="api">专用 API</h3>
+<ul>
+<li><code>GET /api/admin/deck_key_recycle_bin</code></li>
+<li><code>POST /api/admin/deck_key_recycle_restore/&lt;id&gt;</code></li>
+<li><code>DELETE /api/admin/deck_key_recycle/&lt;id&gt;</code>（需 <code>confirm=PERMANENT_DELETE_RECYCLED_DECK_KEY</code>）</li>
+<li>通用 <code>/api/admin/recycle_bin</code> / <code>recycle_restore</code> 也识别 <code>deck_key_recycle</code></li>
+</ul>
+<h3 id="_5">前端</h3>
+<p><code>templates/dashboard.html</code> 牌组模态框：
+- 工具栏「🗑 密钥回收站」+ 计数徽章
+- 面板：列表 / 恢复 / 永久删除
+- 打开牌组管理时静默刷新徽章
+- 文案改为“先入回收站”</p>
+<h2 id="_6">验证</h2>
+<p>容器内 E2E（临时 <code>DK-AUDIT-RECYCLE-001</code>）：
+1. 创建 → 软删 → 列表有记录
+2. 恢复 → <code>decks</code> 与 <code>deck_key</code> 还原
+3. 再软删 → 永久删除 → 主表与回收站均空
+4. 未登录 302
+5. <code>verify_all.py</code> success/ready</p>
+<p>备份：<code>*.bak_deck_recycle_20260722</code></p>
+<h2 id="_7">使用</h2>
+<p>后台 → 牌组专属密钥管理 → 删除密钥 → 点「密钥回收站」恢复或永久删除。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

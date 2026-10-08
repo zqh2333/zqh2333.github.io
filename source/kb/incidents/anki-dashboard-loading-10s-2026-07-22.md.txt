@@ -1,0 +1,20 @@
+# Anki 后台卡在“正在加载数据，最多等待 10 秒”（2026-07-22）
+
+## 症状
+Dashboard 一直显示：`正在加载数据，最多等待 10 秒...`
+
+## 根因
+不是后端慢。`/api/admin/data` 持续 200，约 80KB。
+真正原因：前一轮给「牌组密钥回收站清空」加的前端函数里，`prompt('...多行...')` 用了**未转义的单引号多行字符串**，导致整个 `dashboard.html` 主脚本语法错误；`refreshData()` 根本不执行，页面永远停在初始 skeleton。
+
+## 修复
+- 将 `clearDeckKeyRecycleBin()` 的 prompt 改为 `\\n` 合法单行字符串。
+- 给 `refreshData` 成功回调加 `try/catch`，渲染异常时显示“页面渲染失败”而不是永久骨架屏。
+
+## 验证
+- 源码断言：非法多行 prompt 已消失。
+- 内部 `/api/admin/data` 20 条 / total 1469。
+- `verify_all.py`: success=true, ready=true。
+
+## 使用
+强制刷新浏览器（Ctrl+F5）即可看到主数据表恢复。

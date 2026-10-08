@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CC Switch Codex /responses: input[N].name is required（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="cc-switch-codex-responses-inputnname-is-required2026-07-18">CC Switch Codex /responses: input[N].name is required（2026-07-18）</h1>
+<h2 id="_1">报错</h2>
+<pre><code>CC Switch local proxy failed while handling Codex endpoint /responses.
+Provider: cpa; model: gpt-5.6-sol; upstream_status: HTTP 400;
+cause: input[43].name is required
+</code></pre>
+<p>用户侧感知：新增 CPA 站点后、使用 Grok4.5 时出现。</p>
+<h2 id="_2">关键澄清</h2>
+<ol>
+<li><strong>实际请求模型是 <code>gpt-5.6-sol</code>，不是 <code>grok-4.5</code></strong>（错误体写明 model=gpt-5.6-sol）。</li>
+<li>根因 A：Codex 长会话 <code>input[]</code> 中 <code>function_call</code> 等项缺 <code>name</code> → 上游 400。</li>
+<li>根因 B（当前叠加）：<code>gpt-5.6-sol</code> 上游额度/鉴权不稳（429/503），清洗后不再 400 name，但可能仍失败。</li>
+</ol>
+<h2 id="_3">修复</h2>
+<ul>
+<li><code>cpa_stable_models_proxy.py</code>（8317）：<strong>深度递归</strong>清洗 <code>/responses</code> body，补全 name。</li>
+<li><code>codex_fingerprint.js</code>：请求前同样 deep walk 清洗。</li>
+<li>清洗日志：<code>/root/cli-proxy-data/state/responses_sanitize.log</code></li>
+<li>复测日志样例：<code>fixes</code> 含 <code>root.input[43]</code> → 证明缺 name 已被补。</li>
+</ul>
+<h2 id="cc-switch">CC Switch 必配</h2>
+<ul>
+<li>Base URL: <code>http://&lt;LAN-8&gt;:8317/v1</code>（<strong>不要</strong> <code>18317</code>）</li>
+<li>若要用 Grok：模型显式选 <strong><code>grok-4.5</code></strong></li>
+<li>若界面显示 Grok 却打到 sol：检查 CC Switch 模型映射/默认模型</li>
+</ul>
+<h2 id="gpt-56-sol">gpt-5.6-sol 提供方（当时）</h2>
+<ul>
+<li>mimo / 魔方 / 简直了 / temp1 / codex(RawChat 桥)</li>
+<li>清洗后失败形态变为 429 额度用尽 或 503 无可用 auth（上游状态问题）</li>
+</ul>
+<h2 id="_4">验证</h2>
+<ul>
+<li>unit：嵌套 function_call / tools 缺 name → 0 missing</li>
+<li>8317 收到缺 name 请求会写 sanitize log，不再以 name is required 为第一失败原因</li>
+</ul>
+<h2 id="_5">后续（同日）</h2>
+<p>深度清洗曾导致 422 ModelInput，已改为安全 top-level 清洗。见 [[incidents/<TOKEN>]]。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

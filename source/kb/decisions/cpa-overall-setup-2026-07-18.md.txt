@@ -1,0 +1,45 @@
+# CPA 整体配置与问题凭证治理（2026-07-18）
+
+## 问题
+1. 管理中心「认证文件管理」报 `timeout of 30000ms exceeded`，筛选「问题」显示 0。
+2. 用户要求整体把 CPA 配置好，并自动删除问题凭证。
+
+## 根因
+- auth-dir 中有 **3250** 个 xAI oauth 文件，其中 **2582** 个 `expired` 已过期。
+- 面板拉 `/v0/management/auth-files` 需汇总大量凭证，客户端 30s 超时。
+- 并非面板“删光了”，而是问题凭证过多导致超时/显示异常。
+
+## 已处理
+### 1. 清理问题凭证
+- 删除 expired/disabled/no_token 凭证 **2582**
+- 保留有效 **668**
+- 快照：`/root/cli-proxy-data/state/auth_before_purge_*.txt`
+
+### 2. 自动删除
+- 脚本：`/root/cli-proxy-data/scripts/cpa_auth_cleanup.py`
+- cron：
+  - `20 4 * * *` 每日
+  - `25 3,9,15,21 * * *` 每 6 小时（对齐同步窗口后）
+- 日志：`/root/cli-proxy-data/state/auth_cleanup.log`
+
+### 3. CPA 整体配置核对/固化
+- 路由：`fill-first`
+- 冷却：`transient-error-cooldown-seconds=300`，`request-retry=2`，`max-retry-credentials=3`
+- `privacyfilter=false`（防长上下文 CPU 爆）
+- 固定 10 模型空 alias 故障转移
+- 上游优先级：RawChat1 / snote2 / alfred3 / mimo4 / 薄荷喵喵6 / 魔方8 / 简直了9
+- 服务 active：`cpa-stable-proxy` `cpa-provider-watch` RawChat 桥
+- 对外 8317 仅 10 稳定模型；CPA 容器 18317
+
+## 验证
+- clients：677 = 668 auth + 1 codex + 8 openai-compat
+- `/v1/models` = 10
+- chat：`grok-4.5`/`mimo-v2.5` 200
+- `cpa_health_check` HEALTH_OK
+- Hermes 菜单 missing_in_cpa=[]
+
+## 用户侧
+管理中心点「刷新」后，认证文件数量应约 **668**，不再被 3000+ 过期文件拖超时。
+若仍超时，再查公网到 18317/面板反向代理超时设置。
+
+相关：[[decisions/cpa-local-model-sync]]、[[decisions/cpa-advanced-failover-2026-07-17]]、[[decisions/auto-fix-on-errors]]

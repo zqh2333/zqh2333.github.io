@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>elysiver (烁) leak protection 与 CPA 路由 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="elysiver-leak-protection-cpa">elysiver (烁) leak protection 与 CPA 路由</h1>
+<h2 id="_1">现象</h2>
+<ul>
+<li>日志：<code>leak protection blocked request: matched gitleaks rule generic-api-key</code></li>
+<li>请求 ID 形如 <code>20260802...268d9d6...</code></li>
+<li>站点：<code>https://elysiver.h-e.top</code>（CPA 站点名「烁」）</li>
+</ul>
+<h2 id="_2">根因</h2>
+<p>这是 <strong>上游 New API 站点自身的 gitleaks 防泄漏</strong>，不是 CPA 本地 <code>privacyfilter</code>。</p>
+<p>触发条件：请求 body（含 messages/历史上下文）里出现疑似 API Key 字符串，例如：
+- 用户在对话中粘贴的 token
+- 工具结果/脚本输出里的密钥
+- Hermes 长会话回灌的历史 secrets</p>
+<p>CPA 侧确认：
+- <code>plugins.configs.privacyfilter.enabled: false</code>（本地脱敏已关）
+- 拦截发生在上游 <code>elysiver.h-e.top</code> 返回前</p>
+<h2 id="2026-08-02">处理（2026-08-02）</h2>
+<ol>
+<li><strong>CPA 路由降权</strong>：<code>烁 / elysiver</code> 的 <code>priority</code> 从 <code>60</code> → <code>5</code><br />
+   - 同模型时优先走其他上游，减少被 gitleaks 误伤<br />
+   - <strong>未删除站点、未探活、未改 alias</strong></li>
+<li>备份：<code>/root/CLIProxyAPI/config.yaml.bak_elysiver_prio_20260802_122922</code></li>
+<li>本地 privacyfilter 保持关闭</li>
+</ol>
+<h2 id="_3">用户侧规避</h2>
+<ul>
+<li>不要在对话里粘贴 API Key / Token / 私钥</li>
+<li>长会话若已污染密钥：<code>/new</code> 开新会话再聊</li>
+<li>若必须用 elysiver：到站点后台关闭「防泄漏 / leak protection / gitleaks」（需站点管理员权限）</li>
+<li>公共站点通常无法由我们远端改 option；只能降权或换上游</li>
+</ul>
+<h2 id="_4">相关</h2>
+<ul>
+<li>CPA privacyfilter CPU：<code>ops-knowledge-base/references/cpa-privacyfilter-cpu.md</code></li>
+<li>站点列表权威在面板；priority 手动</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

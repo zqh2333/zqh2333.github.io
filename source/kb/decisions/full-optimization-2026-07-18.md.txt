@@ -1,0 +1,45 @@
+# 家实优化「全部落地」清单（2026-07-18）
+
+## P0
+| 项 | 状态 | 说明 |
+|---|---|---|
+| CC Switch /responses name | ✅ | 8317+jshandler 深度清洗；日志 `responses_sanitize.log` |
+| CC Switch 入口 | ✅ 文档+告警文案 | 强制建议 `http://<LAN-8>:8317/v1` |
+| gpt-5.6-sol 菜单规则 | ✅ | **不进** Hermes/8317 固定 10 名；上游池仍可路由 |
+| xAI 凭证清理防误伤 | ✅ | access 过期≠删号；`kept=668` |
+| 401/慢上游降权 | ✅ | sticky；snote-temp=20 alfred-temp=10 |
+| 401 Telegram 提醒 | ✅ | `cpa_ops_alert` + cron `521f3acd0a11` |
+
+## P1
+| 项 | 状态 |
+|---|---|
+| NAS 磁盘告警 | ✅ cron `6d0b17e1d2a9`（现 70%） |
+| 站点变更审计 | ✅ `provider_audit.jsonl` + 每日/同步挂钩 |
+| 健康检查增强 | ✅ 带 upstream_alerts / sol 菜单策略 warn |
+| Anki 公告编辑 | ✅ 颜色/清内联色/发布校验 |
+| 每日简报 | ✅ cron `15bfea823418` 09:00 |
+
+## P2/P3
+| 项 | 状态 |
+|---|---|
+| 暴露面收敛 | 🟡 扫描+清单已写；**未自动关 RDP/面板**（防锁死） |
+| 故障自动修复看板 | 🟡 用 ops_alert + daily digest 代替第一版 |
+| HA 更新窗口 | ⬜ 未自动升级（需维护窗） |
+
+## 新脚本（宝塔）
+- `cpa_ops_alert.py`
+- `cpa_provider_audit.py`
+- `cpa_stable_menu_policy.py`
+- `cpa_upstream_quality.py`（已有增强）
+- `cpa_auth_cleanup.py`（已修）
+
+## Hermes cron
+- CPA运维告警推送 `521f3acd0a11` 08:45/12:45/18:45/22:45
+- 家实每日简报 `15bfea823418` 09:00
+- NAS磁盘 `6d0b17e1d2a9` 09:30/21:30
+
+## 验证摘要
+- HEALTH_OK（warn: cpu、snote/alfred 401）
+- 8317 models=10，**无 gpt-5.6-sol**
+- ops_alert 可输出上游 401
+- digest 可输出 CPA+NAS+菜单+cron

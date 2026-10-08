@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anki 全站公告编辑功能修复（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="anki-2026-07-18">Anki 全站公告编辑功能修复（2026-07-18）</h1>
+<h2 id="_1">用户反馈</h2>
+<ul>
+<li>修改/编辑功能不完善</li>
+<li><strong>字体颜色改不了</strong></li>
+<li>其他修改项也不完善/不能用</li>
+</ul>
+<h2 id="_2">根因</h2>
+<ol>
+<li>**颜色只改了外层 CSS，没有改 HTML 内联 <code>style="color:..."``**
+   - 现网公告正文大量内联颜色（如</code>#fff<code>/</code>#ff4d4f<code>）
+   - 颜色选择器只设置预览容器</code>css({color})`，被内联样式覆盖 → 看起来“改不了”</li>
+<li><strong>画布改色要求先选中文字</strong>
+   - <code>applyVisualStyle</code> 无选区直接 <code>return</code>，点取色器无反应</li>
+<li><strong>画布编辑后发布可能丢改动</strong>
+   - 发布时只读 textarea，未强制把 contenteditable 画布 HTML 写回</li>
+<li><strong>草稿不回载</strong>
+   - API 有 draft，打开弹窗只加载已发布数据</li>
+<li><strong>到期动作字段缺失</strong>
+   - 数据里有 <code>expire_action</code>，UI/collect 不完整</li>
+</ol>
+<h2 id="_3">修复</h2>
+<p>文件：
+- <code>templates/dashboard.html</code>
+- <code>app/utils.py</code>（sanitize 保留更多安全 style）
+- <code>app/routes/admin.py</code>（expire_action 归一化）</p>
+<p>改动要点：
+1. 新增 <code>applyGlobalAnnouncementColor</code>：改颜色时重写 HTML 内所有 <code>color:</code>
+2. 全局颜色/字号/对齐绑定 <code>input/change</code>，同步进 HTML
+3. 画布工具：无选区时应用到整块内容
+4. <code>collectAnnouncementData</code> 发布前同步画布 → textarea
+5. 打开弹窗优先加载草稿，并提示
+6. 增加“到期后动作”选择器</p>
+<h2 id="_4">验证</h2>
+<ul>
+<li><code>/api/status</code> 200</li>
+<li>sanitize 保留 <code>#112233</code> 等颜色</li>
+<li>normalize：color/font/version/expire 均正确</li>
+<li>草稿写读正常</li>
+<li>前端关键标记齐全</li>
+</ul>
+<h2 id="_5">使用说明</h2>
+<ol>
+<li>打开「编辑全站公告」</li>
+<li>改「文字颜色」→ 预览正文颜色应立刻变（含原 HTML 内联色）</li>
+<li>画布模式：不选文字也可改色/字号</li>
+<li>可先「保存草稿」，再「安全检查后发布」</li>
+<li>发布后客户端拉 <code>/api/announcement.json</code> 生效</li>
+</ol>
+<h2 id="_6">备份</h2>
+<p><code>*.bak_ann_edit_20260718_060019</code></p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

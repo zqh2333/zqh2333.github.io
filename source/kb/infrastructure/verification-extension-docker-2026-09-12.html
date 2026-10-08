@@ -1,0 +1,91 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chrome 验证自动化插件与宝塔授权服务 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="chrome">Chrome 验证自动化插件与宝塔授权服务</h1>
+<ul>
+<li>日期：2026-09-12</li>
+<li>项目：<code>/home/user/projects/verification-extension</code></li>
+<li>插件：Manifest V3，固定 ID <code>mgpembebkeoiciopndiciehcokojeldf</code>，当前版本 <code>1.1.6</code>。</li>
+<li>服务：宝塔 Docker <code>verification-license</code>，<code>0.0.0.0:18766</code>，数据持久化到 <code>/root/verification-extension/data</code>。</li>
+<li>部署暂存：v1.1.6 ZIP/CRX 已上传宝塔 <code>/root/verification-extension/deploy-staging-v1.1.6/</code>；线上已重建 <code>verification-license</code>，<code>/health</code>=200，更新清单=<code>1.1.6</code>，静态 CRX SHA-256 <code>&lt;HASH&gt;</code>。</li>
+</ul>
+<h2 id="_1">功能</h2>
+<ul>
+<li>授权码激活、设备绑定、设备上限、过期、暂停/恢复、撤销设备。</li>
+<li>插件未激活时不运行自动化。</li>
+<li>目标域名白名单和 <code>authorized_simulation</code> 页面标记。</li>
+<li>OCR API 只允许激活设备调用；输入 data URL 只解码一次，限制 2MB。</li>
+<li>自学习：按域名记录 kind/selector/action 成功与失败次数；插件按成功率优先复用策略；不上传密码、Cookie、challenge token。</li>
+<li>模拟生产验证能力：OAuth、Turnstile/hCaptcha 控件、图片 OCR、算术、Canvas、动态 DOM、Shadow DOM、滑块、拼图、顺序点选、旋转。</li>
+<li>Hassbian/Discuz 兼容：识别 <code>input[name="seccodeverify"]</code>、<code>id^="seccodeverify_"</code> 和同一验证码行内无 <code>alt</code> 的 <code>misc.php?mod=seccode</code> 动图；GIF 优先走 HTTP 缓存 + <code>ImageDecoder</code> 取最长停留帧，缓存未命中则截当前页可见帧，<strong>禁止二次 fetch</strong>（Discuz <code>no-cache</code> 会换码）；同一签名只提交一次；动态登录弹窗与验证码 <code>src</code> 刷新由 MutationObserver 触发处理；用户名/密码为空时只填验证码不自动提交；账号密码后填时由 input/change 监听继续提交。</li>
+</ul>
+<h2 id="_2">部署</h2>
+<ul>
+<li>宝塔项目：<code>/root/verification-extension</code></li>
+<li>管理后台：<code>http://&lt;LAN-8&gt;:18766/</code></li>
+<li>健康：<code>GET /health</code></li>
+<li>更新清单：<code>GET /extension/update.xml</code></li>
+<li>CRX：<code>GET /extension/assistant.crx</code></li>
+<li>管理员凭据仅在本机 <code>~/.hermes/secrets/verification_extension.env</code> 和宝塔项目 <code>.env</code>，权限 600。</li>
+</ul>
+<h2 id="_3">验证证据</h2>
+<ul>
+<li>本地契约测试：7/7 PASS。</li>
+<li>API E2E：激活、校验、自学习读取、设备上限、暂停失效、撤销设备 PASS。</li>
+<li>插件 JS 语法、Python 编译、ZIP 完整性 PASS。</li>
+<li>基础验证回归：9/9 PASS。</li>
+<li>扩展验证回归：6/6 PASS。</li>
+<li>总自动化回归：15/15 PASS。</li>
+<li>Google Chrome 企业策略安装：固定 ID 已安装；线上更新清单已切换到 <code>1.1.6</code>。本机 headless 真实加载受策略 <code>ExtensionInstallForcelist</code> 与 <code>chrome-extension://</code> 拦截限制，Discuz 选择器回归用 content script 注入夹具验证。</li>
+<li>Chrome 设置页真实激活：<code>✅ 激活成功</code>。</li>
+<li>Chrome popup 真实校验：<code>✅ 已激活</code>。</li>
+<li>Chrome 本地 HTTP 模拟生产页面：算术验证码自动填写 42、提交后 <code>VERIFIED</code>。</li>
+<li>Chrome 插件真实页面 E2E（独立页面）：算术、滑块、顺序点选、Shadow DOM 全部 <code>PASS</code>。</li>
+<li>Chrome 插件 OCR E2E：Canvas 生成 <code>2468</code> → 服务端 OCR → 自动填写 → 提交，<code>PASS</code>。</li>
+<li>本次回归修复：本地 Discuz/Hassbian 结构夹具与 <code>tests/content_script_behavior.py</code> 验证传统 <code>seccodeverify</code> 输入框 + 无语义属性 seccode 图片可被发现、OCR 回传、自动填写；空凭据不提交；动态弹窗可提交；预览模式不填写；先填验证码后输入账号密码会继续提交。</li>
+<li>新版本 <code>v1.1.4</code> 产物：<code>artifacts/authorized-verification-assistant-v1.1.4.zip</code>，SHA-256 <code>&lt;HASH&gt;</code>；CRX SHA-256 <code>&lt;HASH&gt;</code>。</li>
+<li>独立 Chrome 本地扩展冒烟：解压目录加载 + 本地 Discuz 页面 + OCR mock + 填写，结果 <code>REAL_CHROME_EXTENSION_SMOKE_PASS</code>。</li>
+<li>宝塔 Docker <code>verification-license</code> 持续 <code>Up</code>，<code>/health</code> 200；线上更新清单 <code>1.1.4</code>，CRX integrity <code>&lt;HASH&gt;</code>。</li>
+<li>Chrome service worker 已运行：<code>chrome-extension://mgpembebkeoiciopndiciehcokojeldf/background.js</code>。</li>
+<li>服务端学习记录已经产生并可回读（当前记录数 9）。</li>
+</ul>
+<h2 id="chrome_1">Chrome 稳定版安装规则</h2>
+<ul>
+<li>Chrome 稳定版会自动关闭未上架 Chrome Web Store 的 CRX 侧载扩展，表现为红色“未列在应用商店”警告、灰色关闭开关和“没有正在运行的视图”。</li>
+<li>用户安装必须使用 ZIP 解压版：先移除旧 CRX → 解压 ZIP 到固定目录 → <code>chrome://extensions/</code> 开启开发者模式 → “加载已解压的扩展程序” → 选择直接包含 <code>manifest.json</code> 的目录。</li>
+<li>v1.1.6 manifest 已嵌入与 <code>extension.pem</code> 对应的公开 <code>key</code>，解压加载仍保持固定 ID <code>mgpembebkeoiciopndiciehcokojeldf</code>。</li>
+<li>NAS：<code>/volume1/云/Hermes项目产物/verification-extension/v1.1.6/authorized-verification-assistant-v1.1.6.zip</code>。</li>
+<li>ZIP SHA-256：<code>&lt;HASH&gt;</code>。</li>
+<li>CRX SHA-256：<code>&lt;HASH&gt;</code>。</li>
+</ul>
+<h2 id="_4">授权列表完整显示与删除</h2>
+<ul>
+<li>用户要求后台完整显示授权码，并提供删除。此前设计只在创建卡片显示一次明文，列表只存 SHA-256 + hint，因此无法回读旧码。</li>
+<li>授权码展示对齐 Anki 后台：浅蓝渐变胶囊，点击授权码本身写入剪贴板，页面不出现「复制」二字按钮。</li>
+<li>授权列表操作新增「删除」：<code>DELETE /api/admin/licenses/{id}</code>，同时删除绑定设备。旧「解绑设备」仍保留。</li>
+<li>升级后现有旧授权 <code>license_key</code> 为空，只能继续显示脱敏 hint，无法还原历史明文；新建授权可完整显示。</li>
+<li>验证：契约含完整显示/删除断言且页面无「复制」文案；API E2E 创建后列表回读明文并删除；本地管理页 Playwright <code>ADMIN_LICENSE_UI_E2E_PASS</code>。</li>
+</ul>
+<h2 id="ui">管理 UI 创建授权修复</h2>
+<ul>
+<li>修复创建授权时报 <code>Cannot read properties of undefined (reading 'trim')</code>：根因是表单 <code>id="name"</code> 依赖元素全局变量，与浏览器内置 <code>window.name</code> 冲突；现改为全部使用显式 <code>document.getElementById</code> 引用。</li>
+<li>新增“永久授权”复选框；勾选后有效天数输入框禁用，创建请求发送 <code>permanent: true</code>，后端把 <code>expires_at</code> 保存为 <code>NULL</code>，列表和创建结果显示“永久”。</li>
+<li>真实浏览器 E2E：登录 → 创建 7 天授权 → 创建永久授权 → 回读列表到期值；控制台无 <code>trim</code> 错误，截图布局正常。测试后按 <code>PERM-E2E-*</code> 精确删除 2 条测试记录，现有授权未改。</li>
+</ul>
+<h2 id="_5">新授权码展示与复制</h2>
+<ul>
+<li>新创建的完整授权码仅在创建结果卡片中显示；服务端继续只保存 SHA-256 与脱敏 hint，授权列表不恢复明文，这是安全设计。</li>
+<li>创建结果卡片完整显示并自动换行授权码，提供“复制”和“×”关闭按钮；双击授权码或键盘 Enter/Space 也可复制。</li>
+<li>Clipboard API 不可用时自动回退 <code>document.execCommand('copy')</code>，兼容当前 HTTP 管理地址。</li>
+<li>每次创建会重置 30 秒隐藏计时器；关闭按钮立即清空页面内授权码变量与 DOM 文本。</li>
+<li>真实浏览器 E2E：完整授权码与创建 API 返回逐字符一致；复制按钮、双击复制、关闭、重新显示和计时器均 PASS，控制台无错误。测试记录已精准删除。</li>
+</ul>
+<h2 id="_6">重要安装说明</h2>
+<ul>
+<li>Chrome 通过企业策略安装，策略文件：<code>/etc/opt/chrome/policies/managed/verification-assistant.json</code>。</li>
+<li>不要删除 <code>extension.pem</code>，否则重新打包会改变扩展 ID并无法覆盖更新。</li>
+<li>测试 Chrome 专用 profile：<code>~/.hermes/browser-profiles/verification-extension-policy-e2e</code>。</li>
+<li>日常 Chrome 不被本次测试关闭；首次使用插件需在设置页输入授权码。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

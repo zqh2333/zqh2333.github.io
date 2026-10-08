@@ -1,0 +1,28 @@
+# luckyg 每日签到（2026-07-22）
+
+## 站点
+- 个人页：`https://luckyg.131518.xyz/profile`
+- API base：`https://luckyg.131518.xyz`
+- 账号：id=966 / display_name=Zqh2333
+
+## 认证
+New API 风格：
+```text
+Authorization: <token>
+New-Api-User: 966
+```
+
+## 接口
+- `GET /api/user/self`
+- `GET /api/user/checkin`（状态）
+- `POST /api/user/checkin`（签到）
+
+## 落地
+- secrets：`~/.hermes/secrets/luckyg.env`（600）
+- 脚本：`~/.hermes/scripts/luckyg_daily_checkin.py`
+- wrapper：`luckyg_checkin_random.sh`（08:00–08:30 随机 sleep）
+- cron：`luckyg每日签到（08:00-08:30随机）`，`no_agent=true`
+
+## 今日验证
+- 首次 POST 签到成功：`quota_awarded=3147838`（date=2026-07-22）
+- 脚本复跑：`ALREADY_CHECKED_IN`

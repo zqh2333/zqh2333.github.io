@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CC Switch 422 ModelInput（清洗过深导致，2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="cc-switch-422-modelinput2026-07-18">CC Switch 422 ModelInput（清洗过深导致，2026-07-18）</h1>
+<h2 id="_1">报错</h2>
+<pre><code>unexpected status 422 Unprocessable Entity
+CC Switch ... Codex endpoint /responses
+Provider: cpa; model: gpt-5.6-sol; upstream_status: HTTP 422
+cause: Failed to deserialize the JSON body into the target type:
+data did not match any variant of untagged enum ModelInput
+url: http://127.0.0.1:15721/v1/responses
+</code></pre>
+<p>用户：CC Switch 选 custom <strong>grok-4.5</strong>，改菜单/清洗后一直报错。</p>
+<h2 id="_2">根因</h2>
+<ol>
+<li><strong>实际请求模型仍是 <code>gpt-5.6-sol</code></strong>（错误体写明），不是 grok-4.5 —— CC Switch 模型映射/默认模型问题。</li>
+<li><strong>422 根因</strong>：上一版 <code>/responses</code> sanitizer <strong>深度递归</strong>给不该有 <code>name</code> 的项加了字段
+   - 例如 <code>function_call_output</code>、部分 content parts
+   - 破坏 Codex <code>ModelInput</code> 反序列化 → 422</li>
+<li>日志侧大量 422 也出现在 <code>/v1/chat/completions</code>（外网 43.x），与 responses 清洗叠加混淆。</li>
+</ol>
+<h2 id="_3">修复（已落地）</h2>
+<ul>
+<li><code>cpa_stable_models_proxy.py</code>：<strong>安全清洗</strong></li>
+<li>只处理 top-level <code>input[]</code> 里 <code>type in {function_call, tool_call, ...}</code> 且缺 <code>name</code> 的项</li>
+<li><strong>不再</strong> deep-walk 整棵树</li>
+<li><strong>绝不</strong>给 <code>function_call_output</code> 加 <code>name</code></li>
+<li><code>codex_fingerprint.js</code>：同样收紧</li>
+<li>备份：<code>*.bak_safe422_20260718_084718</code></li>
+</ul>
+<h2 id="_4">验证</h2>
+<table>
+<thead>
+<tr>
+<th>用例</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>grok-4.5 string/msg/input_text parts <code>/responses</code></td>
+<td><strong>200</strong>（18317+8317）</td>
+</tr>
+<tr>
+<td>unit：fco 不被加 name</td>
+<td>pass</td>
+</tr>
+<tr>
+<td>unit：fc 缺 name 会补</td>
+<td>pass</td>
+</tr>
+<tr>
+<td>gpt-5.6-sol 当前</td>
+<td><strong>429 model_cooldown</strong>（上游冷却/额度，不是 422）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="cc-switch">CC Switch 必查</h2>
+<ol>
+<li>Base URL: <code>http://&lt;LAN-8&gt;:8317/v1</code></li>
+<li>自定义模型 ID 必须是 <strong><code>grok-4.5</code></strong>（不能是 sol，也不能别名指错）</li>
+<li>若 UI 显示 Grok 但错误体 <code>model: gpt-5.6-sol</code> → 改 Provider 模型映射/默认模型</li>
+<li>改完后<strong>新开对话</strong>（旧会话历史可能仍带 sol 的 tool items）</li>
+</ol>
+<h2 id="name-is-required">与「name is required」关系</h2>
+<ul>
+<li>400 name required：缺 name → 需要补</li>
+<li>422 ModelInput：补错了/补多了 → 本次收紧修复</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

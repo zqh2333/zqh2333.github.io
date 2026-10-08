@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>家实优化「全部落地」清单（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="2026-07-18">家实优化「全部落地」清单（2026-07-18）</h1>
+<h2 id="p0">P0</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>状态</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CC Switch /responses name</td>
+<td>✅</td>
+<td>8317+jshandler 深度清洗；日志 <code>responses_sanitize.log</code></td>
+</tr>
+<tr>
+<td>CC Switch 入口</td>
+<td>✅ 文档+告警文案</td>
+<td>强制建议 <code>http://&lt;LAN-8&gt;:8317/v1</code></td>
+</tr>
+<tr>
+<td>gpt-5.6-sol 菜单规则</td>
+<td>✅</td>
+<td><strong>不进</strong> Hermes/8317 固定 10 名；上游池仍可路由</td>
+</tr>
+<tr>
+<td>xAI 凭证清理防误伤</td>
+<td>✅</td>
+<td>access 过期≠删号；<code>kept=668</code></td>
+</tr>
+<tr>
+<td>401/慢上游降权</td>
+<td>✅</td>
+<td>sticky；snote-temp=20 alfred-temp=10</td>
+</tr>
+<tr>
+<td>401 Telegram 提醒</td>
+<td>✅</td>
+<td><code>cpa_ops_alert</code> + cron <code>521f3acd0a11</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="p1">P1</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NAS 磁盘告警</td>
+<td>✅ cron <code>6d0b17e1d2a9</code>（现 70%）</td>
+</tr>
+<tr>
+<td>站点变更审计</td>
+<td>✅ <code>provider_audit.jsonl</code> + 每日/同步挂钩</td>
+</tr>
+<tr>
+<td>健康检查增强</td>
+<td>✅ 带 upstream_alerts / sol 菜单策略 warn</td>
+</tr>
+<tr>
+<td>Anki 公告编辑</td>
+<td>✅ 颜色/清内联色/发布校验</td>
+</tr>
+<tr>
+<td>每日简报</td>
+<td>✅ cron <code>15bfea823418</code> 09:00</td>
+</tr>
+</tbody>
+</table>
+<h2 id="p2p3">P2/P3</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>暴露面收敛</td>
+<td>🟡 扫描+清单已写；<strong>未自动关 RDP/面板</strong>（防锁死）</td>
+</tr>
+<tr>
+<td>故障自动修复看板</td>
+<td>🟡 用 ops_alert + daily digest 代替第一版</td>
+</tr>
+<tr>
+<td>HA 更新窗口</td>
+<td>⬜ 未自动升级（需维护窗）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_1">新脚本（宝塔）</h2>
+<ul>
+<li><code>cpa_ops_alert.py</code></li>
+<li><code>cpa_provider_audit.py</code></li>
+<li><code>cpa_stable_menu_policy.py</code></li>
+<li><code>cpa_upstream_quality.py</code>（已有增强）</li>
+<li><code>cpa_auth_cleanup.py</code>（已修）</li>
+</ul>
+<h2 id="hermes-cron">Hermes cron</h2>
+<ul>
+<li>CPA运维告警推送 <code>521f3acd0a11</code> 08:45/12:45/18:45/22:45</li>
+<li>家实每日简报 <code>15bfea823418</code> 09:00</li>
+<li>NAS磁盘 <code>6d0b17e1d2a9</code> 09:30/21:30</li>
+</ul>
+<h2 id="_2">验证摘要</h2>
+<ul>
+<li>HEALTH_OK（warn: cpu、snote/alfred 401）</li>
+<li>8317 models=10，<strong>无 gpt-5.6-sol</strong></li>
+<li>ops_alert 可输出上游 401</li>
+<li>digest 可输出 CPA+NAS+菜单+cron</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

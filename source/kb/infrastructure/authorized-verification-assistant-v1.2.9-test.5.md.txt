@@ -1,0 +1,27 @@
+# Authorized Verification Assistant v1.2.9-test.5
+
+## 实测
+
+- 真实 Chrome 扩展 ID：`mgpembebkeoiciopndiciehcokojeldf`
+- Worker：已确认
+- 授权：有效，`VALIDATE=true`
+- 设备指纹：64 位 SHA-256，已持久化并提交授权服务
+- `captcha7/8`：真实 Canvas OCR 填充成功，验证码字段长度 4；未提交未知账号密码
+- 使用授权测试账号后，`captcha1–6` 动态挑战识别为：
+  - captcha1：`GEETEST_SLIDER`
+  - captcha2/3：`GEETEST_IMAGE_ORDER`
+  - captcha4：`GEETEST_TEXT_ORDER`
+  - captcha5：`GEETEST_SPATIAL_REASONING`
+  - captcha6：`GEETEST_IMAGE_SELECT`
+- 真实 Geetest、Google reCAPTCHA、网易易盾挑战不伪造 token、不篡改状态，插件输出 `HUMAN_REQUIRED`。
+
+## 回归与产物
+
+- `GEETEST_DETECTION_CONTRACT_PASS`
+- `CANVAS_SCRAPE_CENTER_SELECTOR_PASS`
+- `28 passed`
+- ZIP：`/home/user/artifacts/authorized-verification-assistant-v1.2.9-test.5-extension.zip`
+- ZIP SHA-256：`<HASH>`
+- ZIP 大小：`17109 bytes`
+- NAS：`/volume1/云/Hermes项目产物/authorized-verification-assistant/v1.2.9-test.5-extension/`
+- NAS 哈希回读：一致

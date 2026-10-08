@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hermes 菜单移除 gpt-5.6-sol（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="hermes-gpt-56-sol2026-07-18">Hermes 菜单移除 gpt-5.6-sol（2026-07-18）</h1>
+<h2 id="_1">用户要求</h2>
+<p>从 Hermes 菜单移除 <code>gpt-5.6-sol</code>。</p>
+<h2 id="_2">范围</h2>
+<ul>
+<li>✅ 从 Hermes custom provider models 删除</li>
+<li>✅ 从 Hermes 本地稳定名单删除</li>
+<li>✅ 从 CPA 8317 稳定目录删除</li>
+<li>✅ 菜单策略改回排除 sol/luna</li>
+<li>✅ jshandler <code>/models</code> allowlist 删除 sol</li>
+<li>❌ <strong>不删除 CPA 上游站点中的 sol 模型</strong>（mimo/魔方/简直了保留）</li>
+</ul>
+<h2 id="10">当前固定菜单（10）</h2>
+<p><code>gpt-5.6-terra</code>, <code>gpt-5.5</code>, <code>gpt-5.4</code>, <code>grok-4.5</code>, <code>glm-5.2</code>,
+<code>deepseek-v4-flash</code>, <code>deepseek-v4-pro</code>, <code>deepseek-chat</code>, <code>mimo-v2.5-pro</code>, <code>mimo-v2.5</code>。</p>
+<h2 id="_3">目的</h2>
+<p>避免 CC Switch 误选/映射到不稳定的 sol；Grok 应显式使用 <code>grok-4.5</code>。</p>
+<h2 id="_4">已撤销（同日）</h2>
+<p>用户随后要求「取消移除」。已从 <code>*.bak_remove_sol_*</code> 精确恢复；当前 Hermes/8317 再次包含 sol（11 模型）。本页仅保留历史审计，<strong>不代表当前状态</strong>。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>禁止 CPA 上游定时探活（2026-07-20） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="cpa-2026-07-20">禁止 CPA 上游定时探活（2026-07-20）</h1>
+<h2 id="_1">用户规则</h2>
+<p>CPA 上游站点禁止定时探活：不得定时请求 <code>/health</code>、<code>/models</code>、chat/completions 或发送其他探测报文。频繁请求、尤其大报文 agent 调用可能触发封号。</p>
+<h2 id="_2">已清理</h2>
+<ul>
+<li>本机 user systemd：删除 <code>cpa-model-audit-sync.service</code> / <code>.timer</code></li>
+<li>原任务：<code>cpa_upstream_sync_then_hermes_audit.py</code>，会同步上游并作业务模型审计。</li>
+<li>删除现网对应 audit/sync 脚本与 pycache；历史归档不执行。</li>
+<li>CPA 宝塔：未发现活动的 sync/health/probe/quality/watch timer、service 或 cron。</li>
+<li><code>cpa-provider-watch</code> 不存在/未运行。</li>
+</ul>
+<h2 id="_3">保留范围</h2>
+<ul>
+<li><code>cpa-stable-proxy</code>：仅是 8317 入站边缘转发与固定 <code>/v1/models</code> 菜单；<strong>不主动请求上游</strong>。</li>
+<li>RawChat 桥：仅在客户端真实业务调用时转发，不定时探活。</li>
+<li>用户明确建立的每日签到 cron 保留；它们是针对指定签到站的单次业务操作，不是 CPA 上游模型探测。</li>
+</ul>
+<h2 id="_4">验证</h2>
+<ul>
+<li>本机 <code>cpa-model-audit-sync.timer</code>：<code>not-found</code></li>
+<li>本机无 active CPA sync/audit/probe 脚本引用</li>
+<li>宝塔仅 <code>cpa-stable-proxy.service</code> active；无 active provider-watch / probe / health / sync unit</li>
+</ul>
+<h2 id="_5">后续纪律</h2>
+<ul>
+<li>未经用户明确许可，不创建或恢复 CPA 上游 <code>/models</code>、chat、health、质量审计或模型同步定时任务。</li>
+<li>需要验证模型时先让用户明确授权，并用低频、最小真实业务请求；禁止大报文 agent 工作负载。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

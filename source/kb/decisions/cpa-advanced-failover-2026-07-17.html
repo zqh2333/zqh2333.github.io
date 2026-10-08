@@ -1,0 +1,55 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA 进阶故障转移：快失败 + 冷却 + 慢上游剔除（2026-07-17） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="cpa-2026-07-17">CPA 进阶故障转移：快失败 + 冷却 + 慢上游剔除（2026-07-17）</h1>
+<h2 id="_1">背景</h2>
+<p><code>gpt-5.5</code> / <code>glm-5.2</code> 故障时，fill-first 会打到慢上游（薄荷/喵喵 ~40s 超时）或连续 503 上游（魔方），拖死整次请求。</p>
+<h2 id="_2">落地项</h2>
+<h3 id="1">1. 瞬态错误冷却</h3>
+<ul>
+<li><code>transient-error-cooldown-seconds: 300</code>（408/500/502/503/504 冷却 5 分钟）</li>
+<li><code>disable-cooling: false</code></li>
+<li><code>save-cooldown-status: true</code>（冷却状态落盘，短重启不丢）</li>
+<li><code>max-retry-interval: 3</code>（不等待长时间冷却凭据）</li>
+</ul>
+<h3 id="2">2. 限制重试抖动</h3>
+<ul>
+<li><code>request-retry: 2</code></li>
+<li><code>max-retry-credentials: 3</code></li>
+</ul>
+<h3 id="3-deny">3. 慢上游模型 deny（同步脚本）</h3>
+<p><code>MODEL_PROVIDER_DENY</code>：
+- <code>glm-5.2</code> <strong>禁止</strong>落在 <code>薄荷</code> / <code>喵喵</code>（只保留 mimo 等快路径）
+- 同步脚本 <code>provider_allows_model</code> + <code>strip_denied_models</code> 固化，自动同步不会再加回</p>
+<h3 id="4">4. 优先级</h3>
+<ul>
+<li>mimo=4（glm/gpt 共享模型优先）</li>
+<li>薄荷/喵喵=6</li>
+<li>魔方=8（当前易 503，降权）</li>
+</ul>
+<h3 id="5">5. 边缘代理</h3>
+<ul>
+<li><code>cpa_stable_models_proxy.py</code>：chat/responses 超时 <strong>90s</strong>（避免客户端卡 600s）</li>
+</ul>
+<h2 id="_3">验证</h2>
+<ul>
+<li>同步脚本 <code>py_compile</code> + 实跑 exit 0</li>
+<li>放置：<code>glm-5.2 → 仅 mimo</code>；<code>gpt-5.5 → mimo + 魔方</code></li>
+<li>烟测：<code>glm-5.2</code> / <code>gpt-5.5</code> / <code>deepseek-v4-flash</code> 经 8317 返回 200（上游恢复窗口内）</li>
+<li><code>cpa_health_check</code> HEALTH_OK</li>
+</ul>
+<h2 id="_4">效果</h2>
+<ul>
+<li>慢失败上游不再拖 40s+ 才切</li>
+<li>502/503 后 5 分钟内优先跳过坏凭据</li>
+<li>自动同步不会把 glm-5.2 塞回薄荷/喵喵</li>
+</ul>
+<h2 id="_5">回滚</h2>
+<ul>
+<li>配置备份：<code>config.yaml.bak_adv_failover_*</code></li>
+<li>恢复冷却默认：<code>transient-error-cooldown-seconds: 0</code>（即 legacy 60s 语义见官方注释）</li>
+<li>去掉 <code>MODEL_PROVIDER_DENY</code> 相关补丁可恢复全量放置</li>
+</ul>
+<p>相关：[[incidents/gpt55-403-glm52-timeout-2026-07-17]]、[[decisions/cpa-local-model-sync]]</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

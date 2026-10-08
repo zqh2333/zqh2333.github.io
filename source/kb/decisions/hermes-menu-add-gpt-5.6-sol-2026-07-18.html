@@ -1,0 +1,31 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hermes 菜单加入 gpt-5.6-sol（2026-07-18） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="hermes-gpt-56-sol2026-07-18">Hermes 菜单加入 gpt-5.6-sol（2026-07-18）</h1>
+<h2 id="_1">用户决策</h2>
+<p>要求把 <code>gpt-5.6-sol</code> 加入 Hermes 固定菜单（此前策略排除）。</p>
+<h2 id="_2">变更</h2>
+<ol>
+<li><code>~/.hermes/config.yaml</code> models 增加 <code>gpt-5.6-sol: gpt-5.6-sol</code></li>
+<li><code>~/.hermes/state/stable_models.json</code> 固定名单 11 个（含 sol）</li>
+<li>宝塔 <code>/root/cli-proxy-data/state/stable_models.json</code> 同步</li>
+<li><code>cpa_stable_menu_policy.py</code>：exclude 仅保留 <code>gpt-5.6-luna</code></li>
+<li>jshandler allowlist 增加 sol</li>
+<li>重启 <code>cpa-stable-proxy</code> / <code>cli-proxy</code></li>
+</ol>
+<h2 id="_3">验证</h2>
+<ul>
+<li>8317 <code>/v1/models</code> 含 <code>gpt-5.6-sol</code>（共 11）</li>
+<li>Hermes audit：<code>hermes_models=11</code>, <code>missing_in_cpa=[]</code></li>
+<li><code>gpt-5.6-sol</code> chat 抽测 <strong>200</strong></li>
+</ul>
+<h2 id="_4">使用</h2>
+<ul>
+<li>Hermes 菜单可选 <code>gpt-5.6-sol</code></li>
+<li>仍走 <code>http://&lt;LAN-8&gt;:8317/v1</code></li>
+<li>若 CC Switch 长会话，继续用 8317（已有 /responses name 清洗）</li>
+</ul>
+<h2 id="_5">当前状态</h2>
+<p>用户取消了后续“移除 sol”操作；已恢复。sol 继续显示在 Hermes/8317 菜单。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>

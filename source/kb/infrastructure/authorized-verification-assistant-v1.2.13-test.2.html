@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Authorized Verification Assistant v1.2.13-test.2 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · infrastructure</nav><article><h1 id="authorized-verification-assistant-v1213-test2">Authorized Verification Assistant v1.2.13-test.2</h1>
+<ul>
+<li>日期：2026-09-16</li>
+<li>产物：<code>authorized-verification-assistant-v1.2.13-test.2.zip</code></li>
+<li>本地路径：<code>/home/user/artifacts/authorized-verification-assistant-v1.2.13-test.2.zip</code></li>
+<li>NAS：<code>/volume1/云/Hermes项目产物/authorized-verification-assistant/v1.2.13-test.2/</code></li>
+<li>大小：83007 bytes</li>
+<li>SHA-256：<code>&lt;HASH&gt;</code></li>
+</ul>
+<h2 id="_1">新增</h2>
+<ul>
+<li><code>shared/challenge-detector.js</code></li>
+<li><code>NO_CHALLENGE</code>、<code>SITE_OWNED_IMAGE_CAPTCHA</code>、<code>HUMAN_REQUIRED</code> 三种分类</li>
+<li>reCAPTCHA、Turnstile、hCaptcha、网易易盾/拼图/滑块、通用人机风险挑战识别</li>
+<li>在页面运行链中记录 <code>CHALLENGE_DETECTED</code>；真实第三方安全盾不自动破解</li>
+<li>站点自有图片验证码继续使用原 OCR、原生 input/change、提交上限和成功状态校验</li>
+</ul>
+<h2 id="_2">安全边界</h2>
+<p>不包含：</p>
+<ul>
+<li>token 伪造、重放或注入</li>
+<li>挑战状态修改</li>
+<li>undetected-chromedriver/nodriver 隐身绕过</li>
+<li>EzSolver/第三方打码服务</li>
+<li>真实 reCAPTCHA/易盾图片点选或拼图自动破解</li>
+</ul>
+<h2 id="_3">验证</h2>
+<ul>
+<li>上传包全部 JavaScript 语法：通过</li>
+<li>探测器回归：通过</li>
+<li>现有内容脚本/Hassbian/契约/策略矩阵：<code>28 passed</code></li>
+<li>Google reCAPTCHA Demo：真实页面只读识别到 reCAPTCHA</li>
+<li>网易易盾 Jigsaw：真实页面只读识别到拼图控件、iframe、canvas</li>
+<li>未点击、未拖动、未提交、未生成第三方 token</li>
+<li>本机系统 Chrome 可控测试：Chrome 150 已启动，但当前测试加载参数没有出现目标扩展 Worker，因此未宣称扩展在该 Chrome 中实机通过</li>
+<li>Windows Chrome/Edge：未在本机执行，需用户在 Windows 实机安装后验收</li>
+<li>NAS：文件大小、SHA-256、ZIP 完整性回读通过</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-08</footer></div></body></html>
