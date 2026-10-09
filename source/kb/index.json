@@ -1,7 +1,7 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-09",
- "count": 103,
+ "count": 104,
  "categories": [
   {
    "id": "decisions",
@@ -21,7 +21,7 @@
   {
    "id": "runbooks",
    "name": "操作手册",
-   "count": 8
+   "count": 9
   },
   {
    "id": "meta",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "去掉 DSM 登录时的「管理员帐户安全性」2FA 弹窗（2026-10-09）",
+   "date": "2026-10-09",
+   "category": "runbooks",
+   "url": "runbooks/dsm-disable-admin-2fa-nag-2026-10-09.html",
+   "summary": "去掉 DSM 登录时的「管理员帐户安全性」2FA 弹窗（2026 10 09） 现象 每次登录 DSM 网页，右下角弹出一个白色通知卡： 橙色感叹号图标，标题（蓝色）「 管理员帐户安全性 」 正文：默认帐户\"admin\""
+  },
   {
    "title": "运维知识库自动沉淀发布（2026-10-08）",
    "date": "2026-10-08",

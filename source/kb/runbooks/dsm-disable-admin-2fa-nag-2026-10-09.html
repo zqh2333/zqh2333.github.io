@@ -1,0 +1,128 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>去掉 DSM 登录时的「管理员帐户安全性」2FA 弹窗（2026-10-09） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><h1 id="dsm-2fa-2026-10-09">去掉 DSM 登录时的「管理员帐户安全性」2FA 弹窗（2026-10-09）</h1>
+<h2 id="_1">现象</h2>
+<p>每次登录 DSM 网页，右下角弹出一个白色通知卡：</p>
+<ul>
+<li>橙色感叹号图标，标题（蓝色）「<strong>管理员帐户安全性</strong>」</li>
+<li>正文：默认帐户"admin"容易遭到暴力破解…您可以通过<strong>双重验证(2FA)</strong>来保护您的帐户，
+  不过我们建议您停用"admin"帐户。</li>
+<li>只有一个按钮「<strong>启用 2FA</strong>」+ 右上角 X</li>
+</ul>
+<p><strong>点 X 只关当前这次，下次登录照弹。</strong></p>
+<h2 id="2fa">关键认知：这不是真的 2FA 验证</h2>
+<p>它是<strong>安全告警（advisory）</strong>，不是验证码挑战。SSH 层根本没有 2FA：</p>
+<pre><code>/etc/ssh/sshd_config:  ChallengeResponseAuthentication no
+/etc/pam.d/sshd:       无任何 OTP 模块
+/var/log/auth.log:     无 OTP/challenge 记录
+</code></pre>
+<p>所以<strong>不要</strong>去关 SSH 的 2FA（没有可关的），也不要真的去开 2FA（那会变成每次登录
+真的要输验证码，与诉求相反）。</p>
+<h2 id="_2">机制（逆向结果）</h2>
+<table>
+<thead>
+<tr>
+<th>环节</th>
+<th>落点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前端模块</td>
+<td><code>/usr/syno/synoman/webman/modules/DisableAdminNotification/</code></td>
+</tr>
+<tr>
+<td>前端 JS</td>
+<td><code>DisableAdminNotification.js</code>（Vue，<code>autoLaunch:true, hidden:true</code>）</td>
+</tr>
+<tr>
+<td>后端 API</td>
+<td><code>SYNO.Core.DisableAdmin</code>（<code>/usr/syno/synoman/webapi/lib/SYNO.Core.DisableAdmin.so</code>）</td>
+</tr>
+<tr>
+<td>API 方法</td>
+<td><strong><code>get</code></strong> 和 <strong><code>ignore</code></strong></td>
+</tr>
+<tr>
+<td>配置存储</td>
+<td><code>/etc/synoinfo.conf</code>（经 <code>libsynoserviceconf.so.7</code>）</td>
+</tr>
+<tr>
+<td>开关键</td>
+<td><strong><code>hide_disable_admin_notification="yes"</code></strong></td>
+</tr>
+<tr>
+<td>相关键</td>
+<td><code>notify_disable_admin</code>、<code>reset_admin</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>JS 判定逻辑</strong>（反混淆后）：</p>
+<pre><code class="language-js">canOpen(){
+  let n = SYNO.SDS.App.DisableAdminNotification.notified;
+  return !(!_S(&quot;is_admin&quot;) || !0===n || (…, this.disableAdminInfoLoad(), 1))
+}
+disableAdminInfoLoad(){
+  synowebapi.request({api:&quot;SYNO.Core.DisableAdmin&quot;, method:&quot;get&quot;, version:1})
+    .then(n =&gt; { if (n.notify_disable_admin) /* 弹通知 */ })
+}
+</code></pre>
+<p>即：<strong>是管理员</strong> 且 <strong><code>get</code> 返回 <code>notify_disable_admin=true</code></strong> → 弹。</p>
+<p><code>get</code> 的服务端判定（从 <code>.so</code> 符号推出）：
+<code>SYNOUserTwoFactorStatusGet</code>（该账户没开 2FA）+ <code>SYNOUserCheckExpired</code>（账户启用中）
++ <code>hide_disable_admin_notification</code> 未设 → <code>true</code>。</p>
+<h3 id="_3">★ 两个误导性极强的坑</h3>
+<ol>
+<li><strong>文案里有 <code>info_ignore = "不再显示"</code>，但组件根本没实现它。</strong>
+   <code>[disable_admin_notification]</code> 段落里确实有这个字符串，然而
+   <code>disable-admin-tray.vue</code> 渲染时写死 <strong><code>has-cancel-btn:!1</code>（没有取消按钮）</strong>，
+   只绑定了 <code>confirm</code>（启用 2FA）和 <code>on-close</code>（X，纯关闭）。
+   <strong>"不再显示" 是遗留未用字符串</strong> —— 别以为点 X 或找那个选项就行。</li>
+<li><strong><code>strings</code> 在 DSM 上不存在</strong>。<code>.so</code> 提字符串要用
+   <code>grep -aoE "[ -~]{4,}" file.so</code>。</li>
+</ol>
+<h2 id="api">修法（官方 API，一步）</h2>
+<p>DSM 自带本地 webapi 调用器 <strong><code>/usr/syno/bin/synowebapi</code></strong>，以 <code>SYSTEM_ADMIN</code> 身份执行，
+<strong>不需要密码、不需要 _sid</strong>：</p>
+<pre><code class="language-bash"># 0) 先备份（配置改动铁律）
+cp -a /etc/synoinfo.conf /etc/synoinfo.conf.bak-$(date +%Y%m%d-%H%M%S)
+
+# 1) 看现状
+/usr/syno/bin/synowebapi --exec api=SYNO.Core.DisableAdmin method=get version=1
+#   → {&quot;data&quot;:{&quot;notify_disable_admin&quot;:true}, &quot;success&quot;:true}
+
+# 2) 关掉（就是前端那个没做按钮的 Ignore）
+/usr/syno/bin/synowebapi --exec api=SYNO.Core.DisableAdmin method=ignore version=1
+#   → {&quot;success&quot;:true, &quot;httpd_restart&quot;:false}
+</code></pre>
+<h2 id="_4">验证（闭环）</h2>
+<pre><code class="language-bash">grep -n hide_disable_admin_notification /etc/synoinfo.conf
+#   → 2706:hide_disable_admin_notification=&quot;yes&quot;
+
+/usr/syno/bin/synowebapi --exec api=SYNO.Core.DisableAdmin method=get version=1
+#   → {&quot;data&quot;:{&quot;notify_disable_admin&quot;:false}, ...}   ← 条件已解除
+</code></pre>
+<p><strong>这条 <code>get</code> 就是浏览器登录时走的同一条代码路径</strong>，返回 false 即代表不会再弹。
+<code>httpd_restart:false</code> → 无需重启任何服务，下次登录直接生效。</p>
+<h2 id="_5">撤销</h2>
+<pre><code class="language-bash">/usr/syno/bin/synosetkeyvalue /etc/synoinfo.conf hide_disable_admin_notification no
+# 或直接删掉该行；也可从 /etc/synoinfo.conf.bak-* 恢复
+</code></pre>
+<h2 id="_6">⚠️ 安全说明（只是隐藏告警，没改变安全态势）</h2>
+<ul>
+<li><code>admin</code> 帐户<strong>仍然启用</strong>、<strong>仍然没开 2FA</strong> —— 弹窗说的风险原样存在。</li>
+<li>实测：<code>administrators</code> 组<strong>只有 <code>admin</code> 一个成员</strong> → <strong>不能直接停用 admin</strong>，
+  否则会<strong>把自己锁在门外</strong>。</li>
+<li>要真正加固，正确顺序是：
+  1. 新建/指定另一个管理员（如 <code>yiting</code>）并加入 <code>administrators</code> 组
+  2. 用新管理员登录验证权限
+  3. 再停用 <code>admin</code>
+  4. （可选）给管理员账户开 2FA</li>
+<li>本操作<strong>没有</strong>做上述任何一步，只是把 nag 关掉。</li>
+</ul>
+<h2 id="_7">持久性</h2>
+<p>写在 <code>/etc/synoinfo.conf</code>，重启/升级一般保留。
+<strong>但 DSM 大版本升级可能重置该文件</strong> —— 若某天弹窗复活，重跑一次 <code>ignore</code> 即可。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-09</footer></div></body></html>
