@@ -1,0 +1,116 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NAS 夸克同步套件（bind + 原生 Cloud Sync） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><hr />
+<p>title: NAS 夸克同步套件（bind + 原生 Cloud Sync，已上线）
+date: 2026-10-09
+category: runbooks
+tags: [NAS, Synology, CloudSync, 夸克, WebDAV, Alist, bind-mount, 备份]</p>
+<hr />
+<h1 id="nas-bind-cloud-sync">NAS 夸克同步套件（bind + 原生 Cloud Sync）</h1>
+<h2 id="_1">目标</h2>
+<p>把 NAS <code>/volume1/云</code>（503 GB / ~33.8k 文件）同步到<strong>夸克网盘</strong>，用<strong>原生 Cloud Sync</strong>，
+体验和「百度云」任务一致（DSM 界面可见、逐文件进度、断点续传）。</p>
+<h2 id="_2">三个必须绕过的限制（实测）</h2>
+<table>
+<thead>
+<tr>
+<th>现象</th>
+<th>真因</th>
+<th>绕过</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>418 Local syncfolder has been used</code></td>
+<td>本地目录重叠，<strong>前缀级</strong>判断（父目录被占，子目录也不行）</td>
+<td><code>mount --bind</code> 换路径（418 按<strong>路径字符串</strong>判断，非 inode）</td>
+</tr>
+<tr>
+<td><code>417 account has been linked</code></td>
+<td>一个 WebDAV 账号默认只能建一个任务</td>
+<td>覆盖 <code>unique_id</code> 加后缀（如 <code>...#yun</code>）</td>
+</tr>
+<tr>
+<td>删任务报 <code>103</code>/<code>120</code></td>
+<td>方法名/参数名错</td>
+<td><code>unlink_connection</code> + <strong><code>connection_id=&lt;id&gt;</code></strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="bind">★ 关键验证：bind 对同步真的有效（不是只有建任务有效）</h2>
+<p>曾一度怀疑「Cloud Sync worker 穿不透 bind」，实测<strong>否定</strong>：</p>
+<ul>
+<li>worker 与本机<strong>同一 mount namespace</strong>（<code>mnt:[4026531840]</code>），<code>/proc/&lt;pid&gt;/mountinfo</code> 里能看到 bind。</li>
+<li>建任务后 <code>unfinished_files</code> 从 0 → <strong>10010</strong> 并持续下降。</li>
+<li>Cloud Sync 日志 <code>session_id=8</code> 大量 <code>err=0</code>，路径 <code>/docker/quark-sync/云/...</code>。</li>
+<li>夸克端实际落盘：<code>/quark/云/DIY/BOM_PCB...csv</code>、<code>/quark/云/闲鱼/...apk</code> 等。</li>
+</ul>
+<p><strong>★ 教训</strong>：3.3 万文件首次<strong>枚举要数分钟</strong>才开始传。建任务后 1~2 分钟看"远端为空"
+<strong>不等于失败</strong> —— 必须等枚举完再判断。</p>
+<h2 id="_3">套件结构（已部署）</h2>
+<pre><code>/volume1/docker/quark-sync/
+├── 云/                     ← bind 挂载点 → /volume1/云
+├── bin/{bind.sh, verify.sh, quark_sync_create_task.py, cleanup_test.py}
+└── README.md
+/usr/local/etc/rc.d/quark-sync-bind.sh    ← 开机钩子（bind 重启会丢，靠它恢复）
+</code></pre>
+<h2 id="_4">任务参数</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>任务名 / id</td>
+<td><code>云→夸克</code> / <strong>id=13</strong></td>
+</tr>
+<tr>
+<td>本地 / 远程</td>
+<td><code>/docker/quark-sync/云</code> → <code>/quark/云</code></td>
+</tr>
+<tr>
+<td>方向</td>
+<td><code>ONLY_UPLOAD</code>（只上传）</td>
+</tr>
+<tr>
+<td>保险丝</td>
+<td><code>no_delete = true</code>（<strong>永不删远端</strong>）</td>
+</tr>
+<tr>
+<td>unique_id</td>
+<td><code>127.0.0.1:5244:admin#yun</code></td>
+</tr>
+<tr>
+<td>远程通道</td>
+<td>Alist WebDAV <code>http://127.0.0.1:5244/dav</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_5">日常操作</h2>
+<pre><code class="language-sh">/volume1/docker/quark-sync/bin/verify.sh     # 健康检查（bind/inode/文件数/任务状态）
+/volume1/docker/quark-sync/bin/bind.sh       # 手动恢复 bind
+tail -20 /var/log/quark-sync-bind.log        # bind 日志
+</code></pre>
+<h2 id="_6">撤销</h2>
+<pre><code class="language-sh"># 1. 删任务（connection_id=&lt;id&gt;）
+# 2. umount /volume1/docker/quark-sync/云
+# 3. rm /usr/local/etc/rc.d/quark-sync-bind.sh
+</code></pre>
+<h2 id="_7">限制与风险</h2>
+<ul>
+<li><strong>夸克上传封顶 ~500 KB/s</strong>（账号级限速，本机无解）→ 503 GB 首轮约 <strong>11.6 天</strong>。</li>
+<li><strong>夸克 Cookie 约 13 天过期</strong> → 靠 <code>alist_quark_cookie_sync.py</code> 定时保活，临界但够用。</li>
+<li><code>rc.d</code> 钩子若被 DSM 大版本更新清掉 → 重启后 bind 不恢复（同步静默停；因 <code>no_delete</code> 不会误删）。</li>
+<li>Alist <code>:5244</code> 只绑 <code>127.0.0.1</code>（有意隔离），LAN 访问不到属正常。</li>
+</ul>
+<h2 id="_8">相关</h2>
+<ul>
+<li>容器：<code>alist</code>(127.0.0.1:5244) / <code>quark-keeper</code>(:5250) / <code>filecodebox</code></li>
+<li>凭据：NAS <code>/volume1/docker/quark-keeper/data/alist.env</code>(600)</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-09</footer></div></body></html>

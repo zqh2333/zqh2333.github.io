@@ -1,0 +1,80 @@
+---
+title: NAS 夸克同步套件（bind + 原生 Cloud Sync，已上线）
+date: 2026-10-09
+category: runbooks
+tags: [NAS, Synology, CloudSync, 夸克, WebDAV, Alist, bind-mount, 备份]
+---
+
+# NAS 夸克同步套件（bind + 原生 Cloud Sync）
+
+## 目标
+把 NAS `/volume1/云`（503 GB / ~33.8k 文件）同步到**夸克网盘**，用**原生 Cloud Sync**，
+体验和「百度云」任务一致（DSM 界面可见、逐文件进度、断点续传）。
+
+## 三个必须绕过的限制（实测）
+
+| 现象 | 真因 | 绕过 |
+|---|---|---|
+| `418 Local syncfolder has been used` | 本地目录重叠，**前缀级**判断（父目录被占，子目录也不行） | `mount --bind` 换路径（418 按**路径字符串**判断，非 inode） |
+| `417 account has been linked` | 一个 WebDAV 账号默认只能建一个任务 | 覆盖 `unique_id` 加后缀（如 `...#yun`） |
+| 删任务报 `103`/`120` | 方法名/参数名错 | `unlink_connection` + **`connection_id=<id>`** |
+
+## ★ 关键验证：bind 对同步真的有效（不是只有建任务有效）
+
+曾一度怀疑「Cloud Sync worker 穿不透 bind」，实测**否定**：
+
+- worker 与本机**同一 mount namespace**（`mnt:[4026531840]`），`/proc/<pid>/mountinfo` 里能看到 bind。
+- 建任务后 `unfinished_files` 从 0 → **10010** 并持续下降。
+- Cloud Sync 日志 `session_id=8` 大量 `err=0`，路径 `/docker/quark-sync/云/...`。
+- 夸克端实际落盘：`/quark/云/DIY/BOM_PCB...csv`、`/quark/云/闲鱼/...apk` 等。
+
+**★ 教训**：3.3 万文件首次**枚举要数分钟**才开始传。建任务后 1~2 分钟看"远端为空"
+**不等于失败** —— 必须等枚举完再判断。
+
+## 套件结构（已部署）
+
+```
+/volume1/docker/quark-sync/
+├── 云/                     ← bind 挂载点 → /volume1/云
+├── bin/{bind.sh, verify.sh, quark_sync_create_task.py, cleanup_test.py}
+└── README.md
+/usr/local/etc/rc.d/quark-sync-bind.sh    ← 开机钩子（bind 重启会丢，靠它恢复）
+```
+
+## 任务参数
+
+| 项 | 值 |
+|---|---|
+| 任务名 / id | `云→夸克` / **id=13** |
+| 本地 / 远程 | `/docker/quark-sync/云` → `/quark/云` |
+| 方向 | `ONLY_UPLOAD`（只上传） |
+| 保险丝 | `no_delete = true`（**永不删远端**） |
+| unique_id | `127.0.0.1:5244:admin#yun` |
+| 远程通道 | Alist WebDAV `http://127.0.0.1:5244/dav` |
+
+## 日常操作
+
+```sh
+/volume1/docker/quark-sync/bin/verify.sh     # 健康检查（bind/inode/文件数/任务状态）
+/volume1/docker/quark-sync/bin/bind.sh       # 手动恢复 bind
+tail -20 /var/log/quark-sync-bind.log        # bind 日志
+```
+
+## 撤销
+
+```sh
+# 1. 删任务（connection_id=<id>）
+# 2. umount /volume1/docker/quark-sync/云
+# 3. rm /usr/local/etc/rc.d/quark-sync-bind.sh
+```
+
+## 限制与风险
+
+- **夸克上传封顶 ~500 KB/s**（账号级限速，本机无解）→ 503 GB 首轮约 **11.6 天**。
+- **夸克 Cookie 约 13 天过期** → 靠 `alist_quark_cookie_sync.py` 定时保活，临界但够用。
+- `rc.d` 钩子若被 DSM 大版本更新清掉 → 重启后 bind 不恢复（同步静默停；因 `no_delete` 不会误删）。
+- Alist `:5244` 只绑 `127.0.0.1`（有意隔离），LAN 访问不到属正常。
+
+## 相关
+- 容器：`alist`(127.0.0.1:5244) / `quark-keeper`(:5250) / `filecodebox`
+- 凭据：NAS `/volume1/docker/quark-keeper/data/alist.env`(600)
