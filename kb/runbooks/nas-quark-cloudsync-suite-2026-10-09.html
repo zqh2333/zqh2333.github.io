@@ -54,8 +54,35 @@ tags: [NAS, Synology, CloudSync, 夸克, WebDAV, Alist, bind-mount, 备份]</p>
 ├── 云/                     ← bind 挂载点 → /volume1/云
 ├── bin/{bind.sh, verify.sh, quark_sync_create_task.py, cleanup_test.py}
 └── README.md
-/usr/local/etc/rc.d/quark-sync-bind.sh    ← 开机钩子（bind 重启会丢，靠它恢复）
+/etc/systemd/system/quark-sync-bind.service   ← ★主机制
+/usr/local/etc/rc.d/quark-sync-bind.sh        ← 兜底钩子
+/var/log/quark-sync-bind.log
 </code></pre>
+<h2 id="bind_1">★★ 开机自恢复机制（bind 重启会丢，必须固化）</h2>
+<p><strong>关键事实：DSM 7 的 PID 1 是 <code>systemd</code></strong>（不是 sysvinit）。
+<code>/etc/rc</code>、<code>/etc/rc.local</code> 都<strong>不存在</strong>；<code>rc.d</code> 也不是 DSM 原生机制。</p>
+<p>Synology 的 <code>rc.d</code> 实际由 <strong><code>pkg-rclocal.service</code></strong> 驱动：</p>
+<pre><code class="language-sh"># /usr/syno/lib/systemd/scripts/pkg-rclocal.sh
+for sh in $(/bin/ls -1 /usr/local/etc/rc.d/*.sh 2&gt;/dev/null | sort); do
+    $sh start || true          # ← 注意：带参数 start
+done
+</code></pre>
+<p>它属于 <code>syno-bootup-done.target</code>（<strong>很晚</strong>），而 Cloud Sync 属于
+<code>syno-low-priority-packages.target</code> → <strong>rc.d 晚于 CloudSync 启动</strong>。</p>
+<p><strong>因此采用双保险：</strong></p>
+<ol>
+<li><strong>主 = 自定义 systemd 单元 <code>quark-sync-bind.service</code></strong>（<code>systemctl enable</code>）
+   - <code>After=pkg-volume.target syno-volume.target</code>（等 /volume1）
+   - <code>Before=pkgctl-CloudSync.service</code>（<strong>在 Cloud Sync 之前</strong> bind）
+   - → Cloud Sync 一启动就看到完整目录，<strong>无需重启</strong>，零打扰</li>
+<li><strong>兜底 = <code>/usr/local/etc/rc.d/quark-sync-bind.sh start</code></strong>
+   - 只在「发现 bind 缺失并补上」时才 <code>synopkg restart CloudSync</code> 重扫
+   - 正常情况（主机制生效）识别到「已挂载」→ 0 秒返回，不打扰</li>
+</ol>
+<p><strong>其它实测坑</strong>：
+- NAS 上<strong>没有 <code>systemd-run</code></strong> → 不能用瞬态定时器做「延迟重启」。
+- systemd oneshot 服务里 <code>cmd &amp;</code> 起的后台进程会被 cgroup 杀掉 → 别用后台延迟。
+- 用 <code>synopkg restart CloudSync</code> 会<strong>同时重启百度云任务</strong>（短暂中断）。</p>
 <h2 id="_4">任务参数</h2>
 <table>
 <thead>
@@ -103,9 +130,13 @@ tail -20 /var/log/quark-sync-bind.log        # bind 日志
 </code></pre>
 <h2 id="_7">限制与风险</h2>
 <ul>
-<li><strong>夸克上传封顶 ~500 KB/s</strong>（账号级限速，本机无解）→ 503 GB 首轮约 <strong>11.6 天</strong>。</li>
+<li><strong>夸克上传封顶 ~500 KB/s</strong>（账号级限速，本机无解）→ 503 GB 首轮 <strong>≥ 11.6 天</strong>。</li>
+<li><strong>★逐文件延迟高（实测）</strong>：Alist WebDAV 每项（含建目录）约 <strong>60–90 秒</strong>
+  （日志时间戳：<code>IPTV.apk</code> → <code>图片/Pictures</code> 相隔 63s）。
+  → 33,810 个文件的<strong>文件数开销</strong>可能比带宽更致命（<code>备份/</code> 有 26,002 个小文件）。</li>
 <li><strong>夸克 Cookie 约 13 天过期</strong> → 靠 <code>alist_quark_cookie_sync.py</code> 定时保活，临界但够用。</li>
-<li><code>rc.d</code> 钩子若被 DSM 大版本更新清掉 → 重启后 bind 不恢复（同步静默停；因 <code>no_delete</code> 不会误删）。</li>
+<li>开机单元/钩子若被 DSM 大版本更新清掉 → 重启后 bind 不恢复，同步<strong>静默停</strong>
+  （因 <code>no_delete=true</code>，<strong>不会误删</strong>夸克上的文件）。</li>
 <li>Alist <code>:5244</code> 只绑 <code>127.0.0.1</code>（有意隔离），LAN 访问不到属正常。</li>
 </ul>
 <h2 id="_8">相关</h2>
