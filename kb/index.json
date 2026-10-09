@@ -1,7 +1,7 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-09",
- "count": 104,
+ "count": 103,
  "categories": [
   {
    "id": "decisions",
@@ -21,7 +21,7 @@
   {
    "id": "runbooks",
    "name": "操作手册",
-   "count": 9
+   "count": 8
   },
   {
    "id": "meta",
@@ -30,13 +30,6 @@
   }
  ],
  "entries": [
-  {
-   "title": "NAS 夸克同步套件（bind + 原生 Cloud Sync）",
-   "date": "2026-10-09",
-   "category": "runbooks",
-   "url": "runbooks/nas-quark-cloudsync-suite-2026-10-09.html",
-   "summary": "title: NAS 夸克同步套件（bind + 原生 Cloud Sync，已上线） date: 2026 10 09 category: runbooks tags: NAS, Synology, CloudSync"
-  },
   {
    "title": "运维知识库自动沉淀发布（2026-10-08）",
    "date": "2026-10-08",
