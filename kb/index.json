@@ -31,11 +31,11 @@
  ],
  "entries": [
   {
-   "title": "DSM Cloud Sync 任务重叠限制与绕过（2026-10-09）",
+   "title": "NAS 夸克同步套件（bind + 原生 Cloud Sync）",
    "date": "2026-10-09",
    "category": "runbooks",
-   "url": "runbooks/dsm-cloudsync-overlap-workaround-2026-10-09.html",
-   "summary": "DSM Cloud Sync 任务重叠限制与绕过（2026 10 09） 背景 要把 NAS /volume1/云 （503 GB / 33,804 文件）同步到夸克网盘，走\"和 Cloud Sync 一样\"的方案： A"
+   "url": "runbooks/nas-quark-cloudsync-suite-2026-10-09.html",
+   "summary": "title: NAS 夸克同步套件（bind + 原生 Cloud Sync，已上线） date: 2026 10 09 category: runbooks tags: NAS, Synology, CloudSync"
   },
   {
    "title": "运维知识库自动沉淀发布（2026-10-08）",

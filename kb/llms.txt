@@ -191,8 +191,8 @@
     Verification Challenge Lab v1.0.1 本地产物： /home/user/artifacts/verification challenge lab v1.0.1.zip SHA 256： <H
 
 ## 操作手册 (9)
-- [2026-10-09] DSM Cloud Sync 任务重叠限制与绕过（2026-10-09） — runbooks/dsm-cloudsync-overlap-workaround-2026-10-09.html
-    DSM Cloud Sync 任务重叠限制与绕过（2026 10 09） 背景 要把 NAS /volume1/云 （503 GB / 33,804 文件）同步到夸克网盘，走"和 Cloud Sync 一样"的方案： A
+- [2026-10-09] NAS 夸克同步套件（bind + 原生 Cloud Sync） — runbooks/nas-quark-cloudsync-suite-2026-10-09.html
+    title: NAS 夸克同步套件（bind + 原生 Cloud Sync，已上线） date: 2026 10 09 category: runbooks tags: NAS, Synology, CloudSync
 - [2026-10-08] NAS MTU 误设 1492 导致 DS file 断连（2026-10-08） — runbooks/nas-mtu-1492-rollback-2026-10-08.html
     NAS MTU 误设 1492 导致 DS file 断连（2026 10 08） 背景 排查 NAS 16MB 上传 HTTP 405 时，怀疑是 MTU 问题。 未经询问 就把 NAS eth0 MTU 从 1500
 - [2026-09-29] 指定 IP 段开放端口扫描（port_scan.py） — runbooks/port-scan-ip-range-2026-09-29.html
