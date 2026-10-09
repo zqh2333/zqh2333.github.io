@@ -38,8 +38,42 @@ tags: [NAS, Synology, CloudSync, 夸克, WebDAV, Alist, bind-mount, 备份]
 ├── 云/                     ← bind 挂载点 → /volume1/云
 ├── bin/{bind.sh, verify.sh, quark_sync_create_task.py, cleanup_test.py}
 └── README.md
-/usr/local/etc/rc.d/quark-sync-bind.sh    ← 开机钩子（bind 重启会丢，靠它恢复）
+/etc/systemd/system/quark-sync-bind.service   ← ★主机制
+/usr/local/etc/rc.d/quark-sync-bind.sh        ← 兜底钩子
+/var/log/quark-sync-bind.log
 ```
+
+## ★★ 开机自恢复机制（bind 重启会丢，必须固化）
+
+**关键事实：DSM 7 的 PID 1 是 `systemd`**（不是 sysvinit）。
+`/etc/rc`、`/etc/rc.local` 都**不存在**；`rc.d` 也不是 DSM 原生机制。
+
+Synology 的 `rc.d` 实际由 **`pkg-rclocal.service`** 驱动：
+
+```sh
+# /usr/syno/lib/systemd/scripts/pkg-rclocal.sh
+for sh in $(/bin/ls -1 /usr/local/etc/rc.d/*.sh 2>/dev/null | sort); do
+    $sh start || true          # ← 注意：带参数 start
+done
+```
+
+它属于 `syno-bootup-done.target`（**很晚**），而 Cloud Sync 属于
+`syno-low-priority-packages.target` → **rc.d 晚于 CloudSync 启动**。
+
+**因此采用双保险：**
+
+1. **主 = 自定义 systemd 单元 `quark-sync-bind.service`**（`systemctl enable`）
+   - `After=pkg-volume.target syno-volume.target`（等 /volume1）
+   - `Before=pkgctl-CloudSync.service`（**在 Cloud Sync 之前** bind）
+   - → Cloud Sync 一启动就看到完整目录，**无需重启**，零打扰
+2. **兜底 = `/usr/local/etc/rc.d/quark-sync-bind.sh start`**
+   - 只在「发现 bind 缺失并补上」时才 `synopkg restart CloudSync` 重扫
+   - 正常情况（主机制生效）识别到「已挂载」→ 0 秒返回，不打扰
+
+**其它实测坑**：
+- NAS 上**没有 `systemd-run`** → 不能用瞬态定时器做「延迟重启」。
+- systemd oneshot 服务里 `cmd &` 起的后台进程会被 cgroup 杀掉 → 别用后台延迟。
+- 用 `synopkg restart CloudSync` 会**同时重启百度云任务**（短暂中断）。
 
 ## 任务参数
 
@@ -70,9 +104,13 @@ tail -20 /var/log/quark-sync-bind.log        # bind 日志
 
 ## 限制与风险
 
-- **夸克上传封顶 ~500 KB/s**（账号级限速，本机无解）→ 503 GB 首轮约 **11.6 天**。
+- **夸克上传封顶 ~500 KB/s**（账号级限速，本机无解）→ 503 GB 首轮 **≥ 11.6 天**。
+- **★逐文件延迟高（实测）**：Alist WebDAV 每项（含建目录）约 **60–90 秒**
+  （日志时间戳：`IPTV.apk` → `图片/Pictures` 相隔 63s）。
+  → 33,810 个文件的**文件数开销**可能比带宽更致命（`备份/` 有 26,002 个小文件）。
 - **夸克 Cookie 约 13 天过期** → 靠 `alist_quark_cookie_sync.py` 定时保活，临界但够用。
-- `rc.d` 钩子若被 DSM 大版本更新清掉 → 重启后 bind 不恢复（同步静默停；因 `no_delete` 不会误删）。
+- 开机单元/钩子若被 DSM 大版本更新清掉 → 重启后 bind 不恢复，同步**静默停**
+  （因 `no_delete=true`，**不会误删**夸克上的文件）。
 - Alist `:5244` 只绑 `127.0.0.1`（有意隔离），LAN 访问不到属正常。
 
 ## 相关
