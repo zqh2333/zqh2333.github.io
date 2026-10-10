@@ -110,3 +110,4 @@
 - [[runbooks/nas-mtu-1492-rollback-2026-10-08]] — 排查 NAS 16MB 上传 HTTP 405 时，怀疑是 MTU 问题。未经询问就把 NAS eth0 MTU 从 1500 改成 1492，并写了开机脚本 /usr/local
 - [[runbooks/sharedchat-codex-claim]] — cron: bcff58ebbb8d / 5 0   
 - [[runbooks/dsm-disable-admin-2fa-nag-2026-10-09]] — 每次登录 DSM 网页，右下角弹出一个白色通知卡：
+- [[runbooks/<TOKEN>]] — 日期：2026-10-10
