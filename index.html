@@ -1397,6 +1397,20 @@ http://www.myxzy.com/post-488.html
 
 <script src="/libs/aplayer/APlayer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js"></script>
+<script>
+(function(){
+ var player=document.querySelector('meting-js'); if(!player)return;
+ var state={failed:false,attempts:0};
+ try{state=JSON.parse(sessionStorage.getItem('blog-music-state')||'null')||state;}catch(_){}
+ player.addEventListener('error',function(){
+  state.attempts+=1;
+  if(state.attempts>=3){state.failed=true;var s=document.getElementById('musicStatus');if(s){s.textContent='音乐服务暂时不可用，请稍后重试。';s.style.display='block';}}
+  try{sessionStorage.setItem('blog-music-state',JSON.stringify(state));}catch(_){}
+ });
+ player.addEventListener('loadeddata',function(){state.failed=false;state.attempts=0;var s=document.getElementById('musicStatus');if(s)s.style.display='none';try{sessionStorage.setItem('blog-music-state',JSON.stringify(state));}catch(_){} });
+})();
+</script>
+<div id="musicStatus" role="status" aria-live="polite" style="display:none;position:fixed;left:8px;bottom:72px;z-index:100;font-size:12px;background:#fff;color:#555;padding:6px 10px;border-radius:4px"></div>
 
     
     <div class="container row center-align" style="margin-bottom: 15px !important;">
@@ -1468,16 +1482,23 @@ http://www.myxzy.com/post-488.html
                     var todayHour = today.getHours();
                     var todayMinute = today.getMinutes();
                     var todaySecond = today.getSeconds();
-                    var t1 = Date.UTC(startYear, startMonth, startDate, startHour, startMinute, startSecond);
-                    var t2 = Date.UTC(todayYear, todayMonth, todayDate, todayHour, todayMinute, todaySecond);
+                    var t1 = new Date(Number(startYear), Number(startMonth) - 1, Number(startDate), Number(startHour), Number(startMinute), Number(startSecond)).getTime();
+                    var t2 = today.getTime();
                     var diff = t2 - t1;
-                    var diffYears = Math.floor(diff / years);
-                    var diffDays = Math.floor((diff / days) - diffYears * 365);
-                    var diffHours = Math.floor((diff - (diffYears * 365 + diffDays) * days) / hours);
-                    var diffMinutes = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours) /
-                        minutes);
-                    var diffSeconds = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours -
-                        diffMinutes * minutes) / seconds);
+                    var diffYears = today.getFullYear() - Number(startYear);
+                    var yearAnchor = new Date(Number(startYear) + diffYears, Number(startMonth) - 1, Number(startDate), Number(startHour), Number(startMinute), Number(startSecond));
+                    if (yearAnchor > today) {
+                        diffYears--;
+                        yearAnchor.setFullYear(yearAnchor.getFullYear() - 1);
+                    }
+                    var remainder = t2 - yearAnchor.getTime();
+                    var diffDays = Math.floor(remainder / days);
+                    remainder -= diffDays * days;
+                    var diffHours = Math.floor(remainder / hours);
+                    remainder -= diffHours * hours;
+                    var diffMinutes = Math.floor(remainder / minutes);
+                    remainder -= diffMinutes * minutes;
+                    var diffSeconds = Math.floor(remainder / seconds);
                     if (startYear == todayYear) {
                         document.getElementById("year").innerHTML = todayYear;
                         document.getElementById("sitetime").innerHTML = "本站已安全运行 " + diffDays + " 天 " + diffHours +
