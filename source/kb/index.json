@@ -1,7 +1,7 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-10",
- "count": 104,
+ "count": 105,
  "categories": [
   {
    "id": "decisions",
@@ -21,7 +21,7 @@
   {
    "id": "runbooks",
    "name": "操作手册",
-   "count": 9
+   "count": 10
   },
   {
    "id": "meta",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "luckyg 每日签到 cron 静默停跑：fire_claim 残留卡死",
+   "date": "2026-10-10",
+   "category": "runbooks",
+   "url": "runbooks/luckyg-checkin-cron-fireclaim-wedge-2026-10-10.html",
+   "summary": "luckyg 每日签到 cron 静默停跑：fire_claim 残留卡死 日期 ：2026 10 10 现象 ： luckyg.131518.xyz 每日签到 cron（job 4b53ae5ee8cf ）从 2026"
+  },
   {
    "title": "去掉 DSM 登录时的「管理员帐户安全性」2FA 弹窗（2026-10-09）",
    "date": "2026-10-09",

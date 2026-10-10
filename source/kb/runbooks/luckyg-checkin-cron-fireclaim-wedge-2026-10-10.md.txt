@@ -1,0 +1,113 @@
+# luckyg 每日签到 cron 静默停跑：fire_claim 残留卡死
+
+**日期**：2026-10-10
+**现象**：`luckyg.131518.xyz` 每日签到 cron（job `4b53ae5ee8cf`）从 **2026-09-07** 起连续 33 天未执行。
+job 表面完全正常：`enabled=true`、`state=scheduled`、`last_status=ok`、`last_delivery_error=null`，
+**没有任何报错**——所以不会触发任何告警，只能靠"发现站点没签到"或横向比对才发现。
+
+## 根因
+
+`cron/jobs.json` 中该 job 残留一个 **`fire_claim`**，且 `next_run_at` 已被推到未来。
+其它一切正常的同批次任务（简直了／薄荷／Venlacy／MCII）**都没有 `fire_claim`**。
+
+### 机制（Hermes cron，`cron/jobs.py`）
+
+```
+claim_job_for_fire(job_id, claim_ttl_seconds=300)   # jobs.py:1710
+  ├─ 若无 claim 或 claim 已过期(>300s) → 抢到
+  ├─ 写入 fire_claim = {at, by}
+  └─ 对 cron/interval 任务同时推进 next_run_at 到下一次   # ← 关键
+run_one_job(...)
+  └─ mark_job_run(...)                                # jobs.py:1497
+       ├─ last_run_at / last_status
+       ├─ fire_claim = None    # 只有"运行完成"才清除
+       └─ run_claim  = None
+```
+
+**认领成功会立刻推进 `next_run_at`，但 claim 只有运行完成才清除。**
+若"认领成功 → 执行被中断"，就留下 **claim 残留 + next_run_at 已推走** 的组合：
+任务看起来随时该跑，实际永远不入 due 队列 → **静默永久停跑**。
+
+（源码注释原文：future/broken claim 会让 job "permanently unfireable"。）
+
+### 本机触发点
+
+`fire_claim` 在本机**只有一个写入方**：`cronjob` 工具的 `run`（action=run）动作
+（`tools/cronjob_tools.py:625` → `_execute_job_now`）。因为 `cron.provider` 未配置，
+跑的是内置 `InProcessCronScheduler`，它**从不调用** `fire_due`（外部 Chronos 路径才用）。
+
+→ 即：**任何一次"手动试跑 cron job"如果中途被打断，就会把这个 job 永久卡死。**
+本次卡死时间点 `fire_claim.at=2026-10-10T11:34:31`，恰逢 agent 轮次处理同一条请求时
+被上游 502 + gateway shutdown（11:38）打断。09-07 那次是同类意外。
+
+## 排查手法（横向比对，最快）
+
+把同 schedule 的一批 job 拉出来比 `fire_claim` 字段——**唯一带 claim 的那个就是停跑的**：
+
+```python
+import json, pathlib
+jobs = json.loads((pathlib.Path.home()/'.hermes/cron/jobs.json').read_text())
+for j in (jobs if isinstance(jobs, list) else jobs.get('jobs', list(jobs.values()))):
+    if j.get('schedule', {}).get('expr') == '0 8 * * *':
+        print(j['name'], '| enabled=', j.get('enabled'),
+              '| last_run=', j.get('last_run_at'),
+              '| claim=', 'YES' if j.get('fire_claim') else 'no')
+```
+
+也可直接看 `repeat.completed` 是否停止增长（本例停在 47）。
+
+## 修复
+
+**必须走 Hermes 自己的锁**（`_jobs_lock()`），不要直接编辑 jobs.json（会被调度器覆写）：
+
+```python
+import sys; sys.path.insert(0, "/home/user/.hermes/hermes-agent")
+from datetime import timedelta
+from cron.jobs import load_jobs, save_jobs, _jobs_lock, _hermes_now
+
+JID = "4b53ae5ee8cf"
+with _jobs_lock():
+    jobs = load_jobs()
+    if isinstance(jobs, dict): jobs = list(jobs.values())
+    for j in jobs:
+        if j["id"] == JID:
+            j["fire_claim"] = None
+            j["run_claim"] = None
+            j["next_run_at"] = (_hermes_now() + timedelta(minutes=2)).isoformat()
+    save_jobs(jobs)
+```
+
+用 `~/.hermes/hermes-agent/venv/bin/python` 执行。
+改前先 `cp -a ~/.hermes/cron/jobs.json{,.bak-$(date +%Y%m%d-%H%M%S)}`。
+
+## 验证（端到端闭环，别只看字段）
+
+把 `next_run_at` 设成 `now+2min`，等调度器 tick，然后看三处：
+
+1. 日志：`INFO cron.scheduler: Job '<id>': delivered to telegram:<chat>` ✅
+2. `last_run_at` 已更新 + `last_status=ok`
+3. **`next_run_at` 自动回到 `次日 08:00`** + `fire_claim=None`（证明已重新武装）
+
+`@reboot`/tick 间隔约 1 分钟；`ticker_heartbeat` / `ticker_last_success` 在 `~/.hermes/cron/` 下。
+
+## 附带修复
+
+- **wrapper 补齐成熟写法**（对齐薄荷／简直了／Venlacy 三个正常任务）：
+  `luckyg_checkin_random.sh` 改为 `set -u` + `LUCKYG_NO_WAIT=1` 逃生阀 + 管道过
+  `cron_notify_filter.py luckyg`（原来无过滤器，通知是整行 JSON 原文）。
+- `cron_notify_filter.py` 新增 `luckyg` 分支：成功→`✅ luckyg：签到成功｜奖励 N`；
+  已签→`✅ luckyg：今日已签到`；Turnstile→`⚠️ ... 需人工处理`。
+
+## Turnstile 说明
+
+2026-09-06 曾失败一次：`{'message': 'Turnstile token 为空'}`。查 `GET /api/status`：
+`turnstile_check=False`（站点 v1.3.7 / New API）→ 站主临时开了一天就关了，**非常态**。
+**若将来强制 Turnstile：不求解、不绕过**（用户硬规则），脚本报 `⚠️` 交人工。
+
+## 认证
+
+- `~/.hermes/secrets/luckyg.env`（600）：`LUCKYG_BASE` / `LUCKYG_USER_ID=966` / `LUCKYG_ACCESS_TOKEN`
+- 请求头：`Authorization: <access_token>` + `New-Api-User: 966`
+- 端点：`GET /api/user/self` 验活，`GET/POST /api/user/checkin` 签到
+- 脚本：`~/.hermes/scripts/luckyg_daily_checkin.py`；wrapper：`luckyg_checkin_random.sh`
+- job：`4b53ae5ee8cf`（`0 8 * * *`，no_agent，deliver=origin）

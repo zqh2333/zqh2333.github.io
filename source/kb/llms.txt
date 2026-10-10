@@ -1,4 +1,4 @@
-# 运维知识库 · 104 篇 · 生成于 2026-10-10
+# 运维知识库 · 105 篇 · 生成于 2026-10-10
 
 ## 决策记录 (24)
 - [2026-10-08] 运维知识库自动沉淀发布（2026-10-08） — decisions/kb-auto-publish-2026-10-08.html
@@ -190,7 +190,9 @@
 - [] Verification Challenge Lab v1.0.1 — infrastructure/verification-challenge-lab-v1.0.1.html
     Verification Challenge Lab v1.0.1 本地产物： /home/user/artifacts/verification challenge lab v1.0.1.zip SHA 256： <H
 
-## 操作手册 (9)
+## 操作手册 (10)
+- [2026-10-10] luckyg 每日签到 cron 静默停跑：fire_claim 残留卡死 — runbooks/luckyg-checkin-cron-fireclaim-wedge-2026-10-10.html
+    luckyg 每日签到 cron 静默停跑：fire_claim 残留卡死 日期 ：2026 10 10 现象 ： luckyg.131518.xyz 每日签到 cron（job 4b53ae5ee8cf ）从 2026
 - [2026-10-09] 去掉 DSM 登录时的「管理员帐户安全性」2FA 弹窗（2026-10-09） — runbooks/dsm-disable-admin-2fa-nag-2026-10-09.html
     去掉 DSM 登录时的「管理员帐户安全性」2FA 弹窗（2026 10 09） 现象 每次登录 DSM 网页，右下角弹出一个白色通知卡： 橙色感叹号图标，标题（蓝色）「 管理员帐户安全性 」 正文：默认帐户"admin"
 - [2026-10-08] NAS MTU 误设 1492 导致 DS file 断连（2026-10-08） — runbooks/nas-mtu-1492-rollback-2026-10-08.html
