@@ -49,6 +49,36 @@
                    list-folded='<%- theme.music.listFolded ? 'true' : 'false' %>'
         >
         </meting-js>
+        <div id="musicStatus" role="status" aria-live="polite" style="display:none;text-align:center;font-size:12px;opacity:.8;margin-top:6px"></div>
+        <script>
+            (function () {
+                var player = document.querySelector('meting-js');
+                var status = document.getElementById('musicStatus');
+                if (!player || !status) return;
+                var state = {failed: false, attempts: 0};
+                try { state = JSON.parse(sessionStorage.getItem('blog-music-state') || 'null') || state; } catch (_) {}
+                window.addEventListener('storage', function (event) {
+                    if (event.key === 'blog-music-state' && event.newValue) {
+                        try { state = JSON.parse(event.newValue); } catch (_) {}
+                    }
+                });
+                player.addEventListener('error', function () {
+                    state.attempts += 1;
+                    if (state.attempts >= 3) {
+                        state.failed = true;
+                        status.textContent = '音乐服务暂时不可用，请稍后重试。';
+                        status.style.display = 'block';
+                    }
+                    try { sessionStorage.setItem('blog-music-state', JSON.stringify(state)); } catch (_) {}
+                });
+                player.addEventListener('loadeddata', function () {
+                    state.failed = false;
+                    state.attempts = 0;
+                    status.style.display = 'none';
+                    try { sessionStorage.setItem('blog-music-state', JSON.stringify(state)); } catch (_) {}
+                });
+            })();
+        </script>
     </div>
 </div>
 

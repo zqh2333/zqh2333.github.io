@@ -20,14 +20,14 @@
             <% } %>
 			
             <% if (theme.busuanziStatistics && theme.busuanziStatistics.totalTraffic) { %>
-            <span id="busuanzi_container_site_pv" style='display:none'></span>
+            <span id="busuanzi_container_site_pv" style="display:none">
                 |&nbsp;<i class="far fa-eye"></i>&nbsp;总访问量:&nbsp;<span id="busuanzi_value_site_pv"
                     class="white-color"></span>&nbsp;次
             </span>
             <% } %>
 			
             <% if (theme.busuanziStatistics && theme.busuanziStatistics.totalNumberOfvisitors) { %>
-            <span id="busuanzi_container_site_uv" style='display:none'></span>
+            <span id="busuanzi_container_site_uv" style="display:none">
                 |&nbsp;<i class="fas fa-users"></i>&nbsp;总访问人数:&nbsp;<span id="busuanzi_value_site_uv"
                     class="white-color"></span>&nbsp;人
             </span>
@@ -55,16 +55,23 @@
                     var todayHour = today.getHours();
                     var todayMinute = today.getMinutes();
                     var todaySecond = today.getSeconds();
-                    var t1 = Date.UTC(startYear, startMonth, startDate, startHour, startMinute, startSecond);
-                    var t2 = Date.UTC(todayYear, todayMonth, todayDate, todayHour, todayMinute, todaySecond);
+                    var t1 = new Date(Number(startYear), Number(startMonth) - 1, Number(startDate), Number(startHour), Number(startMinute), Number(startSecond)).getTime();
+                    var t2 = today.getTime();
                     var diff = t2 - t1;
-                    var diffYears = Math.floor(diff / years);
-                    var diffDays = Math.floor((diff / days) - diffYears * 365);
-                    var diffHours = Math.floor((diff - (diffYears * 365 + diffDays) * days) / hours);
-                    var diffMinutes = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours) /
-                        minutes);
-                    var diffSeconds = Math.floor((diff - (diffYears * 365 + diffDays) * days - diffHours * hours -
-                        diffMinutes * minutes) / seconds);
+                    var diffYears = today.getFullYear() - Number(startYear);
+                    var yearAnchor = new Date(Number(startYear) + diffYears, Number(startMonth) - 1, Number(startDate), Number(startHour), Number(startMinute), Number(startSecond));
+                    if (yearAnchor > today) {
+                        diffYears--;
+                        yearAnchor.setFullYear(yearAnchor.getFullYear() - 1);
+                    }
+                    var remainder = t2 - yearAnchor.getTime();
+                    var diffDays = Math.floor(remainder / days);
+                    remainder -= diffDays * days;
+                    var diffHours = Math.floor(remainder / hours);
+                    remainder -= diffHours * hours;
+                    var diffMinutes = Math.floor(remainder / minutes);
+                    remainder -= diffMinutes * minutes;
+                    var diffSeconds = Math.floor(remainder / seconds);
                     if (startYear == todayYear) {
                         document.getElementById("year").innerHTML = todayYear;
                         document.getElementById("sitetime").innerHTML = "本站已安全运行 " + diffDays + " 天 " + diffHours +
