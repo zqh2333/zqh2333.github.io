@@ -1399,15 +1399,17 @@ http://www.myxzy.com/post-488.html
 <script src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js"></script>
 <script>
 (function(){
- var player=document.querySelector('meting-js'); if(!player)return;
+ var player=document.querySelector('meting-js'),status=document.getElementById('musicStatus'); if(!player||!status)return;
  var state={failed:false,attempts:0};
  try{state=JSON.parse(sessionStorage.getItem('blog-music-state')||'null')||state;}catch(_){}
+ if(state.failed){status.textContent='音乐服务暂时不可用，请稍后重试。';status.style.display='block';}
+ function persist(){try{sessionStorage.setItem('blog-music-state',JSON.stringify(state));}catch(_){}}
  player.addEventListener('error',function(){
   state.attempts+=1;
-  if(state.attempts>=3){state.failed=true;var s=document.getElementById('musicStatus');if(s){s.textContent='音乐服务暂时不可用，请稍后重试。';s.style.display='block';}}
-  try{sessionStorage.setItem('blog-music-state',JSON.stringify(state));}catch(_){}
+  if(state.attempts>=3){state.failed=true;status.textContent='音乐服务暂时不可用，请稍后重试。';status.style.display='block';}
+  persist();
  });
- player.addEventListener('loadeddata',function(){state.failed=false;state.attempts=0;var s=document.getElementById('musicStatus');if(s)s.style.display='none';try{sessionStorage.setItem('blog-music-state',JSON.stringify(state));}catch(_){} });
+ player.addEventListener('loadeddata',function(){state.failed=false;state.attempts=0;status.style.display='none';persist();});
 })();
 </script>
 <div id="musicStatus" role="status" aria-live="polite" style="display:none;position:fixed;left:8px;bottom:72px;z-index:100;font-size:12px;background:#fff;color:#555;padding:6px 10px;border-radius:4px"></div>
