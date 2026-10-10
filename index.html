@@ -1614,7 +1614,7 @@ $(function () {
     <script>
 (function(){
  var done=false,attempt=0;
- var hosts=['https://busuanzi.ibruce.info/busuanzi?jsonpCallback=FooterBusuanzi','http://busuanzi.ibruce.info/busuanzi?jsonpCallback=FooterBusuanzi','https://104.243.17.131/busuanzi?jsonpCallback=FooterBusuanzi','https://97.64.23.206/busuanzi?jsonpCallback=FooterBusuanzi'];
+ var hosts=['https://busuanzi.ibruce.info/busuanzi?jsonpCallback=FooterBusuanzi'];
  function show(data){if(done||!data||data.site_pv==null||data.site_uv==null)return;done=true;document.getElementById('busuanzi_value_site_pv').textContent=data.site_pv;document.getElementById('busuanzi_value_site_uv').textContent=data.site_uv;['busuanzi_container_site_pv','busuanzi_container_site_uv'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='inline';});}
  function tryNext(){if(done||attempt>=hosts.length)return;var host=hosts[attempt++],cb='FooterBusuanzi_'+Date.now()+'_'+attempt,script=document.createElement('script'),timer=setTimeout(function(){script.remove();tryNext();},5000);window[cb]=function(data){clearTimeout(timer);try{show(data);}finally{delete window[cb];script.remove();if(!done)tryNext();}};script.onerror=function(){clearTimeout(timer);delete window[cb];script.remove();tryNext();};script.src=host.replace('FooterBusuanzi',cb);document.head.appendChild(script);}
  tryNext();
