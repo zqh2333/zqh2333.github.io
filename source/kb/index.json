@@ -1,7 +1,7 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-11",
- "count": 105,
+ "count": 106,
  "categories": [
   {
    "id": "decisions",
@@ -11,7 +11,7 @@
   {
    "id": "incidents",
    "name": "故障记录",
-   "count": 30
+   "count": 31
   },
   {
    "id": "infrastructure",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "CPA 上游「烁」403 假页面 = Cloudflare UA 封禁（error 1010）",
+   "date": "2026-10-11",
+   "category": "incidents",
+   "url": "incidents/elysiver-cloudflare-ua-1010-fix-2026-10-11.html",
+   "summary": "CPA 上游「烁」403 假页面 = Cloudflare UA 封禁（error 1010） 日期：2026 10 11 分类：incidents 状态：已修复并端到端验证 背景 / 现象 症状：CPA 里 suo:g"
+  },
   {
    "title": "luckyg 每日签到 cron 静默停跑：fire_claim 残留卡死",
    "date": "2026-10-10",
