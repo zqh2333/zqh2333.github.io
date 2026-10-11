@@ -1,0 +1,136 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPA 上游「烁」403 假页面 = Cloudflare UA 封禁（error 1010） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="cpa-403-cloudflare-ua-error-1010">CPA 上游「烁」403 假页面 = Cloudflare UA 封禁（error 1010）</h1>
+<p>日期：2026-10-11
+分类：incidents
+状态：已修复并端到端验证</p>
+<h2 id="_1">背景 / 现象</h2>
+<ul>
+<li>症状：CPA 里 <code>suo:glm-5.3</code>、<code>suo:glm-5.3-flash</code> 一律不可用。Hermes 报
+  <code>⚠️ The model provider failed after retries</code>；日志里是
+  <code>PermissionDeniedError</code> / <code>HTTP 403 — 系统终端 - 异常状态诊断</code>。</li>
+<li>403 的<strong>响应体不是 JSON API 错误</strong>，而是一个伪装 HTML 页
+  （<code>&lt;title&gt;系统终端 - 异常状态诊断&lt;/title&gt;</code>、<code>TERMINAL COGNITIVE REPORT // PORT 404</code>）。</li>
+<li>计费库统计：provider <code>烁</code>（上游 <code>https://elysiver.h-e.top/v1</code>）
+  自 2026-09-09 上线到 10-11 共 <strong>81 次请求，81 次全部失败、0 次成功</strong>；
+  覆盖 <code>grok-4.6</code>(43)、<code>deepseek-v4-pro-0813</code>(20)、<code>deepseek-v4-flash-0731</code>(7)、
+  <code>glm-5.3</code>(6)、<code>glm-5.3-flash</code>(5) —— 连不用工具的模型也全挂。</li>
+</ul>
+<h2 id="_2">排查过程（排除项）</h2>
+<table>
+<thead>
+<tr>
+<th>假设</th>
+<th>证据</th>
+<th>结论</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>限制工具调用</td>
+<td>81/81 全挂，含无工具模型；本地计费插件 <code>routes</code> 表为空、api_keys 无模型限制</td>
+<td>排除</td>
+</tr>
+<tr>
+<td>缺价格被计费拦截</td>
+<td>早期确有 <code>model_price_error 模型 suo:glm-5.3-flash 尚未定价</code>，但价格已补齐（<code>suo:glm-5.3</code> 1.4/4.4、<code>-flash</code> 0.15/0.5）</td>
+<td>排除（已修）</td>
+</tr>
+<tr>
+<td>key 失效</td>
+<td>3 条 key 实际只有 2 把（1 条重复），但换任何 key 都一样</td>
+<td>非主因</td>
+</tr>
+<tr>
+<td>上游整站拒绝</td>
+<td>403 响应头 <code>server=cloudflare</code></td>
+<td><strong>命中</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_3">根因</h2>
+<p><strong>Cloudflare error 1010</strong>：站点 <code>elysiver.h-e.top</code>（CF 前置）把
+<strong>Python/脚本类 User-Agent 拉黑了</strong>。CPA 默认用 OpenAI/Python SDK 的 UA 出站，
+所以每个请求在 CF 边缘就被 403 掉，<strong>根本到不了模型层</strong>。
+这也解释了为什么响应是 HTML 伪装页而不是 API JSON 错误。</p>
+<h2 id="_4">修复</h2>
+<p>给该 provider <strong>单独</strong>挂 codex 指纹请求头（<strong>不碰全局 codex-fingerprint</strong>，
+不影响其他 provider）：</p>
+<pre><code class="language-yaml">openai-compatibility:
+  - name: 烁
+    base-url: https://elysiver.h-e.top/v1
+    headers:                                    # ← 新增，仅此 provider
+      User-Agent: &quot;codex_cli_rs/0.114.0 (Mac OS 14.2.0; x86_64) vscode/1.111.0&quot;
+      originator: &quot;codex_cli_rs&quot;
+      version: &quot;0.114.0&quot;
+</code></pre>
+<p>要点：
+- CPA 的 <code>openai-compatibility</code> 条目支持 <code>headers:</code> 自定义出站头
+  （值以 <code>$</code> 开头可动态复制下游客户端同名头）。<strong>这是 per-provider 的</strong>。
+- 顶层 <code>codex-header-defaults</code> 只对 <strong>OAuth/文件型 Codex</strong> 生效，
+  对 openai-compatibility 条目<strong>无效</strong>，别指望它。
+- CPA <strong>热加载 config.yaml</strong>，改完不需要重启容器。
+- 备份：<code>/root/CLIProxyAPI/config.yaml.bak_before_suo_codexua_&lt;时间戳&gt;</code></p>
+<h2 id="_5">验证方式与实际结果</h2>
+<p>受控对照（直打上游，一次一发）：</p>
+<table>
+<thead>
+<tr>
+<th>出站 UA</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>默认 python-urllib</td>
+<td>HTTP <strong>403</strong>，<code>server=cloudflare</code>，<code>error code: 1010</code></td>
+</tr>
+<tr>
+<td><code>codex_cli_rs/0.114.0 …</code></td>
+<td>HTTP <strong>200</strong> ✅ 真实补全</td>
+</tr>
+<tr>
+<td>Chrome UA</td>
+<td>HTTP <strong>200</strong> ✅</td>
+</tr>
+</tbody>
+</table>
+<p>改配置后经 CPA 端到端复测：</p>
+<table>
+<thead>
+<tr>
+<th>请求</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>suo:glm-5.3</code></td>
+<td>HTTP <strong>200</strong></td>
+</tr>
+<tr>
+<td><code>suo:glm-5.3-flash</code></td>
+<td>HTTP <strong>200</strong></td>
+</tr>
+<tr>
+<td><code>suo:glm-5.3</code> + <code>tools</code> + <code>tool_choice:auto</code></td>
+<td>HTTP <strong>200</strong>，<code>finish_reason=tool_calls</code>，正确返回 <code>get_weather({"city":"Beijing"})</code> ✅</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_6">可复用教训</h2>
+<ol>
+<li><strong>403 + 自定义 HTML 页（而非 JSON）</strong> ⇒ 先怀疑边缘/WAF，不要在后端模型配置里找原因。</li>
+<li>响应头里的 <code>server: cloudflare</code> + <code>error code: 1010</code> 就是「UA 被封」的铁证。</li>
+<li>公共 openai-compat 上游默认用 OpenAI/Python UA；遇到 CF UA 封禁时，
+   <strong>只给该 provider 加 <code>headers</code></strong> 是最小改动，比全局改 UA 安全得多。</li>
+<li>不要拿「工具调用被限制」解释一个<strong>所有模型都挂</strong>的上游故障——用「有没有成功过」一刀切开。</li>
+</ol>
+<h2 id="_7">相关</h2>
+<ul>
+<li><code>incidents/&lt;TOKEN&gt;.md</code> —— 同一站点的另一类拦截</li>
+<li>CPA 配置权威：<code>/root/CLIProxyAPI/config.yaml</code>（容器内同路径，宿主机挂载）</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-11</footer></div></body></html>

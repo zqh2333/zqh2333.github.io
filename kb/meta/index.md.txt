@@ -111,3 +111,4 @@
 - [[runbooks/sharedchat-codex-claim]] — cron: bcff58ebbb8d / 5 0   
 - [[runbooks/dsm-disable-admin-2fa-nag-2026-10-09]] — 每次登录 DSM 网页，右下角弹出一个白色通知卡：
 - [[runbooks/<TOKEN>]] — 日期：2026-10-10
+- [[incidents/<TOKEN>]] — 日期：2026-10-11
