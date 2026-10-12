@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>知识库自动发布 cron 偶发失败：github 瞬时不可达 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="cron-github">知识库自动发布 cron 偶发失败：github 瞬时不可达</h1>
+<ul>
+<li><strong>日期</strong>：2026-10-13</li>
+<li><strong>分类</strong>：incidents</li>
+<li><strong>影响</strong>：cron「知识库自动沉淀发布」（<code>0 */6 * * *</code>，no_agent）在 00:02 整轮失败，推送告警到 Telegram；该轮新增知识未发布（延迟到下次）。</li>
+</ul>
+<h2 id="_1">背景</h2>
+<p>发布链路：<code>kb_auto_publish.sh</code> → <code>kb_publish.py</code>（脱敏生成）→ 泄漏复检 → 变化检测 → <code>kb_deploy.py</code>（clone master/hexo + push）→ 线上实测。</p>
+<p>失败日志（<code>~/.hermes/kb-build/publish.log</code>）：</p>
+<pre><code>[1/2] master 分支 → /kb/
+→ clone master
+fatal: 无法访问 'https://github.com/.../kb.example.com.git/'：
+Failed to connect to github.com port 443 after 133897 ms: Couldn't connect to server
+✗ clone master 失败
+</code></pre>
+<h2 id="_2">结论（根因）</h2>
+<ul>
+<li><strong>不是脚本逻辑错，也不是凭据问题</strong>：同一时刻其他 <code>0 */6</code> 任务（quark 保活、模型守卫）在 00:00 均成功 → 说明是 <strong>github 专线的瞬时抖动</strong>。</li>
+<li>本机 github 走<strong>路由器 fake-ip 代理</strong>（<code>github.com</code> → <code>198.18.0.95</code>，<code>/etc/hosts</code> 无固定映射）。代理/节点瞬时不可用时，连接被<strong>黑洞</strong>，TCP 一直挂到 134 秒才报错。</li>
+<li>事后复测：<code>curl https://github.com</code> 5/5 成功（conn ≈3ms）、<code>git ls-remote</code> 正常 → 已自愈。</li>
+<li>日志中该失败<strong>仅出现 1 次</strong>，属首次偶发。</li>
+</ul>
+<h2 id="_3">修复（抗抖动，非绕过）</h2>
+<ol>
+<li><strong><code>kb_deploy.py</code></strong>：所有<strong>网络</strong> git 命令（clone / push）改走 <code>net_run()</code>——
+   - 单次硬超时 <code>timeout 60</code>（黑洞连接 60s 即放弃，不再挂 134s）；
+   - 最多 4 次尝试，退避 10/20/30s；
+   - 置 <code>GIT_TERMINAL_PROMPT=0</code>，绝不因认证提示挂死；
+   - 本地 git 命令（add/commit/status）不受影响。</li>
+<li><strong><code>kb_auto_publish.sh</code></strong>：在<strong>变化检测之后、推送之前</strong>加<strong>网络闸门</strong>——最多 6 次 × (8s 探测 + 30s 间隔) ≈ 3 分钟等 github 恢复；仍不可达才退出 1 并明确报「网络故障」。
+   - 闸门放在变化检测之后：<strong>无变化时根本不碰网络</strong>（保持静默）。</li>
+</ol>
+<h2 id="_4">验证方式</h2>
+<pre><code class="language-bash">bash -n ~/.hermes/scripts/kb_auto_publish.sh          # 语法
+python3 ~/.hermes/scripts/kb_deploy.py --dry          # 凭据 + 站点就绪
+bash ~/.hermes/scripts/kb_auto_publish.sh             # 端到端实跑
+# 重试机制单测（模拟黑洞端点）
+python3 -c &quot;import sys;sys.path.insert(0,'$HOME/.hermes/scripts');import kb_deploy as k;k.NET_ATTEMPT_TIMEOUT=3;k.NET_TRIES=3;k.NET_BACKOFF=[1,1];k.net_run(['ls-remote','https://&lt;LAN&gt;/x.git'],label='模拟')&quot;
+</code></pre>
+<h2 id="_5">实际结果</h2>
+<ul>
+<li>端到端实跑：<code>✅ 知识库已自动发布：https://kb.example.com/kb/ （106 篇，线上 HTTP 200）</code>，耗时 15s，exit 0（补发了 00:02 积压内容）。</li>
+<li>远端确认：master 最新提交 <code>kb: 发布脱敏运维知识库（111 个页面）</code>；线上 <code>/kb/</code>、<code>index.json</code> 均 HTTP 200。</li>
+<li>重试单测：3 次尝试 + 2 次退避 + 明确报错，总耗时 ≈11s，符合预期。</li>
+<li>备份：<code>kb_deploy.py.bak_20261013_004336</code>、<code>kb_auto_publish.sh.bak_20261013_004336</code>。</li>
+</ul>
+<h2 id="_6">教训</h2>
+<ul>
+<li>走代理/fake-ip 的出网命令<strong>必须自带硬超时 + 重试</strong>，否则一次抖动就让整轮任务失败并误报为「脚本 bug」。</li>
+<li>网络闸门要放在<strong>真正需要网络的那一步之前</strong>（此处为变化检测之后），既吸收抖动又不破坏「无变化静默」的约定。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-13</footer></div></body></html>

@@ -1,0 +1,58 @@
+# 知识库自动发布 cron 偶发失败：github 瞬时不可达
+
+- **日期**：2026-10-13
+- **分类**：incidents
+- **影响**：cron「知识库自动沉淀发布」（`0 */6 * * *`，no_agent）在 00:02 整轮失败，推送告警到 Telegram；该轮新增知识未发布（延迟到下次）。
+
+## 背景
+
+发布链路：`kb_auto_publish.sh` → `kb_publish.py`（脱敏生成）→ 泄漏复检 → 变化检测 → `kb_deploy.py`（clone master/hexo + push）→ 线上实测。
+
+失败日志（`~/.hermes/kb-build/publish.log`）：
+
+```
+[1/2] master 分支 → /kb/
+→ clone master
+fatal: 无法访问 'https://github.com/.../kb.example.com.git/'：
+Failed to connect to github.com port 443 after 133897 ms: Couldn't connect to server
+✗ clone master 失败
+```
+
+## 结论（根因）
+
+- **不是脚本逻辑错，也不是凭据问题**：同一时刻其他 `0 */6` 任务（quark 保活、模型守卫）在 00:00 均成功 → 说明是 **github 专线的瞬时抖动**。
+- 本机 github 走**路由器 fake-ip 代理**（`github.com` → `198.18.0.95`，`/etc/hosts` 无固定映射）。代理/节点瞬时不可用时，连接被**黑洞**，TCP 一直挂到 134 秒才报错。
+- 事后复测：`curl https://github.com` 5/5 成功（conn ≈3ms）、`git ls-remote` 正常 → 已自愈。
+- 日志中该失败**仅出现 1 次**，属首次偶发。
+
+## 修复（抗抖动，非绕过）
+
+1. **`kb_deploy.py`**：所有**网络** git 命令（clone / push）改走 `net_run()`——
+   - 单次硬超时 `timeout 60`（黑洞连接 60s 即放弃，不再挂 134s）；
+   - 最多 4 次尝试，退避 10/20/30s；
+   - 置 `GIT_TERMINAL_PROMPT=0`，绝不因认证提示挂死；
+   - 本地 git 命令（add/commit/status）不受影响。
+2. **`kb_auto_publish.sh`**：在**变化检测之后、推送之前**加**网络闸门**——最多 6 次 × (8s 探测 + 30s 间隔) ≈ 3 分钟等 github 恢复；仍不可达才退出 1 并明确报「网络故障」。
+   - 闸门放在变化检测之后：**无变化时根本不碰网络**（保持静默）。
+
+## 验证方式
+
+```bash
+bash -n ~/.hermes/scripts/kb_auto_publish.sh          # 语法
+python3 ~/.hermes/scripts/kb_deploy.py --dry          # 凭据 + 站点就绪
+bash ~/.hermes/scripts/kb_auto_publish.sh             # 端到端实跑
+# 重试机制单测（模拟黑洞端点）
+python3 -c "import sys;sys.path.insert(0,'$HOME/.hermes/scripts');import kb_deploy as k;k.NET_ATTEMPT_TIMEOUT=3;k.NET_TRIES=3;k.NET_BACKOFF=[1,1];k.net_run(['ls-remote','https://<LAN>/x.git'],label='模拟')"
+```
+
+## 实际结果
+
+- 端到端实跑：`✅ 知识库已自动发布：https://kb.example.com/kb/ （106 篇，线上 HTTP 200）`，耗时 15s，exit 0（补发了 00:02 积压内容）。
+- 远端确认：master 最新提交 `kb: 发布脱敏运维知识库（111 个页面）`；线上 `/kb/`、`index.json` 均 HTTP 200。
+- 重试单测：3 次尝试 + 2 次退避 + 明确报错，总耗时 ≈11s，符合预期。
+- 备份：`kb_deploy.py.bak_20261013_004336`、`kb_auto_publish.sh.bak_20261013_004336`。
+
+## 教训
+
+- 走代理/fake-ip 的出网命令**必须自带硬超时 + 重试**，否则一次抖动就让整轮任务失败并误报为「脚本 bug」。
+- 网络闸门要放在**真正需要网络的那一步之前**（此处为变化检测之后），既吸收抖动又不破坏「无变化静默」的约定。

@@ -1,4 +1,4 @@
-# 运维知识库 · 106 篇 · 生成于 2026-10-13
+# 运维知识库 · 107 篇 · 生成于 2026-10-13
 
 ## 决策记录 (24)
 - [2026-10-08] 运维知识库自动沉淀发布（2026-10-08） — decisions/kb-auto-publish-2026-10-08.html
@@ -50,7 +50,9 @@
 - [2026-07-15] CPA 本地配置同步与低频模型审计 — decisions/cpa-local-model-sync.html
     CPA 本地配置同步与低频模型审计 服务位置 CPA 控制面：宝塔主机 <LAN 8 。 容器： cli proxy （ eceasy/cli proxy api ）。 本地配置： /root/CLIProxyAPI/c
 
-## 故障记录 (31)
+## 故障记录 (32)
+- [2026-10-13] 知识库自动发布 cron 偶发失败：github 瞬时不可达 — incidents/kb-publish-github-transient-network-retry-2026-10-13.html
+    知识库自动发布 cron 偶发失败：github 瞬时不可达 日期 ：2026 10 13 分类 ：incidents 影响 ：cron「知识库自动沉淀发布」（ 0 /6 ，no_agent）在 00:02 整轮失败，推
 - [2026-10-11] CPA 上游「烁」403 假页面 = Cloudflare UA 封禁（error 1010） — incidents/elysiver-cloudflare-ua-1010-fix-2026-10-11.html
     CPA 上游「烁」403 假页面 = Cloudflare UA 封禁（error 1010） 日期：2026 10 11 分类：incidents 状态：已修复并端到端验证 背景 / 现象 症状：CPA 里 suo:g
 - [2026-09-16] SharedChat Codex 领取任务提示修复 — incidents/sharedchat-codex-no-action-fix-2026-09-16.html
