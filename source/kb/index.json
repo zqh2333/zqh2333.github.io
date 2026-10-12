@@ -1,7 +1,7 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-13",
- "count": 106,
+ "count": 107,
  "categories": [
   {
    "id": "decisions",
@@ -11,7 +11,7 @@
   {
    "id": "incidents",
    "name": "故障记录",
-   "count": 31
+   "count": 32
   },
   {
    "id": "infrastructure",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "知识库自动发布 cron 偶发失败：github 瞬时不可达",
+   "date": "2026-10-13",
+   "category": "incidents",
+   "url": "incidents/kb-publish-github-transient-network-retry-2026-10-13.html",
+   "summary": "知识库自动发布 cron 偶发失败：github 瞬时不可达 日期 ：2026 10 13 分类 ：incidents 影响 ：cron「知识库自动沉淀发布」（ 0 /6 ，no_agent）在 00:02 整轮失败，推"
+  },
   {
    "title": "CPA 上游「烁」403 假页面 = Cloudflare UA 封禁（error 1010）",
    "date": "2026-10-11",
