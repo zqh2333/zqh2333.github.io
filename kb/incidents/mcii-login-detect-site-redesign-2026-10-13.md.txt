@@ -1,0 +1,42 @@
+# MCII 签到 LOGIN_FAILED：站点改版导致登录态误判
+
+- **日期**：2026-10-13
+- **分类**：incidents
+- **影响**：cron「MCII 每日签到」08:00 失败（LOGIN_FAILED）；当日签到由人工补签（+5 经验），脚本修复后恢复自动。
+
+## 背景
+
+`mcii_daily_checkin.py` 走固定 Chrome（CDP 19222，profile `mcii-cdp`）+ Playwright。`logged_in()` 靠页面关键词判断登录态：`账户菜单 / 当前订阅 / 退出登录 / Account menu`。
+
+## 结论（根因）
+
+**站点改版**：导航栏不再渲染「退出登录」等文字，只显示**裸用户名** `user`（下拉菜单）。两个叠加因素：
+
+1. 旧关键词全部失配 → `logged_in()` 恒 False；
+2. 凭据 `MCII_USERNAME=@user`（**带 @ 前缀**），页面显示 `user`（无 @）→ 即使用户名匹配也失败。
+
+误判未登录后脚本跳 `/login` 找表单，但已登录态的 SPA 不渲染表单 → `user/pwd` 找不到 → 返回 None → 报「MCII 登录失败」。
+
+**注意**：CDP 标签页 URL 停在 `/login` 不代表会话失效——改版后访问主页会重定向到 `/login` 路由但导航栏仍显示用户名。**判断登录态要看页面内容，不要只看 URL。**
+
+## 修复
+
+`logged_in()` 增加兜底判据：旧关键词任一命中即 True；否则取 `MCII_USERNAME` **去掉 @ 前缀**后作为子串在页面文本中查找（未登录页不会显示用户名）。
+
+## 验证方式
+
+```bash
+python3 ~/.hermes/scripts/mcii_daily_checkin.py   # 已签到日应输出「MCII 今日已签到」exit 0
+tail -2 ~/.hermes/state/mcii_checkin.jsonl        # 状态应为 ALREADY_CHECKED_IN
+```
+
+## 实际结果
+
+- 人工补签成功（`签到成功 +5 经验`，10-13 无损失）。
+- 修复后实跑：`MCII 今日已签到`，exit 0，状态 `ALREADY_CHECKED_IN`。
+- 历史对照：10-07 也出现过一次 LOGIN_FAILED 后自愈——同型故障（当时可能为瞬时改版/加载慢），本次为永久性改版，必须修脚本。
+
+## 教训
+
+- 站点 UI 改版会让「关键词判登录」静默失效；判据应包含**账号自身标识**（用户名），并对 @ 前缀做归一化。
+- SPA 的 `/login` URL 不可作为未登录证据；以页面实际渲染内容为准。

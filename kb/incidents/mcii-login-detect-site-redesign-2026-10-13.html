@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MCII 签到 LOGIN_FAILED：站点改版导致登录态误判 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="mcii-login_failed">MCII 签到 LOGIN_FAILED：站点改版导致登录态误判</h1>
+<ul>
+<li><strong>日期</strong>：2026-10-13</li>
+<li><strong>分类</strong>：incidents</li>
+<li><strong>影响</strong>：cron「MCII 每日签到」08:00 失败（LOGIN_FAILED）；当日签到由人工补签（+5 经验），脚本修复后恢复自动。</li>
+</ul>
+<h2 id="_1">背景</h2>
+<p><code>mcii_daily_checkin.py</code> 走固定 Chrome（CDP 19222，profile <code>mcii-cdp</code>）+ Playwright。<code>logged_in()</code> 靠页面关键词判断登录态：<code>账户菜单 / 当前订阅 / 退出登录 / Account menu</code>。</p>
+<h2 id="_2">结论（根因）</h2>
+<p><strong>站点改版</strong>：导航栏不再渲染「退出登录」等文字，只显示<strong>裸用户名</strong> <code>user</code>（下拉菜单）。两个叠加因素：</p>
+<ol>
+<li>旧关键词全部失配 → <code>logged_in()</code> 恒 False；</li>
+<li>凭据 <code>MCII_USERNAME=@user</code>（<strong>带 @ 前缀</strong>），页面显示 <code>user</code>（无 @）→ 即使用户名匹配也失败。</li>
+</ol>
+<p>误判未登录后脚本跳 <code>/login</code> 找表单，但已登录态的 SPA 不渲染表单 → <code>user/pwd</code> 找不到 → 返回 None → 报「MCII 登录失败」。</p>
+<p><strong>注意</strong>：CDP 标签页 URL 停在 <code>/login</code> 不代表会话失效——改版后访问主页会重定向到 <code>/login</code> 路由但导航栏仍显示用户名。<strong>判断登录态要看页面内容，不要只看 URL。</strong></p>
+<h2 id="_3">修复</h2>
+<p><code>logged_in()</code> 增加兜底判据：旧关键词任一命中即 True；否则取 <code>MCII_USERNAME</code> <strong>去掉 @ 前缀</strong>后作为子串在页面文本中查找（未登录页不会显示用户名）。</p>
+<h2 id="_4">验证方式</h2>
+<pre><code class="language-bash">python3 ~/.hermes/scripts/mcii_daily_checkin.py   # 已签到日应输出「MCII 今日已签到」exit 0
+tail -2 ~/.hermes/state/mcii_checkin.jsonl        # 状态应为 ALREADY_CHECKED_IN
+</code></pre>
+<h2 id="_5">实际结果</h2>
+<ul>
+<li>人工补签成功（<code>签到成功 +5 经验</code>，10-13 无损失）。</li>
+<li>修复后实跑：<code>MCII 今日已签到</code>，exit 0，状态 <code>ALREADY_CHECKED_IN</code>。</li>
+<li>历史对照：10-07 也出现过一次 LOGIN_FAILED 后自愈——同型故障（当时可能为瞬时改版/加载慢），本次为永久性改版，必须修脚本。</li>
+</ul>
+<h2 id="_6">教训</h2>
+<ul>
+<li>站点 UI 改版会让「关键词判登录」静默失效；判据应包含<strong>账号自身标识</strong>（用户名），并对 @ 前缀做归一化。</li>
+<li>SPA 的 <code>/login</code> URL 不可作为未登录证据；以页面实际渲染内容为准。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-13</footer></div></body></html>
