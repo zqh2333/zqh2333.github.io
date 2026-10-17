@@ -22,7 +22,7 @@
 <tbody>
 <tr>
 <td><code>app.js</code></td>
-<td>本方改过 <code>sold_out</code> 文案为「今日券已领完 · 明日再来」</td>
+<td>~~本方改过 <code>sold_out</code> 文案~~ → 2026-10-18 已按用户要求恢复为原站原文「未抢到 · 预留已释放」，<code>app.js</code> 现已与参考站 md5 字节一致</td>
 </tr>
 <tr>
 <td><code>cookie-login.js</code></td>
@@ -218,5 +218,19 @@ def settle_stale_reserved(ttl=RESERVED_TTL):
 <ul>
 <li>下一日 00:00 的真实领取结果（当前两个账号均为 <code>sold_out</code> 5/5，周期已完成）。</li>
 <li>23:57 预热日志：<code>NIGHTLY_LOG</code> 里会出现 <code>{"at": ..., "prepare": N}</code>。</li>
-</ul></article>
+</ul>
+<h2 id="2026-10-18-appjs">2026-10-18 补记：app.js 恢复为原站原样</h2>
+<p>用户要求「3 和 4 改成和原站一样」，已执行：</p>
+<ol>
+<li><code>sold_out</code> 文案：<code>今日券已领完 · 明日再来</code> → <strong><code>未抢到 · 预留已释放</code></strong>（原站原文）</li>
+<li>核验请求超时：<code>60000</code> → <strong><code>22000</code></strong>（原站原值）</li>
+</ol>
+<p>操作方式：直接用参考站 <code>app.js</code> 覆盖我方文件，<code>index.html</code> 引用改为 <code>app.js?v=20261018a</code> 做缓存破坏。
+覆盖后 <strong>md5 = <HASH>，与参考站完全一致</strong>。</p>
+<p>浏览器实测：页面加载 <code>?v=20261018a</code>，文件内 <code>sold_out:'未抢到 · 预留已释放'</code>、超时 <code>22000</code>，无 JS 错误。</p>
+<p><strong>静态文件一致性：27/29 → 28/29</strong>。唯一剩余差异 <code>cookie-login.js</code>（扫码 tab 接入，功能必需），
+另加新增文件 <code>qr-login.js</code> / <code>qr-login.css</code>。</p>
+<blockquote>
+<p>22 秒超时已够用：实测 <code>check</code> 约 0.7s、<code>claim</code>（预热）约 0.94s，远低于 22s。</p>
+</blockquote></article>
 <footer>脱敏发布的运维知识库 · 生成于 2026-10-18</footer></div></body></html>
