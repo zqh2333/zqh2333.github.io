@@ -813,6 +813,14 @@
 <li>脱敏兜底补 <code>&lt;LAN&gt;</code> 字面量（字母 x 原正则漏网）；线上泄漏复检 0；全站 200。</li>
 <li>排查记录：Pages 构建卡 <code>building</code> 8 分钟（正常 45 秒）→ 手动 <code>POST /pages/builds</code> 触发重建，42 秒完成。</li>
 </ul>
+<h2 id="2026-10-17-pdd-clone-mock">2026-10-17 | pdd-clone 从 Mock 升级为真实链路</h2>
+<ul>
+<li>根因：登录成功只存 user_id 丢弃 token；打卡进度用 uid 哈希编造。</li>
+<li>方案：容器内 Playwright + headless chromium 打开官方活动页，页面自己发请求，网络层读回真实响应（不伪造 anti_content）。</li>
+<li>真实字段：<code>finishCount</code>/<code>gainAwardCount</code>/<code>displayStatus</code>(0-4)，领取靠点击页面按钮。</li>
+<li>业务补全：23:30 预检 / 00:00 领取 / 00:30+每5min 回收；失败不扣次；白名单跳过回收。</li>
+<li>验证：假 CK → AUTH（22.9s）；解析 5 用例全过；普通用户账本 released 后余额不变。</li>
+</ul>
 <h2 id="2026-10-08_1">2026-10-08 | 知识库升级为「记忆库」</h2>
 <ul>
 <li>新增技能 <code>kb-memory</code>：规定回忆历史时<strong>先查知识库</strong>（本地权威源 + 线上镜像）。</li>
