@@ -1,6 +1,8 @@
-# 运维知识库 · 110 篇 · 生成于 2026-10-17
+# 运维知识库 · 111 篇 · 生成于 2026-10-17
 
-## 决策记录 (25)
+## 决策记录 (26)
+- [2026-10-17] pdd-clone 扫码登录：浏览器截图取二维码，登录后自取 HttpOnly Cookie — decisions/pdd-clone-qr-login-2026-10-17.html
+    pdd clone 扫码登录：浏览器截图取二维码，登录后自取 HttpOnly Cookie 日期：2026 10 17 主机：宝塔 <LAN 8 / 容器 pdd clone / 站点 http://<LAN 8 :8
 - [2026-10-17] pdd-clone 接真实拼多多：状态从 SSR rawData 取，领取才用浏览器 — decisions/pdd-clone-real-provider-2026-10-17.html
     pdd clone 接真实拼多多：状态从 SSR rawData 取，领取才用浏览器 日期：2026 10 17（含 14:5x 修正） 主机：宝塔 <LAN 8 / 容器 pdd clone / 端口 8899 结论：
 - [2026-10-08] 运维知识库自动沉淀发布（2026-10-08） — decisions/kb-auto-publish-2026-10-08.html
@@ -223,9 +225,9 @@
     SSH 公钥免密登录 前置检查 1. 检查主机网络与目标 SSH 端口连通。 2. 使用 ssh keyscan 固定目标主机指纹。 3. 为每台设备生成独立密钥，保存到 ~/.ssh/<SSH KEY ，目录权限 70
 
 ## 元数据 (3)
+- [2026-10-17] log — meta/log.html
+    2026 10 17 pdd clone 增加扫码登录，登录后自取 HttpOnly Cookie 参考 HJGSfz68/pdd cookie capture 的 Puppeteer 方案，但砍掉 CDP 双通道：Pl
 - [2026-10-08] 运维知识库索引 — meta/index.html
     运维知识库索引 在处理运维、网络、服务部署或故障问题前先检索本索引及相关页面。 最近更新：2026 10 08 基础设施 infrastructure/nas project artifact archive 2026 
-- [2026-09-26] log — meta/log.html
-    2026 09 26 验证插件 v1.2.12 + 靶场 v1.0.3：官方 test key 沙箱自动化 边界先实测后定：用官方 test key 建页观察 widget 无人值守行为——Turnstile 1x…AA
 - [] 运维知识库规范 — meta/SCHEMA.html
     运维知识库规范 范围 本知识库记录家庭实验室、网络设备、服务部署、故障排查、配置决策与验证结果。 安全边界 不记录明文密码、API Key、Token、私钥、会话 Cookie 或恢复码。 可记录设备别名、内网地址、端口

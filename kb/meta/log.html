@@ -2,7 +2,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>log - 运维知识库</title>
 <link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
-<nav class="crumb"><a href="../index.html">← 知识库首页</a> · _meta</nav><article><h2 id="2026-09-26-v1212-v103-test-key">2026-09-26 | 验证插件 v1.2.12 + 靶场 v1.0.3：官方 test key 沙箱自动化</h2>
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · _meta</nav><article><h2 id="2026-10-17-pdd-clone-httponly-cookie">2026-10-17 | pdd-clone 增加扫码登录，登录后自取 HttpOnly Cookie</h2>
+<ul>
+<li>参考 <code>HJGSfz68/pdd-cookie-capture</code> 的 Puppeteer 方案，但砍掉 CDP 双通道：Playwright <code>context.cookies()</code> 本身返回 HttpOnly。</li>
+<li>新增 <code>/app/qrlogin.py</code>（与 <code>pdd.py</code> 共用浏览器线程）+ <code>/api/qr/{start,state,click,add,cancel}</code> + 前端第三个登录方式「扫码登录」。</li>
+<li>实测：出码 5.7s；<code>zxing-cpp</code> 解出 <code>down_scan.html?...pdd_biz_scene=AUTH_LOGIN&amp;app_id=512</code>；注入登录态 32ms 翻 <code>logged_in</code>；回采 10 字段含 <code>PDDAccessToken</code>；<code>verify_ck</code> 5/5；首接 <code>updated=false</code>、重扫 <code>updated=true</code> 且账号数不变。</li>
+<li>坑：<code>load_secret()</code> 在 <code>server.py</code> 不在 <code>crypto.py</code>；容器无 curl/node。</li>
+</ul>
+<h2 id="2026-09-26-v1212-v103-test-key">2026-09-26 | 验证插件 v1.2.12 + 靶场 v1.0.3：官方 test key 沙箱自动化</h2>
 <ul>
 <li>边界先实测后定：用官方 test key 建页观察 widget 无人值守行为——Turnstile <code>1x…AA</code> 零点击下发 21 字符 token（文档 dummy token）→ 可自动化；reCAPTCHA <code>&lt;TOKEN&gt;</code> 15s 内不出 token、必须点击跨域 iframe → <strong>不造绕过 primitive</strong>，只识别交人工。判据是行为而非厂商名。</li>
 <li>白名单用对象键<strong>精确匹配</strong>（6 个官方 test key），无前缀/子串匹配 → 真实 key 不可能误命中；<code>detectProvider()</code> 中 Turnstile 判定必须前置（两者都用 <code>[data-sitekey]</code>）。</li>

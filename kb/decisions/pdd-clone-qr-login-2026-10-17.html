@@ -1,0 +1,87 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pdd-clone 扫码登录：浏览器截图取二维码，登录后自取 HttpOnly Cookie - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="pdd-clone-httponly-cookie">pdd-clone 扫码登录：浏览器截图取二维码，登录后自取 HttpOnly Cookie</h1>
+<ul>
+<li>日期：2026-10-17</li>
+<li>主机：宝塔 <LAN-8> / 容器 <code>pdd-clone</code> / 站点 <code>http://&lt;LAN-8&gt;:8899</code></li>
+<li>参考实现：<code>HJGSfz68/pdd-cookie-capture</code>（Puppeteer + CDP 双通道）</li>
+<li>结论：<strong>扫完码自动建号，无需手动复制 CK</strong>；实测全链路通过（8.7s / 每轮）。</li>
+</ul>
+<h2 id="cdp">为什么不用参考项目的 CDP 方案</h2>
+<p>参考项目开两个 CDP 通道：一个 <code>Network.getAllCookies</code> 取 Cookie，一个 <code>Fetch</code> 抓请求头兜底。
+Playwright 的 <code>context.cookies()</code> 本身就返回 <strong>HttpOnly Cookie</strong>（<code>PDDAccessToken</code>、<code>pass_id</code>），
+所以本实现只走一条路：登录后直接读浏览器的 Cookie 存储库，不需要拦截网络。</p>
+<h2 id="_1">实现</h2>
+<p>新增 <code>/app/qrlogin.py</code>，与 <code>pdd.py</code> <strong>共用同一个浏览器工作线程</strong>（<code>pdd._WORKER</code>），
+只是新开一个桌面 UA 的上下文（<code>Chrome/124</code>，480×760，<code>Asia/Shanghai</code>），避免多起一个 Chromium 吃内存。</p>
+<pre><code>POST /api/qr/start   → 打开 https://mobile.yangkeduo.com/charge_sign_coupon.html
+                       自动点「扫码登录」，返回首帧截图（data:image/jpeg;base64）
+GET  /api/qr/state   → 每次轮询重截一帧 + 读 ctx.cookies()
+                       命中 pass_id / PDDAccessToken 即翻 logged_in
+POST /api/qr/click   → 截图内点击转发（二维码刷新、人机验证作答）
+POST /api/qr/add     → 重载活动页 → 取全量 Cookie → verify_ck 真实核验 → 落库
+POST /api/qr/cancel  → 立刻释放浏览器上下文
+</code></pre>
+<p>关键点：</p>
+<ul>
+<li>二维码 <strong>不是解析出来的图</strong>，而是整页截图（<code>jpeg q60</code>）；用户点截图即可作答验证码。</li>
+<li>会话单例 + 5 分钟 TTL，<code>qrlogin.gc()</code> 挂在调度器里清超时会话。</li>
+<li>登录成功后<strong>重载活动页</strong>再取 Cookie，确保拿到的是登录态落地后的值。</li>
+<li>同一 <code>uid</code> 重复扫码 → <code>_account_by_uid</code> 命中 → 走更新分支，<strong>不产生重复账号</strong>。</li>
+<li>普通用户仍受「最多托管 1 个账号」限制，超限返回明确文案。</li>
+</ul>
+<h2 id="2026-10-17-150x">实测证据（2026-10-17 15:0x）</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>打开登录页并出二维码</td>
+<td>5.7s，截图 32.4KB，DOM 命中 <code>&lt;img&gt;</code> 且 <code>src=data:image/png</code></td>
+</tr>
+<tr>
+<td>二维码可解</td>
+<td><code>zxing-cpp</code> 解码 → <code>https://mobile.yangkeduo.com/down_scan.html?secret_key=…&amp;pdd_biz_scene=AUTH_LOGIN&amp;app_id=512</code></td>
+</tr>
+<tr>
+<td>登录态识别</td>
+<td>注入已登录 Cookie 后 32ms 内翻 <code>logged_in</code>，识别 10 个字段</td>
+</tr>
+<tr>
+<td>Cookie 回采</td>
+<td>10 个字段含 HttpOnly <code>PDDAccessToken</code>（<code>raw_len=415</code>）</td>
+</tr>
+<tr>
+<td>真实核验</td>
+<td><code>verify_ck</code> → <code>sold_out</code> / 5-5 / uid 尾号 0914 ✅</td>
+</tr>
+<tr>
+<td>首次接入</td>
+<td><code>updated=false</code>，沙盒新建账号，snapshot <code>sold_out 5/5</code>，8.7s</td>
+</tr>
+<tr>
+<td>重复扫码</td>
+<td><code>updated=true</code>，账号数仍为 1（去重生效）</td>
+</tr>
+<tr>
+<td>生产库</td>
+<td>沙盒跑完 <code>accounts</code> 仍 1 条，未被污染</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_2">坑</h2>
+<ul>
+<li><code>start()</code> 只等 DOM 不够：登录页会先渲染「手机登录」，需要点 <code>.qrcode-login</code> 切页签，
+  再 <code>wait_for_timeout(1600)</code> 等二维码画出来；否则截到的是空白占位。</li>
+<li>首帧截图必须在 <code>start()</code> 里拍，否则前端要等第一次轮询（1.5s）才见二维码。</li>
+<li><code>crypto.py</code> <strong>没有</strong> <code>load_secret()</code>，它在 <code>server.py</code>；复用加密要 <code>import server</code> 取 <code>server.SEAL</code>。</li>
+<li>沙盒测试导入 <code>server</code> 是安全的：<code>main()</code> 只在 <code>__main__</code> 下启动，不会二次起调度器/占端口。</li>
+<li>容器内没有 <code>curl</code> / <code>node</code>，HTTP 自检用 <code>urllib</code>，JS 语法检查在宿主机做。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-17</footer></div></body></html>
