@@ -54,3 +54,30 @@ window.rawData.store.signCouponStore.signCouponInfo
 `_finish_login` 只存 `user_id` 不存 cookie，是"接了账号什么都查不到"的根因。
 现在存整串 cookie，并且取用时统一走 `_ck_raw()` / `_ck_jar()`，
 同时兼容 `raw` 与 `cookie` 两种键名（数据库存 `cookie`，解析函数产出 `raw`，不归一就必然失败）。
+
+## 夜间引擎：调度时序与跨日坑
+
+时序：23:30 预检 → 00:00 领取 → 00:30 回收 → 每 5 分钟扫到期（`scheduler()`，20s 轮询，
+用 `marks[day]` 去重，进程重启后 marks 清空但当日仍会重跑一次）。
+
+**bug（已修）**：`run_nightly()` 原来只处理 `snapshot.status=='ready'` 的账号，而快照来自 23:30 预检。
+23:30 时券通常已领完（`sold_out`），跨过 00:00 额度重置后快照仍是 `sold_out` → **整晚跳过，一张都不领**。
+修法：00:00 对非 ready 账号现查一次（`provider.check()`，约 700ms），现查为 `ready` 才继续领取，
+并把新快照写回。沙盒验证：快照 `sold_out` → 现查 `ready` → 领取 `received` → 扣 1 次。
+
+**bug（已修）**：`global_reports` 原来用 `INSERT OR REPLACE` 写入本轮计数，重复运行会把当天统计清零。
+改为按当天 `history` 汇总（`COUNT(DISTINCT account_id)` / `COUNT(DISTINCT CASE WHEN status='received' ...)`），幂等。
+
+## 扣次沙盒测试（数据库副本，不碰生产）
+
+SQLite 是 WAL 模式，只复制 `data.db` 会拿到空库，必须连 `data.db-wal`/`-shm` 一起复制。
+用 `PDD_DB=/tmp/sandbox.db` 指向副本，平台返回用 Fake Provider，业务代码是线上同一份：
+
+| 场景 | 结果 |
+|---|---|
+| ready + 平台返回 received | 扣 1 次（2→1）、`hosting_state=recheck`、history 记 received |
+| ready + 平台返回 sold_out | 释放预留、次数不变（2）、ledger `released` 原因「今日券已领完」 |
+| 次数不足 | 快照写 `no_credit`、不参与、不调领取 |
+| 非 ready | 不参与、无 history |
+
+账本口径：`available = granted(delta 之和) - spent(state=spent 计数) - held(state in reserved/uncertain 计数)`。

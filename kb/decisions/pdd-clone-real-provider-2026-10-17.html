@@ -68,5 +68,44 @@
 <h2 id="_3">落库坑</h2>
 <p><code>_finish_login</code> 只存 <code>user_id</code> 不存 cookie，是"接了账号什么都查不到"的根因。
 现在存整串 cookie，并且取用时统一走 <code>_ck_raw()</code> / <code>_ck_jar()</code>，
-同时兼容 <code>raw</code> 与 <code>cookie</code> 两种键名（数据库存 <code>cookie</code>，解析函数产出 <code>raw</code>，不归一就必然失败）。</p></article>
+同时兼容 <code>raw</code> 与 <code>cookie</code> 两种键名（数据库存 <code>cookie</code>，解析函数产出 <code>raw</code>，不归一就必然失败）。</p>
+<h2 id="_4">夜间引擎：调度时序与跨日坑</h2>
+<p>时序：23:30 预检 → 00:00 领取 → 00:30 回收 → 每 5 分钟扫到期（<code>scheduler()</code>，20s 轮询，
+用 <code>marks[day]</code> 去重，进程重启后 marks 清空但当日仍会重跑一次）。</p>
+<p><strong>bug（已修）</strong>：<code>run_nightly()</code> 原来只处理 <code>snapshot.status=='ready'</code> 的账号，而快照来自 23:30 预检。
+23:30 时券通常已领完（<code>sold_out</code>），跨过 00:00 额度重置后快照仍是 <code>sold_out</code> → <strong>整晚跳过，一张都不领</strong>。
+修法：00:00 对非 ready 账号现查一次（<code>provider.check()</code>，约 700ms），现查为 <code>ready</code> 才继续领取，
+并把新快照写回。沙盒验证：快照 <code>sold_out</code> → 现查 <code>ready</code> → 领取 <code>received</code> → 扣 1 次。</p>
+<p><strong>bug（已修）</strong>：<code>global_reports</code> 原来用 <code>INSERT OR REPLACE</code> 写入本轮计数，重复运行会把当天统计清零。
+改为按当天 <code>history</code> 汇总（<code>COUNT(DISTINCT account_id)</code> / <code>COUNT(DISTINCT CASE WHEN status='received' ...)</code>），幂等。</p>
+<h2 id="_5">扣次沙盒测试（数据库副本，不碰生产）</h2>
+<p>SQLite 是 WAL 模式，只复制 <code>data.db</code> 会拿到空库，必须连 <code>data.db-wal</code>/<code>-shm</code> 一起复制。
+用 <code>PDD_DB=/tmp/sandbox.db</code> 指向副本，平台返回用 Fake Provider，业务代码是线上同一份：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ready + 平台返回 received</td>
+<td>扣 1 次（2→1）、<code>hosting_state=recheck</code>、history 记 received</td>
+</tr>
+<tr>
+<td>ready + 平台返回 sold_out</td>
+<td>释放预留、次数不变（2）、ledger <code>released</code> 原因「今日券已领完」</td>
+</tr>
+<tr>
+<td>次数不足</td>
+<td>快照写 <code>no_credit</code>、不参与、不调领取</td>
+</tr>
+<tr>
+<td>非 ready</td>
+<td>不参与、无 history</td>
+</tr>
+</tbody>
+</table>
+<p>账本口径：<code>available = granted(delta 之和) - spent(state=spent 计数) - held(state in reserved/uncertain 计数)</code>。</p></article>
 <footer>脱敏发布的运维知识库 · 生成于 2026-10-17</footer></div></body></html>
