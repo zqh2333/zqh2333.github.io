@@ -1,0 +1,57 @@
+# pdd-clone 扫码登录：浏览器截图取二维码，登录后自取 HttpOnly Cookie
+
+- 日期：2026-10-17
+- 主机：宝塔 <LAN-8> / 容器 `pdd-clone` / 站点 `http://<LAN-8>:8899`
+- 参考实现：`HJGSfz68/pdd-cookie-capture`（Puppeteer + CDP 双通道）
+- 结论：**扫完码自动建号，无需手动复制 CK**；实测全链路通过（8.7s / 每轮）。
+
+## 为什么不用参考项目的 CDP 方案
+
+参考项目开两个 CDP 通道：一个 `Network.getAllCookies` 取 Cookie，一个 `Fetch` 抓请求头兜底。
+Playwright 的 `context.cookies()` 本身就返回 **HttpOnly Cookie**（`PDDAccessToken`、`pass_id`），
+所以本实现只走一条路：登录后直接读浏览器的 Cookie 存储库，不需要拦截网络。
+
+## 实现
+
+新增 `/app/qrlogin.py`，与 `pdd.py` **共用同一个浏览器工作线程**（`pdd._WORKER`），
+只是新开一个桌面 UA 的上下文（`Chrome/124`，480×760，`Asia/Shanghai`），避免多起一个 Chromium 吃内存。
+
+```
+POST /api/qr/start   → 打开 https://mobile.yangkeduo.com/charge_sign_coupon.html
+                       自动点「扫码登录」，返回首帧截图（data:image/jpeg;base64）
+GET  /api/qr/state   → 每次轮询重截一帧 + 读 ctx.cookies()
+                       命中 pass_id / PDDAccessToken 即翻 logged_in
+POST /api/qr/click   → 截图内点击转发（二维码刷新、人机验证作答）
+POST /api/qr/add     → 重载活动页 → 取全量 Cookie → verify_ck 真实核验 → 落库
+POST /api/qr/cancel  → 立刻释放浏览器上下文
+```
+
+关键点：
+
+- 二维码 **不是解析出来的图**，而是整页截图（`jpeg q60`）；用户点截图即可作答验证码。
+- 会话单例 + 5 分钟 TTL，`qrlogin.gc()` 挂在调度器里清超时会话。
+- 登录成功后**重载活动页**再取 Cookie，确保拿到的是登录态落地后的值。
+- 同一 `uid` 重复扫码 → `_account_by_uid` 命中 → 走更新分支，**不产生重复账号**。
+- 普通用户仍受「最多托管 1 个账号」限制，超限返回明确文案。
+
+## 实测证据（2026-10-17 15:0x）
+
+| 项 | 结果 |
+|---|---|
+| 打开登录页并出二维码 | 5.7s，截图 32.4KB，DOM 命中 `<img>` 且 `src=data:image/png` |
+| 二维码可解 | `zxing-cpp` 解码 → `https://mobile.yangkeduo.com/down_scan.html?secret_key=…&pdd_biz_scene=AUTH_LOGIN&app_id=512` |
+| 登录态识别 | 注入已登录 Cookie 后 32ms 内翻 `logged_in`，识别 10 个字段 |
+| Cookie 回采 | 10 个字段含 HttpOnly `PDDAccessToken`（`raw_len=415`） |
+| 真实核验 | `verify_ck` → `sold_out` / 5-5 / uid 尾号 0914 ✅ |
+| 首次接入 | `updated=false`，沙盒新建账号，snapshot `sold_out 5/5`，8.7s |
+| 重复扫码 | `updated=true`，账号数仍为 1（去重生效） |
+| 生产库 | 沙盒跑完 `accounts` 仍 1 条，未被污染 |
+
+## 坑
+
+- `start()` 只等 DOM 不够：登录页会先渲染「手机登录」，需要点 `.qrcode-login` 切页签，
+  再 `wait_for_timeout(1600)` 等二维码画出来；否则截到的是空白占位。
+- 首帧截图必须在 `start()` 里拍，否则前端要等第一次轮询（1.5s）才见二维码。
+- `crypto.py` **没有** `load_secret()`，它在 `server.py`；复用加密要 `import server` 取 `server.SEAL`。
+- 沙盒测试导入 `server` 是安全的：`main()` 只在 `__main__` 下启动，不会二次起调度器/占端口。
+- 容器内没有 `curl` / `node`，HTTP 自检用 `urllib`，JS 语法检查在宿主机做。

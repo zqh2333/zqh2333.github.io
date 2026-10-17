@@ -1,12 +1,12 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-17",
- "count": 110,
+ "count": 111,
  "categories": [
   {
    "id": "decisions",
    "name": "决策记录",
-   "count": 25
+   "count": 26
   },
   {
    "id": "incidents",
@@ -31,6 +31,13 @@
  ],
  "entries": [
   {
+   "title": "pdd-clone 扫码登录：浏览器截图取二维码，登录后自取 HttpOnly Cookie",
+   "date": "2026-10-17",
+   "category": "decisions",
+   "url": "decisions/pdd-clone-qr-login-2026-10-17.html",
+   "summary": "pdd clone 扫码登录：浏览器截图取二维码，登录后自取 HttpOnly Cookie 日期：2026 10 17 主机：宝塔 <LAN 8 / 容器 pdd clone / 站点 http://<LAN 8 :8"
+  },
+  {
    "title": "pdd-clone 接真实拼多多：状态从 SSR rawData 取，领取才用浏览器",
    "date": "2026-10-17",
    "category": "decisions",
@@ -43,6 +50,13 @@
    "category": "incidents",
    "url": "incidents/pdd-clone-mock-provider-2026-10-17.html",
    "summary": "拼多多托管「复刻版」实为 Mock 演示版（2026 10 17） 现象 宝塔 <LAN 8 :8899 的拼多多托管项目显示「本周期手动打卡 1/5」「暂不在活动资格内」， 但用户在拼多多实际已打卡满 5 天。页面数字"
+  },
+  {
+   "title": "log",
+   "date": "2026-10-17",
+   "category": "meta",
+   "url": "meta/log.html",
+   "summary": "2026 10 17 pdd clone 增加扫码登录，登录后自取 HttpOnly Cookie 参考 HJGSfz68/pdd cookie capture 的 Puppeteer 方案，但砍掉 CDP 双通道：Pl"
   },
   {
    "title": "知识库自动发布 cron 偶发失败：github 瞬时不可达",
@@ -141,13 +155,6 @@
    "category": "infrastructure",
    "url": "infrastructure/workbuddy2api-panel-deploy-2026-09-26.html",
    "summary": "WorkBuddy2API Panel 宝塔 Docker 部署 日期：2026 09 26 部署 仓库： https://github.com/linguo2625469/workbuddy2api panel Com"
-  },
-  {
-   "title": "log",
-   "date": "2026-09-26",
-   "category": "meta",
-   "url": "meta/log.html",
-   "summary": "2026 09 26 验证插件 v1.2.12 + 靶场 v1.0.3：官方 test key 沙箱自动化 边界先实测后定：用官方 test key 建页观察 widget 无人值守行为——Turnstile 1x…AA"
   },
   {
    "title": "<LAN-4> Chrome 自动重启原因与修复",
