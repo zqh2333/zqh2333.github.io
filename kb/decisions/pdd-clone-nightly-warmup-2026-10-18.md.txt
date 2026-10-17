@@ -123,6 +123,45 @@ _check_sem = threading.Semaphore(2)   # 只拦 HTTP 手动核验，不影响夜�
 **已知语义差异**：本方 `recycle_due()` 按本地到期时间回收，不访问上游；
 参考站后端不可见，无法确认其「后台巡检是否查询上游」。
 
+## 隐患修复：reserved 额度僵死自愈
+
+**问题**：`run_nightly` 在 `claim()` 前插一条 `credit_ledger.state='reserved'` 占用 1 次额度。
+成功转 `spent`、失败转 `released`，但**进程若在 claim 途中被杀，这条永远停在 `reserved`**。
+`user_credits()` 把 `reserved` 计入 `held` → 用户额度永久 -1，且原 `recycle_due()` 只动
+`accounts` 表、不碰账本，无从自愈。代码里 `CLAIM_STATES` 已定义 `uncertain` 却从未使用。
+
+**修复**：
+
+```python
+RESERVED_TTL = 7200      # 2 小时
+
+def settle_stale_reserved(ttl=RESERVED_TTL):
+    # state IN ('reserved','uncertain') AND created <= now-ttl
+    # → state='released', reason='预留超时自动归还'，逐条写 audit credit_release_stale
+```
+
+`scheduler()` 每分钟调用一次（`marks["stale"] != (day, hm)` 去重），容器重启后首轮即自愈。
+2 小时阈值的安全边界：单次 claim 最长 180s，20 账号串行实测约 20s，远小于 TTL，
+不会误伤正在进行的领取。
+
+**沙盒验证（生产库副本，5 条断言全 PASS）**：
+
+| 账本 | 结果 |
+|---|---|
+| reserved 3 小时前 | → released ✅ |
+| uncertain 3 小时前 | → released ✅ |
+| reserved 1 小时前 | 保留 ✅ |
+| reserved 10 分钟前 | 保留 ✅ |
+| spent 3 小时前 | 不动 ✅ |
+
+`held` 从 4 降到 2，`audit` 写入 2 条 `credit_release_stale`。
+
+**生产验证**：容器重启后 healthy，首次执行归还 0 条（无残留），`admin` 额度
+`held=0`，首页 HTTP 200。
+
+**未做**：参考站「后台每分钟最多检查 2 个活动托管记录、同号间隔 5 分钟」的上游巡检回收。
+本方 `recycle_due()` 保持纯本地 deadline 判断（不发请求，无风控风险），结果一致。
+
 ## 待验证
 
 - 下一日 00:00 的真实领取结果（当前两个账号均为 `sold_out` 5/5，周期已完成）。
