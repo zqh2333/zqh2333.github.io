@@ -75,3 +75,44 @@ if snap.get("status") not in ("ready", "already", "manual"):
 1. 判断「数据不对」时，先看数据是**真实拉取**还是**本地生成**——本次 `sha256(uid) % 6` 是最强证据。
 2. 界面文案（「检查会查询拼多多」）不等于实现，必须以代码与网络行为为准。
 3. 演示版必须显式标注「模拟数据」，否则会被误当作真实状态使用。
+
+---
+
+## 处置结果（2026-10-17 14:30）：前端已 1:1 完整复刻原站
+
+用户要求「直接完整复刻」，已按原站 `https://pdd.769952156.xyz/` 落地：
+
+**前端全量替换**
+- 抓取原站 **29 个静态资源**（HTML + 26 个 JS/CSS 模块，236K），整体覆盖 `/app/static/`
+- 标题、导航（总览/账号管理/领取记录/朋友管理/我的设置）、三主题、账号卡片、文案全部与原站一致
+- 连原站 `/favicon.ico` 的 404 也一致（原站同样 404）
+
+**后端补齐 5 个缺失接口**（原站前端会调用，本地原无）
+| 接口 | 用途 | 契约 |
+|---|---|---|
+| `GET /api/admin/code-records/(invites\|redeem)` | 邀请码/次数码分页查询 | `{records,total,has_more,next_cursor,notice}`，filters `q/state` |
+| `GET /api/credit-ledger` | 本人次数流水 | 同上 + `credits`/`reconciliation` |
+| `GET /api/admin/users/{id}/credit-ledger` | 管理员查他人流水 | 同上 |
+| `GET /api/hosting-events/page` | 回收记录 | 同上 + `accounts`/`started_at` |
+| `POST /api/admin/accounts/{id}/whitelist` | 回收白名单开关 | `{confirm,enabled,expected}`，`expected` 不符返 409 |
+
+- 迁移：`ALTER TABLE accounts ADD COLUMN whitelist INTEGER DEFAULT 0`（bootstrap 内 try/except，幂等）
+- `hosting_line()` 三种状态均新增 `whitelisted` 字段
+
+**验证（真实 Chrome 153 + Playwright）**
+- 5 个 tab 全部点击打开：**0 个 API 4xx/5xx、0 个 JS 错误**
+- 5 个新接口实测均 HTTP 200，返回结构符合 `PagedQuery` 契约（`limit=50` + `cursor` 偏移）
+- 容器 `pdd-clone` Up (healthy)
+
+**备份**
+- `/data/backups/20261017_141323/`：原 `pdd.py`/`server.py`/`static`（3 文件）
+- `/data/backups/20261017_141323/server.py.before_patch`：打补丁前 server.py
+
+**仍未解决（数据层）**
+前端会显示「检查会查询拼多多」，但 `PROVIDER = MockProvider()` 未变，
+`1/5`、`暂不在活动资格内` 仍是 `sha256(uid)` 派生的假数据。
+真实数字需接入拼多多接口：已定位官方 H5 登录端点
+（`api/sigerus/mobile/code/request`、`api/sigerus/login_mobile`、`api/sigerus/verify/login`），
+但 `anti_content` 风控签名只能由拼多多 JS 在真实浏览器生成 → 必须本人手机收码登录后抓 Cookie。
+工具已就绪：`~/.hermes/scripts/pdd_login_capture.py`（真实 Chrome 抓 CK）、
+容器内 `/data/tools/pdd_ck_import.py`（CK 加密入库）。
