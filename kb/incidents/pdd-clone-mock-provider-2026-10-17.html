@@ -85,5 +85,39 @@ DB snapshot      = {&quot;status&quot;:&quot;ineligible&quot;,&quot;finished&quo
 <li>判断「数据不对」时，先看数据是<strong>真实拉取</strong>还是<strong>本地生成</strong>——本次 <code>sha256(uid) % 6</code> 是最强证据。</li>
 <li>界面文案（「检查会查询拼多多」）不等于实现，必须以代码与网络行为为准。</li>
 <li>演示版必须显式标注「模拟数据」，否则会被误当作真实状态使用。</li>
-</ol></article>
+</ol>
+<hr />
+<h2 id="2026-10-17-1430-11">处置结果（2026-10-17 14:30）：前端已 1:1 完整复刻原站</h2>
+<p>用户要求「直接完整复刻」，已按原站 <code>https://pdd.769952156.xyz/</code> 落地：</p>
+<p><strong>前端全量替换</strong>
+- 抓取原站 <strong>29 个静态资源</strong>（HTML + 26 个 JS/CSS 模块，236K），整体覆盖 <code>/app/static/</code>
+- 标题、导航（总览/账号管理/领取记录/朋友管理/我的设置）、三主题、账号卡片、文案全部与原站一致
+- 连原站 <code>/favicon.ico</code> 的 404 也一致（原站同样 404）</p>
+<p><strong>后端补齐 5 个缺失接口</strong>（原站前端会调用，本地原无）
+| 接口 | 用途 | 契约 |
+|---|---|---|
+| <code>GET /api/admin/code-records/(invites\|redeem)</code> | 邀请码/次数码分页查询 | <code>{records,total,has_more,next_cursor,notice}</code>，filters <code>q/state</code> |
+| <code>GET /api/credit-ledger</code> | 本人次数流水 | 同上 + <code>credits</code>/<code>reconciliation</code> |
+| <code>GET /api/admin/users/{id}/credit-ledger</code> | 管理员查他人流水 | 同上 |
+| <code>GET /api/hosting-events/page</code> | 回收记录 | 同上 + <code>accounts</code>/<code>started_at</code> |
+| <code>POST /api/admin/accounts/{id}/whitelist</code> | 回收白名单开关 | <code>{confirm,enabled,expected}</code>，<code>expected</code> 不符返 409 |</p>
+<ul>
+<li>迁移：<code>ALTER TABLE accounts ADD COLUMN whitelist INTEGER DEFAULT 0</code>（bootstrap 内 try/except，幂等）</li>
+<li><code>hosting_line()</code> 三种状态均新增 <code>whitelisted</code> 字段</li>
+</ul>
+<p><strong>验证（真实 Chrome 153 + Playwright）</strong>
+- 5 个 tab 全部点击打开：<strong>0 个 API 4xx/5xx、0 个 JS 错误</strong>
+- 5 个新接口实测均 HTTP 200，返回结构符合 <code>PagedQuery</code> 契约（<code>limit=50</code> + <code>cursor</code> 偏移）
+- 容器 <code>pdd-clone</code> Up (healthy)</p>
+<p><strong>备份</strong>
+- <code>/data/backups/20261017_141323/</code>：原 <code>pdd.py</code>/<code>server.py</code>/<code>static</code>（3 文件）
+- <code>/data/backups/20261017_141323/server.py.before_patch</code>：打补丁前 server.py</p>
+<p><strong>仍未解决（数据层）</strong>
+前端会显示「检查会查询拼多多」，但 <code>PROVIDER = MockProvider()</code> 未变，
+<code>1/5</code>、<code>暂不在活动资格内</code> 仍是 <code>sha256(uid)</code> 派生的假数据。
+真实数字需接入拼多多接口：已定位官方 H5 登录端点
+（<code>api/sigerus/mobile/code/request</code>、<code>api/sigerus/login_mobile</code>、<code>api/sigerus/verify/login</code>），
+但 <code>anti_content</code> 风控签名只能由拼多多 JS 在真实浏览器生成 → 必须本人手机收码登录后抓 Cookie。
+工具已就绪：<code>~/.hermes/scripts/pdd_login_capture.py</code>（真实 Chrome 抓 CK）、
+容器内 <code>/data/tools/pdd_ck_import.py</code>（CK 加密入库）。</p></article>
 <footer>脱敏发布的运维知识库 · 生成于 2026-10-17</footer></div></body></html>
