@@ -1,42 +1,56 @@
-# pdd-clone 接真实拼多多：浏览器驱动链路（anti_content 不伪造）
+# pdd-clone 接真实拼多多：状态从 SSR rawData 取，领取才用浏览器
 
-- 日期：2026-10-17
+- 日期：2026-10-17（含 14:5x 修正）
 - 主机：宝塔 <LAN-8> / 容器 `pdd-clone` / 端口 8899
-- 结论：站点从 Mock 数据升级为真实链路，打卡进度与领取均来自拼多多官方接口。
+- 结论：核验 744ms 返回真实状态；领取仍走真实浏览器点击。
 
-## 为什么必须用浏览器
-拼多多 `/api/aurum/check_in/task/*` 需要 `anti_content` 风控签名，只能由官方 JS 在真实浏览器环境生成。
-因此不逆向、不伪造签名：用无头 Chromium 打开官方活动页，由页面自己发请求，从网络层读回真实响应。
+## 关键修正：数据不是 XHR，是服务端渲染
 
-## 关键实现
-- 容器内安装 Playwright + `chromium-headless-shell`，浏览器路径 `/app/.browsers`
-  （`PLAYWRIGHT_BROWSERS_PATH=/app/.browsers`，代码里用 `setdefault` 固定）。
-- Playwright sync API 有线程亲和性 → 全部调用走单线程队列 `_BrowserWorker`，避免 HTTP 线程直接调。
-- 活动页：`https://m.pinduoduo.net/charge_sign_coupon.html?source=deposit&_pdd_fs=1`
-- 真实接口与字段（从活动页 JS 反推，已实测解析正确）：
-  - `/api/aurum/check_in/task/query` → `result.finishCount`（已打卡）、`result.gainAwardCount`（需打卡）、`result.displayStatus`
-  - `displayStatus`：0 签到中 / 1 未领取 / 2 可领取 / 3 已领取 / 4 已签满
-  - `/api/aurum/check_in/task/gain/award` 领奖；`sub_task/finish` 打卡
-- 领取 = 点击页面「领取」按钮后读回 award 响应，不自己构造请求。
-- 短信登录：`m.pinduoduo.net/login.html`，实测手机输入框 1 个、`发送验证码` 按钮 1 个；
-  登录成功后把浏览器 cookie 整串落库（旧版只存 user_id，等于没有凭据，这是「功能不完整」的根因）。
-- CK 必需字段放宽为 `PDDAccessToken`；`pdd_user_id`/`pdd_user_uin` 可选（活动站常没有）。
+第一版方案监听 Playwright 的 `response` 事件等 `/api/aurum/check_in/task/query`，
+在真实账号上**永远等不到**——活动页首屏数据是 SSR 直接写进 HTML 的：
 
-## 业务逻辑补全
-- 23:30 `precheck_all()` 预检全部托管账号；00:00 `run_nightly()` 领取；00:30 + 每 5 分钟 `recycle_due()` 回收。
-- 只有 `ready` 参与领取；`already` 不重复领也不扣次。
-- 次数账本：预留（delta 0, state=reserved）→ 成功 `spent` / 失败 `released` 并写原因。
-- 回收写 `audit(action='hosting_released')`；白名单账号跳过回收。
-- 前端核验超时 22s → 60s（真实浏览器核验约 10–23s，原值会误报失败）。
+```
+window.rawData.store.signCouponStore.signCouponInfo
+  progressInfo.currentSignNum / totalSignNum   → 已打卡 / 需打卡
+  couponInfo.canClick / hasReceived            → 能否领 / 是否已领
+  couponInfo.buttonInfoList[].text             → "明日再来" 等按钮文案
+  signButtonInfo.canClick / ifGrayedOut        → 签到按钮态
+  displayStatus                                → 服务端枚举（实测见过 31，含义未定）
+  subTitleList[].text                          → "已连续打卡5天"
+```
 
-## 验证方式与实际结果
-- 假 CK 走真实浏览器：返回 `AUTH 登录已失效，请重新接入`，耗时 22.9s（含首次启动浏览器）。
-- 登录页 UI 探测：`phone_inputs=1`、`发送验证码=1`、title=登录。
-- 解析器 5 个官方用例（manual/ready/already/ready/ineligible）全部通过。
-- 普通用户账本实测：发放 2 次 → 领取失败 → `released`，余额仍 2/held 0/spent 0。
-- 回收实测：deadline 过期 → `released` + 审计落库；白名单账号保持不动。
-- 未做的验证：真实账号「领取成功 → 扣 1 次」需本人一次性短信登录或粘贴真实 CK。
+实测样本（uid 492****914）：`currentSignNum=5 / totalSignNum=5`、`couponInfo.canClick=false`、
+按钮文案「明日再来」、`displayStatus=31`、页面文案「今日券已领完」→ 结论是**今日已签满且券领完**，
+不是"CK 无效"。
 
-## 注意
-- 夜间 20 个账号串行核验，每号约 15s，整体约 5 分钟，00:00 起跑仍在窗口内。
-- 无头浏览器需要 `--no-sandbox`（容器内 root）。
+## 判定顺序（以 canClick 为准，不要猜枚举）
+
+1. `couponInfo.hasReceived` → `already`
+2. `couponInfo.canClick or signButtonInfo.canClick` → `ready`
+3. 按钮文案含「已领完 / 明日再来」→ `sold_out`
+4. `currentSignNum < totalSignNum` → `manual`
+5. 其余 → `window`
+
+`displayStatus` 只是原样带出，不参与判断——枚举值不稳，`canClick` 才是权威。
+
+## 未登录 / 无资格怎么区分（实测）
+
+| 情况 | 页面特征 | 判定 |
+|---|---|---|
+| CK 有效 | rawData.store 有内容且含 signCouponInfo | 正常解析 |
+| CK 失效/未登录 | 返回 51KB 外壳，`store` 为空对象，无登录页文案 | `AUTH` |
+| 已登录但无任务 | store 有内容但没有 signCouponInfo | `INELIGIBLE` |
+
+坑：失效 CK 不会跳 `/login`，页面 URL 和标题都正常，只靠"有没有登录框"判断会误报成 `NO_RESP`。
+
+## 性能对比
+
+- 核验（HTTP GET + 解 rawData）：**~700ms**，容器内存无增量
+- 旧方案（起无头 Chromium 等 XHR）：~22s，且等不到数据
+- 领取（必须浏览器）：页面自己生成 `anti_content` 签名，不伪造
+
+## 落库坑
+
+`_finish_login` 只存 `user_id` 不存 cookie，是"接了账号什么都查不到"的根因。
+现在存整串 cookie，并且取用时统一走 `_ck_raw()` / `_ck_jar()`，
+同时兼容 `raw` 与 `cookie` 两种键名（数据库存 `cookie`，解析函数产出 `raw`，不归一就必然失败）。
