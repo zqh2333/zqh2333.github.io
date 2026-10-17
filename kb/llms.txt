@@ -1,4 +1,4 @@
-# 运维知识库 · 108 篇 · 生成于 2026-10-17
+# 运维知识库 · 109 篇 · 生成于 2026-10-17
 
 ## 决策记录 (24)
 - [2026-10-08] 运维知识库自动沉淀发布（2026-10-08） — decisions/kb-auto-publish-2026-10-08.html
@@ -50,7 +50,9 @@
 - [2026-07-15] CPA 本地配置同步与低频模型审计 — decisions/cpa-local-model-sync.html
     CPA 本地配置同步与低频模型审计 服务位置 CPA 控制面：宝塔主机 <LAN 8 。 容器： cli proxy （ eceasy/cli proxy api ）。 本地配置： /root/CLIProxyAPI/c
 
-## 故障记录 (33)
+## 故障记录 (34)
+- [2026-10-17] 拼多多托管「复刻版」实为 Mock 演示版（2026-10-17） — incidents/pdd-clone-mock-provider-2026-10-17.html
+    拼多多托管「复刻版」实为 Mock 演示版（2026 10 17） 现象 宝塔 <LAN 8 :8899 的拼多多托管项目显示「本周期手动打卡 1/5」「暂不在活动资格内」， 但用户在拼多多实际已打卡满 5 天。页面数字
 - [2026-10-13] 知识库自动发布 cron 偶发失败：github 瞬时不可达 — incidents/kb-publish-github-transient-network-retry-2026-10-13.html
     知识库自动发布 cron 偶发失败：github 瞬时不可达 日期 ：2026 10 13 分类 ：incidents 影响 ：cron「知识库自动沉淀发布」（ 0 /6 ，no_agent）在 00:02 整轮失败，推
 - [2026-10-13] MCII 签到 LOGIN_FAILED：站点改版导致登录态误判 — incidents/mcii-login-detect-site-redesign-2026-10-13.html
