@@ -280,3 +280,40 @@ reload 复用同一渲染进程，再省 0.167s。
 第 20 个账号要到 00:00:13 才点击。这是抢券的真实短板。
 
 参考站声明「全站最多 2 并发」，若夜间也按 2 并发跑，20 账号约 7 秒完成。
+
+
+## 2026-10-18 夜间领取改成真并发（全部账号同时抢）
+
+### 先发现：原来的「并发」是假的
+`pdd.py` 只有一个 `_BrowserWorker`（单线程 + 一个 queue），所有 Playwright 调用排队执行。
+在 server 层开线程池调 `claim()` 并不会加速，只是排队等同一个 worker —— 所以之前 `Semaphore(2)` 的「2 并发」也只是限流，不是并行。
+
+### 改法（5 处）
+1. **worker 池**：`_WORKER` → `_WORKERS` 列表 + `_worker_at(idx)`，每个账号按需新建独立线程/浏览器；预热时分配固定 slot，00:00 claim 回到同一 slot 复用页面。
+2. **run_nightly 三阶段**：
+   - 阶段 1 串行预筛 + 先插 `reserved` 占住额度（并发前串行算，避免超发）
+   - 阶段 2 **全部账号同时 check/claim，只跑网络不写库**（避开 SQLite 写锁打架）
+   - 阶段 3 串行结算：ledger / history / audit / 托管状态
+3. **prepare_nightly 预热也并发**（原来 20 账号串行 46s）。
+4. **夜间结束释放内存**：`pdd.pool_shutdown()` 关浏览器线程 + `_WARM.clear()`，调度器在 run_nightly 后和 00:20 各调一次。
+5. **并发上限** `PDD_NIGHTLY_PARALLEL`，默认 6。
+
+### 实测
+| 场景 | 串行 | 并发 | 提速 |
+|---|---|---|---|
+| 2 账号真实 claim | 1.258s | **0.686s** | 1.84x |
+| 8 账号假 provider（每次 0.8s） | 6.4s | **0.99s** | 6.5x |
+| 8 账号 + 上限 6（分 2 批） | 6.4s | 1.77s | 3.6x |
+| 2 账号并发预热 | 4.59s | **2.50s** | 1.84x |
+| 2 账号真实 run_nightly 全链路 | — | 0.98s | — |
+
+### 内存实测与坑
+- 每个浏览器实例约 **460MB**（预热页面后），2 账号 928MB，回收后降到 318MB。
+- **坑**：容器内 `/proc/meminfo` 显示 MemTotal 64GB、available 18.8GB，但宿主机 `free -m` 只有 **8GB**（swap 2048MB 已用 1751MB）。容器读到的是外层宿主的视图，**不能拿它算并发数**，否则会误判成还能开 30 个浏览器，把 swap 打穿触发 OOM。
+- 因此改成固定上限 6（6 × 460MB ≈ 2.8GB），留 3GB 给宝塔上的 CPA / 青龙。
+
+### 正确性验证（沙盒 8 账号假 provider）
+`participated=8, succeeded=8`；账本 `granted 8 → spent 8`，无残留 `reserved`；`history` 8 条 `received`；托管状态全 `recheck/claimed`；报表 `8/8`；未就绪账号走 `released` 不扣次。
+
+### 备份链
+`pdd.py.bak_pool_*`、`pdd.py.bak_mem_*`、`pdd.py.bak_clear_*`；`server.py.bak_parallel_*`、`server.py.bak_mem_*`、`server.py.bak_cap_*`、`server.py.bak_warmpar_*`、`server.py.bak_shutdown_*`。

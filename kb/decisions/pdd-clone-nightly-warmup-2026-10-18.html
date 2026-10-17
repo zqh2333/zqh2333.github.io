@@ -433,5 +433,73 @@ def settle_stale_reserved(ttl=RESERVED_TTL):
 <h3 id="_13">真正的瓶颈不在单账号，在串行</h3>
 <p><code>run_nightly</code> 目前串行处理账号：0.65s/个，<strong>20 个账号需要约 13 秒</strong>，
 第 20 个账号要到 00:00:13 才点击。这是抢券的真实短板。</p>
-<p>参考站声明「全站最多 2 并发」，若夜间也按 2 并发跑，20 账号约 7 秒完成。</p></article>
+<p>参考站声明「全站最多 2 并发」，若夜间也按 2 并发跑，20 账号约 7 秒完成。</p>
+<h2 id="2026-10-18_1">2026-10-18 夜间领取改成真并发（全部账号同时抢）</h2>
+<h3 id="_14">先发现：原来的「并发」是假的</h3>
+<p><code>pdd.py</code> 只有一个 <code>_BrowserWorker</code>（单线程 + 一个 queue），所有 Playwright 调用排队执行。
+在 server 层开线程池调 <code>claim()</code> 并不会加速，只是排队等同一个 worker —— 所以之前 <code>Semaphore(2)</code> 的「2 并发」也只是限流，不是并行。</p>
+<h3 id="5">改法（5 处）</h3>
+<ol>
+<li><strong>worker 池</strong>：<code>_WORKER</code> → <code>_WORKERS</code> 列表 + <code>_worker_at(idx)</code>，每个账号按需新建独立线程/浏览器；预热时分配固定 slot，00:00 claim 回到同一 slot 复用页面。</li>
+<li><strong>run_nightly 三阶段</strong>：
+   - 阶段 1 串行预筛 + 先插 <code>reserved</code> 占住额度（并发前串行算，避免超发）
+   - 阶段 2 <strong>全部账号同时 check/claim，只跑网络不写库</strong>（避开 SQLite 写锁打架）
+   - 阶段 3 串行结算：ledger / history / audit / 托管状态</li>
+<li><strong>prepare_nightly 预热也并发</strong>（原来 20 账号串行 46s）。</li>
+<li><strong>夜间结束释放内存</strong>：<code>pdd.pool_shutdown()</code> 关浏览器线程 + <code>_WARM.clear()</code>，调度器在 run_nightly 后和 00:20 各调一次。</li>
+<li><strong>并发上限</strong> <code>PDD_NIGHTLY_PARALLEL</code>，默认 6。</li>
+</ol>
+<h3 id="_15">实测</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>串行</th>
+<th>并发</th>
+<th>提速</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2 账号真实 claim</td>
+<td>1.258s</td>
+<td><strong>0.686s</strong></td>
+<td>1.84x</td>
+</tr>
+<tr>
+<td>8 账号假 provider（每次 0.8s）</td>
+<td>6.4s</td>
+<td><strong>0.99s</strong></td>
+<td>6.5x</td>
+</tr>
+<tr>
+<td>8 账号 + 上限 6（分 2 批）</td>
+<td>6.4s</td>
+<td>1.77s</td>
+<td>3.6x</td>
+</tr>
+<tr>
+<td>2 账号并发预热</td>
+<td>4.59s</td>
+<td><strong>2.50s</strong></td>
+<td>1.84x</td>
+</tr>
+<tr>
+<td>2 账号真实 run_nightly 全链路</td>
+<td>—</td>
+<td>0.98s</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_16">内存实测与坑</h3>
+<ul>
+<li>每个浏览器实例约 <strong>460MB</strong>（预热页面后），2 账号 928MB，回收后降到 318MB。</li>
+<li><strong>坑</strong>：容器内 <code>/proc/meminfo</code> 显示 MemTotal 64GB、available 18.8GB，但宿主机 <code>free -m</code> 只有 <strong>8GB</strong>（swap 2048MB 已用 1751MB）。容器读到的是外层宿主的视图，<strong>不能拿它算并发数</strong>，否则会误判成还能开 30 个浏览器，把 swap 打穿触发 OOM。</li>
+<li>因此改成固定上限 6（6 × 460MB ≈ 2.8GB），留 3GB 给宝塔上的 CPA / 青龙。</li>
+</ul>
+<h3 id="8-provider">正确性验证（沙盒 8 账号假 provider）</h3>
+<p><code>participated=8, succeeded=8</code>；账本 <code>granted 8 → spent 8</code>，无残留 <code>reserved</code>；<code>history</code> 8 条 <code>received</code>；托管状态全 <code>recheck/claimed</code>；报表 <code>8/8</code>；未就绪账号走 <code>released</code> 不扣次。</p>
+<h3 id="_17">备份链</h3>
+<p><code>pdd.py.bak_pool_*</code>、<code>pdd.py.bak_mem_*</code>、<code>pdd.py.bak_clear_*</code>；<code>server.py.bak_parallel_*</code>、<code>server.py.bak_mem_*</code>、<code>server.py.bak_cap_*</code>、<code>server.py.bak_warmpar_*</code>、<code>server.py.bak_shutdown_*</code>。</p></article>
 <footer>脱敏发布的运维知识库 · 生成于 2026-10-18</footer></div></body></html>
