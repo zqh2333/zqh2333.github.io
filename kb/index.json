@@ -1,12 +1,12 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-17",
- "count": 109,
+ "count": 110,
  "categories": [
   {
    "id": "decisions",
    "name": "决策记录",
-   "count": 24
+   "count": 25
   },
   {
    "id": "incidents",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "pdd-clone 接真实拼多多：浏览器驱动链路（anti_content 不伪造）",
+   "date": "2026-10-17",
+   "category": "decisions",
+   "url": "decisions/pdd-clone-real-provider-2026-10-17.html",
+   "summary": "pdd clone 接真实拼多多：浏览器驱动链路（anti_content 不伪造） 日期：2026 10 17 主机：宝塔 <LAN 8 / 容器 pdd clone / 端口 8899 结论：站点从 Mock 数据升"
+  },
   {
    "title": "拼多多托管「复刻版」实为 Mock 演示版（2026-10-17）",
    "date": "2026-10-17",
