@@ -115,7 +115,55 @@ docker restart pdd-clone
 <p>预热能省掉建上下文和硬等，但<strong>省不掉</strong>：官方页面必须先请求一次拿到当日
 <code>rawData</code>、真实点击、官方 JS 生成签名。所以下限约为 <strong>0.9–1.2 秒</strong>，做不到
 毫秒级，也不做任何伪造签名的加速。</p>
-<h2 id="_8">待验证</h2>
+<h2 id="2">后续补齐：全站 2 并发闸</h2>
+<p>前端 <code>actions.js</code> 声明「全站最多 2 并发」，后端原先只有 <code>_checking</code>（同号不重复），
+没有全局并发上限。已补：</p>
+<pre><code class="language-python">_check_sem = threading.Semaphore(2)   # 只拦 HTTP 手动核验，不影响夜间任务
+</code></pre>
+<p><code>/api/accounts/&lt;id&gt;/refresh</code> 拿不到许可直接 429。实测 4 个并发请求 →
+<code>[True, True, False, False]</code>，精确保 2 并发。</p>
+<h2 id="_8">与参考站的最终差异（逐项核对）</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>document.title</code> / <code>h1</code> / body 文本长度</td>
+<td>完全一致（238 字符）</td>
+</tr>
+<tr>
+<td>首页 19 个按钮文本</td>
+<td>逐项一致</td>
+</tr>
+<tr>
+<td>CSS 文件</td>
+<td>7 个全部同名；本方多 <code>qr-login.css</code></td>
+</tr>
+<tr>
+<td>前端 28 个静态文件</td>
+<td>26 个 md5 一致</td>
+</tr>
+<tr>
+<td>前端引用的 24 个 API 端点</td>
+<td>全部存在（403/401/400 均表示已实现）</td>
+</tr>
+<tr>
+<td>60 秒冷却 / 同号在途不重复 / 全站 2 并发 / 23:55–00:20 避让</td>
+<td>全部对齐</td>
+</tr>
+<tr>
+<td>唯一功能性新增</td>
+<td>扫码登录（3 个按钮 + <code>qr-login.js/css</code> + <code>/api/qr/*</code>）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>已知语义差异</strong>：本方 <code>recycle_due()</code> 按本地到期时间回收，不访问上游；
+参考站后端不可见，无法确认其「后台巡检是否查询上游」。</p>
+<h2 id="_9">待验证</h2>
 <ul>
 <li>下一日 00:00 的真实领取结果（当前两个账号均为 <code>sold_out</code> 5/5，周期已完成）。</li>
 <li>23:57 预热日志：<code>NIGHTLY_LOG</code> 里会出现 <code>{"at": ..., "prepare": N}</code>。</li>
