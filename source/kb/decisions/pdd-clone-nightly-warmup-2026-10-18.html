@@ -163,6 +163,57 @@ docker restart pdd-clone
 </table>
 <p><strong>已知语义差异</strong>：本方 <code>recycle_due()</code> 按本地到期时间回收，不访问上游；
 参考站后端不可见，无法确认其「后台巡检是否查询上游」。</p>
+<h2 id="reserved">隐患修复：reserved 额度僵死自愈</h2>
+<p><strong>问题</strong>：<code>run_nightly</code> 在 <code>claim()</code> 前插一条 <code>credit_ledger.state='reserved'</code> 占用 1 次额度。
+成功转 <code>spent</code>、失败转 <code>released</code>，但<strong>进程若在 claim 途中被杀，这条永远停在 <code>reserved</code></strong>。
+<code>user_credits()</code> 把 <code>reserved</code> 计入 <code>held</code> → 用户额度永久 -1，且原 <code>recycle_due()</code> 只动
+<code>accounts</code> 表、不碰账本，无从自愈。代码里 <code>CLAIM_STATES</code> 已定义 <code>uncertain</code> 却从未使用。</p>
+<p><strong>修复</strong>：</p>
+<pre><code class="language-python">RESERVED_TTL = 7200      # 2 小时
+
+def settle_stale_reserved(ttl=RESERVED_TTL):
+    # state IN ('reserved','uncertain') AND created &lt;= now-ttl
+    # → state='released', reason='预留超时自动归还'，逐条写 audit credit_release_stale
+</code></pre>
+<p><code>scheduler()</code> 每分钟调用一次（<code>marks["stale"] != (day, hm)</code> 去重），容器重启后首轮即自愈。
+2 小时阈值的安全边界：单次 claim 最长 180s，20 账号串行实测约 20s，远小于 TTL，
+不会误伤正在进行的领取。</p>
+<p><strong>沙盒验证（生产库副本，5 条断言全 PASS）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>账本</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>reserved 3 小时前</td>
+<td>→ released ✅</td>
+</tr>
+<tr>
+<td>uncertain 3 小时前</td>
+<td>→ released ✅</td>
+</tr>
+<tr>
+<td>reserved 1 小时前</td>
+<td>保留 ✅</td>
+</tr>
+<tr>
+<td>reserved 10 分钟前</td>
+<td>保留 ✅</td>
+</tr>
+<tr>
+<td>spent 3 小时前</td>
+<td>不动 ✅</td>
+</tr>
+</tbody>
+</table>
+<p><code>held</code> 从 4 降到 2，<code>audit</code> 写入 2 条 <code>credit_release_stale</code>。</p>
+<p><strong>生产验证</strong>：容器重启后 healthy，首次执行归还 0 条（无残留），<code>admin</code> 额度
+<code>held=0</code>，首页 HTTP 200。</p>
+<p><strong>未做</strong>：参考站「后台每分钟最多检查 2 个活动托管记录、同号间隔 5 分钟」的上游巡检回收。
+本方 <code>recycle_due()</code> 保持纯本地 deadline 判断（不发请求，无风控风险），结果一致。</p>
 <h2 id="_9">待验证</h2>
 <ul>
 <li>下一日 00:00 的真实领取结果（当前两个账号均为 <code>sold_out</code> 5/5，周期已完成）。</li>
