@@ -232,5 +232,81 @@ def settle_stale_reserved(ttl=RESERVED_TTL):
 另加新增文件 <code>qr-login.js</code> / <code>qr-login.css</code>。</p>
 <blockquote>
 <p>22 秒超时已够用：实测 <code>check</code> 约 0.7s、<code>claim</code>（预热）约 0.94s，远低于 22s。</p>
-</blockquote></article>
+</blockquote>
+<h2 id="2026-10-18">2026-10-18 抢券链路双轨演练</h2>
+<p><strong>A 轨 — 真实网络（生产库只读，不写库、不点击）</strong></p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>实测</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>23:57 预热 2 个账号</td>
+<td><strong>1.169s</strong>（每账号约 0.58s）</td>
+</tr>
+<tr>
+<td>00:00 领取 #3</td>
+<td><strong>1.06s</strong> → <code>sold_out</code>，<code>attempts=0</code></td>
+</tr>
+<tr>
+<td>00:00 领取 #5</td>
+<td><strong>1.01s</strong> → <code>sold_out</code>，<code>attempts=0</code></td>
+</tr>
+<tr>
+<td>预热池清理</td>
+<td>OK</td>
+</tr>
+</tbody>
+</table>
+<p>两个账号均 5/5 已领完，<code>canClick=false</code> 故 <code>claim()</code> 不点击，<code>attempts=0</code> —— 与设计一致。</p>
+<p><strong>B 轨 — 沙盒全链路仿真（假 provider：<code>check</code>→ready、<code>claim</code>→received）</strong></p>
+<p>造 1 个普通用户（3 次额度）+ 4 个账号，覆盖四种路径：</p>
+<table>
+<thead>
+<tr>
+<th>账号</th>
+<th>场景</th>
+<th>结果</th>
+<th>托管状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>快照已 ready</td>
+<td><code>received</code></td>
+<td>recheck / claimed</td>
+</tr>
+<tr>
+<td>B</td>
+<td>快照 <code>sold_out</code>，跨日现查后 ready</td>
+<td><code>received</code></td>
+<td>recheck / claimed</td>
+</tr>
+<tr>
+<td>C</td>
+<td>第三次领取</td>
+<td><code>received</code></td>
+<td>recheck / claimed</td>
+</tr>
+<tr>
+<td>D</td>
+<td>额度耗尽</td>
+<td>跳过</td>
+<td>active / round（不动）</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><code>run_nightly()</code> → <code>participated=3, succeeded=3</code></li>
+<li>额度 <code>available 3 → 0</code>，<code>spent=3</code>，<strong>无残留 <code>reserved</code></strong></li>
+<li><code>history</code> 3 条 <code>received</code>；<code>audit</code> = <code>nightly.claim</code>×3 + <code>nightly.skip</code>×1（<code>no_credit</code>）</li>
+<li><code>global_reports</code> = <code>2026-10-18 / 3 / 3</code></li>
+<li>到期回收 → A 转 <code>released / claimed</code></li>
+</ul>
+<p><strong>结论</strong>：领取链路、额度结算、跨日现查、额度耗尽保护、报表统计、到期回收全部打通。
+唯一未验证项是「拼多多服务端在 00:00 那一刻是否真的放券」——这只能靠真实可领账号在下一个周期实测。</p></article>
 <footer>脱敏发布的运维知识库 · 生成于 2026-10-18</footer></div></body></html>

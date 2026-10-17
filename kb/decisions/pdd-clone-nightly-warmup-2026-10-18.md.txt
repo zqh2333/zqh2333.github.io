@@ -183,3 +183,36 @@ def settle_stale_reserved(ttl=RESERVED_TTL):
 另加新增文件 `qr-login.js` / `qr-login.css`。
 
 > 22 秒超时已够用：实测 `check` 约 0.7s、`claim`（预热）约 0.94s，远低于 22s。
+
+## 2026-10-18 抢券链路双轨演练
+
+**A 轨 — 真实网络（生产库只读，不写库、不点击）**
+
+| 阶段 | 实测 |
+|---|---|
+| 23:57 预热 2 个账号 | **1.169s**（每账号约 0.58s） |
+| 00:00 领取 #3 | **1.06s** → `sold_out`，`attempts=0` |
+| 00:00 领取 #5 | **1.01s** → `sold_out`，`attempts=0` |
+| 预热池清理 | OK |
+
+两个账号均 5/5 已领完，`canClick=false` 故 `claim()` 不点击，`attempts=0` —— 与设计一致。
+
+**B 轨 — 沙盒全链路仿真（假 provider：`check`→ready、`claim`→received）**
+
+造 1 个普通用户（3 次额度）+ 4 个账号，覆盖四种路径：
+
+| 账号 | 场景 | 结果 | 托管状态 |
+|---|---|---|---|
+| A | 快照已 ready | `received` | recheck / claimed |
+| B | 快照 `sold_out`，跨日现查后 ready | `received` | recheck / claimed |
+| C | 第三次领取 | `received` | recheck / claimed |
+| D | 额度耗尽 | 跳过 | active / round（不动） |
+
+- `run_nightly()` → `participated=3, succeeded=3`
+- 额度 `available 3 → 0`，`spent=3`，**无残留 `reserved`**
+- `history` 3 条 `received`；`audit` = `nightly.claim`×3 + `nightly.skip`×1（`no_credit`）
+- `global_reports` = `2026-10-18 / 3 / 3`
+- 到期回收 → A 转 `released / claimed`
+
+**结论**：领取链路、额度结算、跨日现查、额度耗尽保护、报表统计、到期回收全部打通。
+唯一未验证项是「拼多多服务端在 00:00 那一刻是否真的放券」——这只能靠真实可领账号在下一个周期实测。
