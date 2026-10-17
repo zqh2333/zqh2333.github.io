@@ -308,5 +308,130 @@ def settle_stale_reserved(ttl=RESERVED_TTL):
 <li>到期回收 → A 转 <code>released / claimed</code></li>
 </ul>
 <p><strong>结论</strong>：领取链路、额度结算、跨日现查、额度耗尽保护、报表统计、到期回收全部打通。
-唯一未验证项是「拼多多服务端在 00:00 那一刻是否真的放券」——这只能靠真实可领账号在下一个周期实测。</p></article>
+唯一未验证项是「拼多多服务端在 00:00 那一刻是否真的放券」——这只能靠真实可领账号在下一个周期实测。</p>
+<h2 id="2026-10-18-1">2026-10-18 抢券提速：把「到判定」压进 1 秒</h2>
+<h3 id="3">先分段计时找瓶颈（3 次，真实活动页）</h3>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>均值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ctx.new_page()</code></td>
+<td>0.051s</td>
+</tr>
+<tr>
+<td><strong><code>pg.goto(wait_until="domcontentloaded")</code></strong></td>
+<td><strong>0.945s（93%）</strong></td>
+</tr>
+<tr>
+<td><code>_wait_state()</code> 读 rawData</td>
+<td>0.024s</td>
+</tr>
+<tr>
+<td>合计</td>
+<td><strong>1.019s</strong></td>
+</tr>
+</tbody>
+</table>
+<p>瓶颈就是 <code>goto</code>：等整个 HTML 下载 + 解析完才返回。</p>
+<h3 id="_10">三种取数方式实测对比</h3>
+<table>
+<thead>
+<tr>
+<th>方式</th>
+<th>goto</th>
+<th>wait</th>
+<th>合计均值</th>
+<th>最小</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>domcontentloaded</code>（原始）</td>
+<td>1.15s</td>
+<td>0.02s</td>
+<td>1.076s</td>
+<td>0.850</td>
+</tr>
+<tr>
+<td><code>commit</code>（拿响应头就走）</td>
+<td>0.15s</td>
+<td>0.63s</td>
+<td>0.784s</td>
+<td>0.641</td>
+</tr>
+<tr>
+<td>预访问一次后再 goto</td>
+<td>0.61s</td>
+<td>0.02s</td>
+<td><strong>0.644s</strong></td>
+<td>0.638</td>
+</tr>
+</tbody>
+</table>
+<p><code>commit</code> 只是把等待从 goto 挪到 <code>_wait_state</code>，总时长抖动大；<strong>预访问后连接复用</strong>才是真收益。</p>
+<h3 id="reload-vs-page">再比：保留页面 reload vs 新建 page</h3>
+<table>
+<thead>
+<tr>
+<th>方式</th>
+<th>合计均值</th>
+<th>最小</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>预热保留 page，00:00 <code>pg.reload()</code></td>
+<td><strong>0.618s</strong></td>
+<td>0.589</td>
+</tr>
+<tr>
+<td>预热只建连接，00:00 新建 page + goto</td>
+<td>0.785s</td>
+<td>0.755</td>
+</tr>
+</tbody>
+</table>
+<p>reload 复用同一渲染进程，再省 0.167s。</p>
+<h3 id="apppddpy">最终改动（<code>/app/pdd.py</code>）</h3>
+<ol>
+<li><code>warm_prepare()</code>：建 ctx 后<strong>加载活动页并常驻</strong>，存入 <code>_WARM[acc_id]["pg"]</code>（23:57 执行）</li>
+<li><code>claim(warm=True)</code>：复用常驻 page，用 <code>pg.reload(wait_until="domcontentloaded")</code> 取新数据，失败则回退 <code>goto</code></li>
+<li><code>_wait_state()</code> 轮询 150ms → <strong>40ms</strong></li>
+<li>award 响应轮询固定 400ms → <strong>30ms 起，命中即走</strong></li>
+</ol>
+<h3 id="_11">实测（生产容器，真实网络）</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>claim 耗时</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>预热后立即领取（3 轮）</td>
+<td><strong>0.637 / 0.645 / 0.657s</strong></td>
+</tr>
+<tr>
+<td>预热后间隔 <strong>180 秒</strong>（模拟 23:57→00:00）</td>
+<td><strong>0.761s</strong></td>
+</tr>
+</tbody>
+</table>
+<p>对比基线 1.019s，<strong>省 0.37s（36%）</strong>。3 分钟间隔后连接部分失效但仍 &lt;1s，
+因为 reload 仍能复用 DNS 缓存与 TLS session。</p>
+<h3 id="_12">一个必须说清的点</h3>
+<p>以上是「<strong>到判定</strong>」的耗时（读 rawData 判断能不能领）。真实点击还要加 <code>pg.click()</code>
+约 0.1s，award 响应返回约 0.2s。</p>
+<p><strong>但抢券胜负由「点击时刻」决定，不是响应返回时刻</strong> —— 请求发出后服务端按到达顺序判库存。
+所以关键指标是：00:00:00 → 点击 ≈ <strong>0.75～0.87s</strong>，仍在 1 秒内。</p>
+<h3 id="_13">真正的瓶颈不在单账号，在串行</h3>
+<p><code>run_nightly</code> 目前串行处理账号：0.65s/个，<strong>20 个账号需要约 13 秒</strong>，
+第 20 个账号要到 00:00:13 才点击。这是抢券的真实短板。</p>
+<p>参考站声明「全站最多 2 并发」，若夜间也按 2 并发跑，20 账号约 7 秒完成。</p></article>
 <footer>脱敏发布的运维知识库 · 生成于 2026-10-18</footer></div></body></html>
