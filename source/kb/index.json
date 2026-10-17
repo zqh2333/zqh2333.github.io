@@ -1,12 +1,12 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-18",
- "count": 112,
+ "count": 113,
  "categories": [
   {
    "id": "decisions",
    "name": "决策记录",
-   "count": 26
+   "count": 27
   },
   {
    "id": "incidents",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "pdd-clone 夜间准点抢券改造（对齐参考站时间线）",
+   "date": "2026-10-18",
+   "category": "decisions",
+   "url": "decisions/pdd-clone-nightly-warmup-2026-10-18.html",
+   "summary": "pdd clone 夜间准点抢券改造（对齐参考站时间线） 日期：2026 10 18 站点： http://<LAN 8 :8899 （容器 pdd clone ） 参考站： https://pdd.769952156."
+  },
   {
    "title": "pdd-clone 夜间任务「跑了但零参与」：静默 continue 让故障不可观测",
    "date": "2026-10-18",

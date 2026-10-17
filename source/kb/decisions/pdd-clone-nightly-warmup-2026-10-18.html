@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pdd-clone 夜间准点抢券改造（对齐参考站时间线） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="pdd-clone">pdd-clone 夜间准点抢券改造（对齐参考站时间线）</h1>
+<ul>
+<li>日期：2026-10-18</li>
+<li>站点：<code>http://&lt;LAN-8&gt;:8899</code>（容器 <code>pdd-clone</code>）</li>
+<li>参考站：<code>https://pdd.769952156.xyz/</code>（"老管券友 · 自助托管"）</li>
+</ul>
+<h2 id="_1">结论先行</h2>
+<p>参考站与自建站<strong>本来就是同一套前端代码</strong>。抓取比对 28 个静态文件，其中
+<strong>26 个 md5 字节级完全一致</strong>（含 <code>style.css</code>、<code>render.js</code>、<code>actions.js</code>、
+<code>capacity-ui.js</code>、<code>codes-ui.js</code>、<code>user-management.js</code> 等）。仅 3 处有意差异：</p>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>差异</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app.js</code></td>
+<td>本方改过 <code>sold_out</code> 文案为「今日券已领完 · 明日再来」</td>
+</tr>
+<tr>
+<td><code>cookie-login.js</code></td>
+<td>本方注入了扫码登录面板</td>
+</tr>
+<tr>
+<td><code>index.html</code></td>
+<td>本方多了扫码 tab（参考站只有短信 / CK 两个 tab）</td>
+</tr>
+</tbody>
+</table>
+<p>所以"做成和这个一样"不是界面问题，<strong>差的是夜间调度</strong>。</p>
+<h2 id="_2">参考站前端声明的规则</h2>
+<p>前端 <code>actions.js</code> 的说明文案已写明产品规则：</p>
+<blockquote>
+<p>每个账号 60 秒冷却，同号在途查询不重复，全站最多 2 并发……后台每分钟最多检查
+2 个活动托管记录，同号至少间隔 5 分钟……<strong>23:55—00:20 避开抢券</strong>。
+没有自动发短信、打卡或补领。</p>
+</blockquote>
+<p>侧栏时间线：<code>23:30 提前检查</code> / <code>23:57 准备</code> / <code>00:00 尝试领取</code>。</p>
+<h2 id="_3">改造前的问题</h2>
+<ol>
+<li>调度 <code>while True: ... time.sleep(20)</code>，<code>hm == 0</code> 只在分钟窗口成立 →
+   实际触发落在 <strong>00:00:00–00:00:19</strong> 之间，最坏晚 19 秒。</li>
+<li><code>claim()</code> 每次都新建 context + 打开活动页 + <strong><code>wait_for_timeout(2500)</code> 硬等 2.5 秒</strong>。</li>
+<li>没有 23:57 准备环节；没有 23:55–00:20 手动核验避让。</li>
+</ol>
+<p>单账号最坏要 00:00:24 才点到按钮，多账号串行更久。</p>
+<h2 id="_4">改造内容</h2>
+<h3 id="pddpy5">pdd.py（5 处）</h3>
+<ul>
+<li>新增 <code>_WARM</code> 预热池 + <code>warm_prepare / warm_drop / warm_drop_all / warm_info</code>。
+  预热<strong>只建 context + 注入 Cookie，不发页面请求</strong>，请求数不变。</li>
+<li>新增 <code>_wait_state(pg, timeout_ms=9000)</code>：轮询 <code>window.rawData</code>，就绪即返回，
+  替代固定 2.5 秒硬等。</li>
+<li><code>claim(account, ck_info, warm=False)</code>：<code>warm=True</code> 时复用预热 context；
+  结束时 <code>pg.close()</code> + <code>ctx.close()</code>，用完即回收。</li>
+<li><code>MockProvider.claim</code> 同步签名。</li>
+</ul>
+<h3 id="serverpy4">server.py（4 处）</h3>
+<ul>
+<li><code>scheduler()</code> 改为<strong>按整分对齐</strong>：<code>time.sleep(max(0.25, 60 - time.time() % 60))</code>，
+  保证 <code>23:57:00</code> / <code>00:00:00</code> 准点命中（误差 &lt; 50ms）。</li>
+<li>新增 <code>prepare_nightly()</code>：23:57 只对 <code>hosting_state='active'</code> 且
+  <code>snapshot.status == 'ready'</code> 的账号预热（不可领的账号预热了也没用）。</li>
+<li><code>run_nightly</code> 调 <code>claim(..., warm=True)</code>；领取结束 <code>warm_drop_all()</code>；
+  00:20 再清一次，防上下文泄漏。</li>
+<li>新增 <code>rush_window()</code>：<code>23:55–00:20</code> 内 <code>/api/accounts/&lt;id&gt;/refresh</code> 返回
+  429「抢券时段，手动核验已暂停」，避免手动核验抢占浏览器线程。</li>
+</ul>
+<h2 id="ck-sold_out">实测数据（真实网络、真实 CK、账号 sold_out 不点击）</h2>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>耗时</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>冷启动 claim（新建 context + 打开页面 + 轮询就绪）</td>
+<td><strong>3.84s</strong>（原 4.7s，去掉硬等省 0.9s）</td>
+</tr>
+<tr>
+<td><code>warm_prepare</code> 预热</td>
+<td><strong>0.01s</strong></td>
+</tr>
+<tr>
+<td>复用预热 context 的 claim</td>
+<td><strong>0.94s</strong></td>
+</tr>
+</tbody>
+</table>
+<p>预热后省 <strong>2.90s / 76%</strong>。加上调度准点（省 0–19s），单账号从
+「0 点后 4.7–24 秒」压到 <strong>「0 点后约 1 秒」</strong>。</p>
+<h2 id="_5">沙盒验证（生产库副本，未污染生产）</h2>
+<pre><code>prepare_nightly 预热数: 1 → [6]   （3 个账号里只有 ready 的那个被预热）
+run_nightly 结果: {'participated': 1, 'succeeded': 1}
+claim 调用: [{'id': 6, 'warm': True}]
+[PASS] 预热只挑 ready
+[PASS] 夜间 claim 带 warm=True
+rush_window 边界：23:54 F / 23:55 T / 23:59 T / 00:00 T / 00:20 T / 00:21 F / 12:00 F
+</code></pre>
+<h2 id="_6">回滚</h2>
+<pre><code>cp /app/pdd.py.bak_rush_20261018_003601 /app/pdd.py
+cp /app/server.py.bak_rush_20261018_003601 /app/server.py
+docker restart pdd-clone
+</code></pre>
+<h2 id="_7">剩余的硬成本</h2>
+<p>预热能省掉建上下文和硬等，但<strong>省不掉</strong>：官方页面必须先请求一次拿到当日
+<code>rawData</code>、真实点击、官方 JS 生成签名。所以下限约为 <strong>0.9–1.2 秒</strong>，做不到
+毫秒级，也不做任何伪造签名的加速。</p>
+<h2 id="_8">待验证</h2>
+<ul>
+<li>下一日 00:00 的真实领取结果（当前两个账号均为 <code>sold_out</code> 5/5，周期已完成）。</li>
+<li>23:57 预热日志：<code>NIGHTLY_LOG</code> 里会出现 <code>{"at": ..., "prepare": N}</code>。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-18</footer></div></body></html>

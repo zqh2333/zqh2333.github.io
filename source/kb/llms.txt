@@ -1,6 +1,8 @@
-# 运维知识库 · 112 篇 · 生成于 2026-10-18
+# 运维知识库 · 113 篇 · 生成于 2026-10-18
 
-## 决策记录 (26)
+## 决策记录 (27)
+- [2026-10-18] pdd-clone 夜间准点抢券改造（对齐参考站时间线） — decisions/pdd-clone-nightly-warmup-2026-10-18.html
+    pdd clone 夜间准点抢券改造（对齐参考站时间线） 日期：2026 10 18 站点： http://<LAN 8 :8899 （容器 pdd clone ） 参考站： https://pdd.769952156.
 - [2026-10-17] pdd-clone 扫码登录：浏览器截图取二维码，登录后自取 HttpOnly Cookie — decisions/pdd-clone-qr-login-2026-10-17.html
     pdd clone 扫码登录：浏览器截图取二维码，登录后自取 HttpOnly Cookie 日期：2026 10 17 主机：宝塔 <LAN 8 / 容器 pdd clone / 站点 http://<LAN 8 :8
 - [2026-10-17] pdd-clone 接真实拼多多：状态从 SSR rawData 取，领取才用浏览器 — decisions/pdd-clone-real-provider-2026-10-17.html

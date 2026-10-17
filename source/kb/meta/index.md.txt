@@ -118,3 +118,5 @@
 - [[decisions/pdd-clone-qr-login-2026-10-17]] — 扫码登录：整页截图取二维码、context.cookies() 自取 HttpOnly Token、uid 去重不建重复号。
 - [[decisions/pdd-clone-real-provider-2026-10-17]] — 接真实拼多多：浏览器驱动 anti_content，finishCount/gainAwardCount/displayStatus 实测
 - [[incidents/pdd-clone-mock-provider-2026-10-17]] — 宝塔 <LAN-8>:8899 的拼多多托管项目显示「本周期手动打卡 1/5」「暂不在活动资格内」，
+- [夜间准点抢券改造（23:57 预热 + 整分对齐）](decisions/pdd-clone-nightly-warmup-2026-10-18.md)
+- [[decisions/pdd-clone-nightly-warmup-2026-10-18]] — 日期：2026-10-18

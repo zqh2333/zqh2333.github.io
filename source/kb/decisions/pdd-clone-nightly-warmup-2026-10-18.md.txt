@@ -1,0 +1,102 @@
+# pdd-clone 夜间准点抢券改造（对齐参考站时间线）
+
+- 日期：2026-10-18
+- 站点：`http://<LAN-8>:8899`（容器 `pdd-clone`）
+- 参考站：`https://pdd.769952156.xyz/`（"老管券友 · 自助托管"）
+
+## 结论先行
+
+参考站与自建站**本来就是同一套前端代码**。抓取比对 28 个静态文件，其中
+**26 个 md5 字节级完全一致**（含 `style.css`、`render.js`、`actions.js`、
+`capacity-ui.js`、`codes-ui.js`、`user-management.js` 等）。仅 3 处有意差异：
+
+| 文件 | 差异 |
+|---|---|
+| `app.js` | 本方改过 `sold_out` 文案为「今日券已领完 · 明日再来」 |
+| `cookie-login.js` | 本方注入了扫码登录面板 |
+| `index.html` | 本方多了扫码 tab（参考站只有短信 / CK 两个 tab） |
+
+所以"做成和这个一样"不是界面问题，**差的是夜间调度**。
+
+## 参考站前端声明的规则
+
+前端 `actions.js` 的说明文案已写明产品规则：
+
+> 每个账号 60 秒冷却，同号在途查询不重复，全站最多 2 并发……后台每分钟最多检查
+> 2 个活动托管记录，同号至少间隔 5 分钟……**23:55—00:20 避开抢券**。
+> 没有自动发短信、打卡或补领。
+
+侧栏时间线：`23:30 提前检查` / `23:57 准备` / `00:00 尝试领取`。
+
+## 改造前的问题
+
+1. 调度 `while True: ... time.sleep(20)`，`hm == 0` 只在分钟窗口成立 →
+   实际触发落在 **00:00:00–00:00:19** 之间，最坏晚 19 秒。
+2. `claim()` 每次都新建 context + 打开活动页 + **`wait_for_timeout(2500)` 硬等 2.5 秒**。
+3. 没有 23:57 准备环节；没有 23:55–00:20 手动核验避让。
+
+单账号最坏要 00:00:24 才点到按钮，多账号串行更久。
+
+## 改造内容
+
+### pdd.py（5 处）
+
+- 新增 `_WARM` 预热池 + `warm_prepare / warm_drop / warm_drop_all / warm_info`。
+  预热**只建 context + 注入 Cookie，不发页面请求**，请求数不变。
+- 新增 `_wait_state(pg, timeout_ms=9000)`：轮询 `window.rawData`，就绪即返回，
+  替代固定 2.5 秒硬等。
+- `claim(account, ck_info, warm=False)`：`warm=True` 时复用预热 context；
+  结束时 `pg.close()` + `ctx.close()`，用完即回收。
+- `MockProvider.claim` 同步签名。
+
+### server.py（4 处）
+
+- `scheduler()` 改为**按整分对齐**：`time.sleep(max(0.25, 60 - time.time() % 60))`，
+  保证 `23:57:00` / `00:00:00` 准点命中（误差 < 50ms）。
+- 新增 `prepare_nightly()`：23:57 只对 `hosting_state='active'` 且
+  `snapshot.status == 'ready'` 的账号预热（不可领的账号预热了也没用）。
+- `run_nightly` 调 `claim(..., warm=True)`；领取结束 `warm_drop_all()`；
+  00:20 再清一次，防上下文泄漏。
+- 新增 `rush_window()`：`23:55–00:20` 内 `/api/accounts/<id>/refresh` 返回
+  429「抢券时段，手动核验已暂停」，避免手动核验抢占浏览器线程。
+
+## 实测数据（真实网络、真实 CK、账号 sold_out 不点击）
+
+| 场景 | 耗时 |
+|---|---|
+| 冷启动 claim（新建 context + 打开页面 + 轮询就绪） | **3.84s**（原 4.7s，去掉硬等省 0.9s） |
+| `warm_prepare` 预热 | **0.01s** |
+| 复用预热 context 的 claim | **0.94s** |
+
+预热后省 **2.90s / 76%**。加上调度准点（省 0–19s），单账号从
+「0 点后 4.7–24 秒」压到 **「0 点后约 1 秒」**。
+
+## 沙盒验证（生产库副本，未污染生产）
+
+```
+prepare_nightly 预热数: 1 → [6]   （3 个账号里只有 ready 的那个被预热）
+run_nightly 结果: {'participated': 1, 'succeeded': 1}
+claim 调用: [{'id': 6, 'warm': True}]
+[PASS] 预热只挑 ready
+[PASS] 夜间 claim 带 warm=True
+rush_window 边界：23:54 F / 23:55 T / 23:59 T / 00:00 T / 00:20 T / 00:21 F / 12:00 F
+```
+
+## 回滚
+
+```
+cp /app/pdd.py.bak_rush_20261018_003601 /app/pdd.py
+cp /app/server.py.bak_rush_20261018_003601 /app/server.py
+docker restart pdd-clone
+```
+
+## 剩余的硬成本
+
+预热能省掉建上下文和硬等，但**省不掉**：官方页面必须先请求一次拿到当日
+`rawData`、真实点击、官方 JS 生成签名。所以下限约为 **0.9–1.2 秒**，做不到
+毫秒级，也不做任何伪造签名的加速。
+
+## 待验证
+
+- 下一日 00:00 的真实领取结果（当前两个账号均为 `sold_out` 5/5，周期已完成）。
+- 23:57 预热日志：`NIGHTLY_LOG` 里会出现 `{"at": ..., "prepare": N}`。
