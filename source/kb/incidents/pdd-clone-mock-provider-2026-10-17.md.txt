@@ -1,0 +1,77 @@
+# 拼多多托管「复刻版」实为 Mock 演示版（2026-10-17）
+
+## 现象
+
+宝塔 `<LAN-8>:8899` 的拼多多托管项目显示「本周期手动打卡 1/5」「暂不在活动资格内」，
+但用户在拼多多实际已打卡满 5 天。页面数字与真实进度不符，且长期不变。
+
+## 根因
+
+部署的是**演示版（Mock）**，不是真的连拼多多。
+
+`/app/pdd.py` 文件头自述：
+
+> 这里把跟拼多多交互的部分抽成 Provider 接口，默认给一个 Mock 实现，方便本地跑通全流程；
+> 接真接口时替换 MockProvider 即可，业务层不用动。
+
+`MockProvider.check()` 的关键逻辑：
+
+```python
+h = int(hashlib.sha256((ck_info.get("user_id") or "").encode()).hexdigest(), 16)
+finished = h % 6                 # 页面上的 x/5
+if (h >> 8) % 5 == 0:            # 页面上的「暂不在活动资格内」
+    return {"status": "ineligible", "finished": finished, "required": 5}
+```
+
+即：**进度值完全由 uid 的哈希决定，与拼多多真实状态无关，且永远不变**。
+
+实测复算（未打印任何凭据）：
+
+```
+uid 长度        = 10
+sha256(uid) % 6  = 1        <- 页面显示 1/5
+(h>>8) % 5 == 0  = True     <- 页面显示 ineligible
+provider.check() = {'status':'ineligible','finished':1,'required':5}
+DB snapshot      = {"status":"ineligible","finished":1,"required":5}
+```
+
+## 连带证据
+
+| 检查项 | 结果 | 含义 |
+|---|---|---|
+| 全项目 HTTP 调用 | 0 处（1538 行，仅 `urllib.parse`） | 从不访问拼多多 |
+| `history` 表 | 0 行 | 从未记录过任何核验/领取 |
+| `audit` 表 | 0 行 | 无操作审计 |
+| `global_reports` | 10-12 ~ 10-17 连续 6 天 `participated=0, succeeded=0` | 夜间领券引擎从未执行 |
+
+夜间引擎因快照状态为 `ineligible` 而被 `continue` 跳过：
+
+```python
+if snap.get("status") not in ("ready", "already", "manual"):
+    continue
+```
+
+## 与原站的关系
+
+- 原站 <https://pdd.769952156.xyz/>（「老管券友 · 自助托管」）前端有 10 个 JS 模块
+  （storage / login-recovery / capacity-ui / render / restore-events / credit-ui / followups / global-history），
+  本地版只有 1 个 `app.js` —— 属**简化重写版**，非原站代码。
+- 原站后端闭源，无法本地复刻真实数据链路。
+- GitHub 无公开源码（搜「老管券友」「海鸥复刻」均无结果）。
+
+## 原站接入要求（实测）
+
+- 首页 HTTP 200，TLS 正常；`/api/me`、`/api/accounts` 未登录返回 401 `{"error":"请先登录"}`
+- **需邀请码注册**；用户名 + 本站密码（明确声明「不是拼多多密码」）
+- 接入方式：**本人手机收码**（短信由拼多多发到本人手机），不需抓包、不需转发验证码
+- 站点自述：不是拼多多官网；**需本人手动打卡达到活动要求**；库存和领取结果不保证
+
+## 处置
+
+用户决定：**改用原站**，本地 `:8899` 保留作练习/演示沙箱，不再期待其反映真实进度。
+
+## 教训
+
+1. 判断「数据不对」时，先看数据是**真实拉取**还是**本地生成**——本次 `sha256(uid) % 6` 是最强证据。
+2. 界面文案（「检查会查询拼多多」）不等于实现，必须以代码与网络行为为准。
+3. 演示版必须显式标注「模拟数据」，否则会被误当作真实状态使用。

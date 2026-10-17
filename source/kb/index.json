@@ -1,7 +1,7 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-17",
- "count": 108,
+ "count": 109,
  "categories": [
   {
    "id": "decisions",
@@ -11,7 +11,7 @@
   {
    "id": "incidents",
    "name": "故障记录",
-   "count": 33
+   "count": 34
   },
   {
    "id": "infrastructure",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "拼多多托管「复刻版」实为 Mock 演示版（2026-10-17）",
+   "date": "2026-10-17",
+   "category": "incidents",
+   "url": "incidents/pdd-clone-mock-provider-2026-10-17.html",
+   "summary": "拼多多托管「复刻版」实为 Mock 演示版（2026 10 17） 现象 宝塔 <LAN 8 :8899 的拼多多托管项目显示「本周期手动打卡 1/5」「暂不在活动资格内」， 但用户在拼多多实际已打卡满 5 天。页面数字"
+  },
   {
    "title": "知识库自动发布 cron 偶发失败：github 瞬时不可达",
    "date": "2026-10-13",
