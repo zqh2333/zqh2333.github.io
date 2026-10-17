@@ -31,11 +31,11 @@
  ],
  "entries": [
   {
-   "title": "pdd-clone 接真实拼多多：浏览器驱动链路（anti_content 不伪造）",
+   "title": "pdd-clone 接真实拼多多：状态从 SSR rawData 取，领取才用浏览器",
    "date": "2026-10-17",
    "category": "decisions",
    "url": "decisions/pdd-clone-real-provider-2026-10-17.html",
-   "summary": "pdd clone 接真实拼多多：浏览器驱动链路（anti_content 不伪造） 日期：2026 10 17 主机：宝塔 <LAN 8 / 容器 pdd clone / 端口 8899 结论：站点从 Mock 数据升"
+   "summary": "pdd clone 接真实拼多多：状态从 SSR rawData 取，领取才用浏览器 日期：2026 10 17（含 14:5x 修正） 主机：宝塔 <LAN 8 / 容器 pdd clone / 端口 8899 结论："
   },
   {
    "title": "拼多多托管「复刻版」实为 Mock 演示版（2026-10-17）",

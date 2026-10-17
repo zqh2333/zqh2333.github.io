@@ -1,51 +1,72 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>pdd-clone 接真实拼多多：浏览器驱动链路（anti_content 不伪造） - 运维知识库</title>
+<title>pdd-clone 接真实拼多多：状态从 SSR rawData 取，领取才用浏览器 - 运维知识库</title>
 <link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
-<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="pdd-clone-anti_content">pdd-clone 接真实拼多多：浏览器驱动链路（anti_content 不伪造）</h1>
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="pdd-clone-ssr-rawdata">pdd-clone 接真实拼多多：状态从 SSR rawData 取，领取才用浏览器</h1>
 <ul>
-<li>日期：2026-10-17</li>
+<li>日期：2026-10-17（含 14:5x 修正）</li>
 <li>主机：宝塔 <LAN-8> / 容器 <code>pdd-clone</code> / 端口 8899</li>
-<li>结论：站点从 Mock 数据升级为真实链路，打卡进度与领取均来自拼多多官方接口。</li>
+<li>结论：核验 744ms 返回真实状态；领取仍走真实浏览器点击。</li>
 </ul>
-<h2 id="_1">为什么必须用浏览器</h2>
-<p>拼多多 <code>/api/aurum/check_in/task/*</code> 需要 <code>anti_content</code> 风控签名，只能由官方 JS 在真实浏览器环境生成。
-因此不逆向、不伪造签名：用无头 Chromium 打开官方活动页，由页面自己发请求，从网络层读回真实响应。</p>
-<h2 id="_2">关键实现</h2>
+<h2 id="xhr">关键修正：数据不是 XHR，是服务端渲染</h2>
+<p>第一版方案监听 Playwright 的 <code>response</code> 事件等 <code>/api/aurum/check_in/task/query</code>，
+在真实账号上<strong>永远等不到</strong>——活动页首屏数据是 SSR 直接写进 HTML 的：</p>
+<pre><code>window.rawData.store.signCouponStore.signCouponInfo
+  progressInfo.currentSignNum / totalSignNum   → 已打卡 / 需打卡
+  couponInfo.canClick / hasReceived            → 能否领 / 是否已领
+  couponInfo.buttonInfoList[].text             → &quot;明日再来&quot; 等按钮文案
+  signButtonInfo.canClick / ifGrayedOut        → 签到按钮态
+  displayStatus                                → 服务端枚举（实测见过 31，含义未定）
+  subTitleList[].text                          → &quot;已连续打卡5天&quot;
+</code></pre>
+<p>实测样本（uid 492<strong><em>*914）：<code>currentSignNum=5 / totalSignNum=5</code>、<code>couponInfo.canClick=false</code>、
+按钮文案「明日再来」、<code>displayStatus=31</code>、页面文案「今日券已领完」→ 结论是</em>*今日已签满且券领完</strong>，
+不是"CK 无效"。</p>
+<h2 id="canclick">判定顺序（以 canClick 为准，不要猜枚举）</h2>
+<ol>
+<li><code>couponInfo.hasReceived</code> → <code>already</code></li>
+<li><code>couponInfo.canClick or signButtonInfo.canClick</code> → <code>ready</code></li>
+<li>按钮文案含「已领完 / 明日再来」→ <code>sold_out</code></li>
+<li><code>currentSignNum &lt; totalSignNum</code> → <code>manual</code></li>
+<li>其余 → <code>window</code></li>
+</ol>
+<p><code>displayStatus</code> 只是原样带出，不参与判断——枚举值不稳，<code>canClick</code> 才是权威。</p>
+<h2 id="_1">未登录 / 无资格怎么区分（实测）</h2>
+<table>
+<thead>
+<tr>
+<th>情况</th>
+<th>页面特征</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CK 有效</td>
+<td>rawData.store 有内容且含 signCouponInfo</td>
+<td>正常解析</td>
+</tr>
+<tr>
+<td>CK 失效/未登录</td>
+<td>返回 51KB 外壳，<code>store</code> 为空对象，无登录页文案</td>
+<td><code>AUTH</code></td>
+</tr>
+<tr>
+<td>已登录但无任务</td>
+<td>store 有内容但没有 signCouponInfo</td>
+<td><code>INELIGIBLE</code></td>
+</tr>
+</tbody>
+</table>
+<p>坑：失效 CK 不会跳 <code>/login</code>，页面 URL 和标题都正常，只靠"有没有登录框"判断会误报成 <code>NO_RESP</code>。</p>
+<h2 id="_2">性能对比</h2>
 <ul>
-<li>容器内安装 Playwright + <code>chromium-headless-shell</code>，浏览器路径 <code>/app/.browsers</code>
-  （<code>PLAYWRIGHT_BROWSERS_PATH=/app/.browsers</code>，代码里用 <code>setdefault</code> 固定）。</li>
-<li>Playwright sync API 有线程亲和性 → 全部调用走单线程队列 <code>_BrowserWorker</code>，避免 HTTP 线程直接调。</li>
-<li>活动页：<code>https://m.pinduoduo.net/charge_sign_coupon.html?source=deposit&amp;_pdd_fs=1</code></li>
-<li>真实接口与字段（从活动页 JS 反推，已实测解析正确）：</li>
-<li><code>/api/aurum/check_in/task/query</code> → <code>result.finishCount</code>（已打卡）、<code>result.gainAwardCount</code>（需打卡）、<code>result.displayStatus</code></li>
-<li><code>displayStatus</code>：0 签到中 / 1 未领取 / 2 可领取 / 3 已领取 / 4 已签满</li>
-<li><code>/api/aurum/check_in/task/gain/award</code> 领奖；<code>sub_task/finish</code> 打卡</li>
-<li>领取 = 点击页面「领取」按钮后读回 award 响应，不自己构造请求。</li>
-<li>短信登录：<code>m.pinduoduo.net/login.html</code>，实测手机输入框 1 个、<code>发送验证码</code> 按钮 1 个；
-  登录成功后把浏览器 cookie 整串落库（旧版只存 user_id，等于没有凭据，这是「功能不完整」的根因）。</li>
-<li>CK 必需字段放宽为 <code>PDDAccessToken</code>；<code>pdd_user_id</code>/<code>pdd_user_uin</code> 可选（活动站常没有）。</li>
+<li>核验（HTTP GET + 解 rawData）：<strong>~700ms</strong>，容器内存无增量</li>
+<li>旧方案（起无头 Chromium 等 XHR）：~22s，且等不到数据</li>
+<li>领取（必须浏览器）：页面自己生成 <code>anti_content</code> 签名，不伪造</li>
 </ul>
-<h2 id="_3">业务逻辑补全</h2>
-<ul>
-<li>23:30 <code>precheck_all()</code> 预检全部托管账号；00:00 <code>run_nightly()</code> 领取；00:30 + 每 5 分钟 <code>recycle_due()</code> 回收。</li>
-<li>只有 <code>ready</code> 参与领取；<code>already</code> 不重复领也不扣次。</li>
-<li>次数账本：预留（delta 0, state=reserved）→ 成功 <code>spent</code> / 失败 <code>released</code> 并写原因。</li>
-<li>回收写 <code>audit(action='hosting_released')</code>；白名单账号跳过回收。</li>
-<li>前端核验超时 22s → 60s（真实浏览器核验约 10–23s，原值会误报失败）。</li>
-</ul>
-<h2 id="_4">验证方式与实际结果</h2>
-<ul>
-<li>假 CK 走真实浏览器：返回 <code>AUTH 登录已失效，请重新接入</code>，耗时 22.9s（含首次启动浏览器）。</li>
-<li>登录页 UI 探测：<code>phone_inputs=1</code>、<code>发送验证码=1</code>、title=登录。</li>
-<li>解析器 5 个官方用例（manual/ready/already/ready/ineligible）全部通过。</li>
-<li>普通用户账本实测：发放 2 次 → 领取失败 → <code>released</code>，余额仍 2/held 0/spent 0。</li>
-<li>回收实测：deadline 过期 → <code>released</code> + 审计落库；白名单账号保持不动。</li>
-<li>未做的验证：真实账号「领取成功 → 扣 1 次」需本人一次性短信登录或粘贴真实 CK。</li>
-</ul>
-<h2 id="_5">注意</h2>
-<ul>
-<li>夜间 20 个账号串行核验，每号约 15s，整体约 5 分钟，00:00 起跑仍在窗口内。</li>
-<li>无头浏览器需要 <code>--no-sandbox</code>（容器内 root）。</li>
-</ul></article>
+<h2 id="_3">落库坑</h2>
+<p><code>_finish_login</code> 只存 <code>user_id</code> 不存 cookie，是"接了账号什么都查不到"的根因。
+现在存整串 cookie，并且取用时统一走 <code>_ck_raw()</code> / <code>_ck_jar()</code>，
+同时兼容 <code>raw</code> 与 <code>cookie</code> 两种键名（数据库存 <code>cookie</code>，解析函数产出 <code>raw</code>，不归一就必然失败）。</p></article>
 <footer>脱敏发布的运维知识库 · 生成于 2026-10-17</footer></div></body></html>
