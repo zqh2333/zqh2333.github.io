@@ -501,5 +501,106 @@ def settle_stale_reserved(ttl=RESERVED_TTL):
 <h3 id="8-provider">正确性验证（沙盒 8 账号假 provider）</h3>
 <p><code>participated=8, succeeded=8</code>；账本 <code>granted 8 → spent 8</code>，无残留 <code>reserved</code>；<code>history</code> 8 条 <code>received</code>；托管状态全 <code>recheck/claimed</code>；报表 <code>8/8</code>；未就绪账号走 <code>released</code> 不扣次。</p>
 <h3 id="_17">备份链</h3>
-<p><code>pdd.py.bak_pool_*</code>、<code>pdd.py.bak_mem_*</code>、<code>pdd.py.bak_clear_*</code>；<code>server.py.bak_parallel_*</code>、<code>server.py.bak_mem_*</code>、<code>server.py.bak_cap_*</code>、<code>server.py.bak_warmpar_*</code>、<code>server.py.bak_shutdown_*</code>。</p></article>
+<p><code>pdd.py.bak_pool_*</code>、<code>pdd.py.bak_mem_*</code>、<code>pdd.py.bak_clear_*</code>；<code>server.py.bak_parallel_*</code>、<code>server.py.bak_mem_*</code>、<code>server.py.bak_cap_*</code>、<code>server.py.bak_warmpar_*</code>、<code>server.py.bak_shutdown_*</code>。</p>
+<h2 id="2026-10-18-1-6-4">2026-10-18 并发拐点实测：1 秒内最多 6 个，推荐 4</h2>
+<h3 id="_18">测试方法</h3>
+<p>预热后并发 <code>reload</code>（模拟 00:00 真实场景），本地 1MB 页面排除网络因素，统计墙钟/单实例耗时/Chromium 总 RSS。</p>
+<table>
+<thead>
+<tr>
+<th>并发数</th>
+<th>墙钟</th>
+<th>单实例</th>
+<th>内存</th>
+<th>判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0.644s</td>
+<td>0.643s</td>
+<td>473 MB</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>2</td>
+<td>0.668s</td>
+<td>0.619~0.667s</td>
+<td>1197 MB</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>4</td>
+<td>0.848s</td>
+<td>0.705~0.846s</td>
+<td>2388 MB</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>6</strong></td>
+<td><strong>0.970s</strong></td>
+<td>0.626~0.968s</td>
+<td>3544 MB</td>
+<td>✅ 临界</td>
+</tr>
+<tr>
+<td>8</td>
+<td>1.457s</td>
+<td>1.154~1.453s</td>
+<td>4620 MB</td>
+<td>❌ 超标</td>
+</tr>
+</tbody>
+</table>
+<p>真实活动页比本地页慢约 0.02s（2 并发：本地 0.668s vs 真实 0.686s），所以 6 并发真实场景约 0.99s —— 卡在线上，没有余量。</p>
+<p><strong>结论：1 秒内最多 6 个，安全值是 4（留 150ms 余量）。</strong></p>
+<h3 id="2357">冷启动并发（23:57 预热用）</h3>
+<p>N 个浏览器同时冷启动（含 Chromium 进程初始化）：</p>
+<table>
+<thead>
+<tr>
+<th>N</th>
+<th>墙钟</th>
+<th>内存增量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1.72s</td>
+<td>+302 MB</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1.49s</td>
+<td>+303 MB</td>
+</tr>
+<tr>
+<td>4</td>
+<td>1.90s</td>
+<td>+905 MB</td>
+</tr>
+<tr>
+<td>6</td>
+<td>2.21s</td>
+<td>+1507 MB</td>
+</tr>
+<tr>
+<td>8</td>
+<td>3.33s</td>
+<td>+2114 MB</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_19">并发数改成可设置</h2>
+<p>优先级：<strong>后台设置（meta 表）&gt; 环境变量 PDD_NIGHTLY_PARALLEL &gt; 默认 4</strong>，取值范围 1–8。</p>
+<ul>
+<li><code>GET /api/admin/settings</code> → 当前值、默认值、实测表、说明</li>
+<li><code>POST /api/admin/settings</code> <code>{"nightly_parallel": 4}</code> → 保存，下一次 23:57 预热起生效</li>
+<li>非法值（如 <code>abc</code>）回落默认；越界（如 99）夹到 8</li>
+<li>未登录访问返回 403（与现有 admin 路由一致）</li>
+</ul>
+<h3 id="_20">前端为什么不改</h3>
+<p><code>index.html</code> / <code>app.js</code> 与参考站保持 md5 字节一致（28/29），加输入框会破坏一致性，所以配置只走 API / meta 表。</p></article>
 <footer>脱敏发布的运维知识库 · 生成于 2026-10-18</footer></div></body></html>
