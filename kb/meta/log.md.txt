@@ -1,3 +1,10 @@
+## 2026-10-18 | pdd-clone 夜间任务静默跳过：补审计
+- 现象：`global_reports` 10-18 有 00:00:03 记录但 `participated=0`，`checked` 停在 23:30，日志无 traceback → 任务跑了但零动作。
+- 根因：`except pdd.PddError` 只处理 AUTH，HTTP/NET/NAV/NO_RESP 全部静默 continue，不写库不打日志。
+- 修复：6 处补 audit（`nightly.skip` / `nightly.check_error` / `nightly.claim`）+ 非 AUTH 错误写 `check_error=1` 且不覆盖 snapshot。
+- 验证：生产手动重跑 1.2s → 2 条 `nightly.skip not_ready`；沙盒 4 分支（HTTP503 / 无CK / 可领 / AUTH）全部按预期落审计，领取分支写 history。
+- 教训：每个 continue 必须有落点，否则「跑了没生效」和「没跑」无法区分。
+
 ## 2026-10-17 | pdd-clone 增加扫码登录，登录后自取 HttpOnly Cookie
 - 参考 `HJGSfz68/pdd-cookie-capture` 的 Puppeteer 方案，但砍掉 CDP 双通道：Playwright `context.cookies()` 本身返回 HttpOnly。
 - 新增 `/app/qrlogin.py`（与 `pdd.py` 共用浏览器线程）+ `/api/qr/{start,state,click,add,cancel}` + 前端第三个登录方式「扫码登录」。

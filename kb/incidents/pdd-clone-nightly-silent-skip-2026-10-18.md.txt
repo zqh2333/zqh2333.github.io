@@ -1,0 +1,82 @@
+# pdd-clone 夜间任务「跑了但零参与」：静默 continue 让故障不可观测
+
+- 日期：2026-10-18 00:00–00:25
+- 主机：宝塔 <LAN-8> / 容器 `pdd-clone`
+- 结论：任务确实在 00:00:03 执行，但两个账号在「现查」阶段失败被静默吞掉，
+  `participated=0`、`checked` 不回写、日志无 traceback —— **现象像没跑，其实跑了但零动作**。
+
+## 现象
+
+用户问「进行过领券任务没有」。库里三条互相矛盾的线索：
+
+| 证据 | 值 |
+|---|---|
+| `global_reports`（10-18） | `participated=0, succeeded=0`，`created` = 00:00:03 |
+| `accounts.checked` | 仍是 23:30:02（23:30 预检的时间） |
+| `history` | 0 条 |
+| 容器日志 | 无 traceback、无任务输出 |
+
+`global_reports` 是 `run_nightly()` 末尾无条件写的 → 证明**函数跑到了最后**；
+`checked` 没更新 → 证明**两个账号都在现查阶段就退出了**，一次 `claim()` 都没调用。
+
+## 根因
+
+`run_nightly()` 里现查的分支：
+
+```python
+except pdd.PddError as e:
+    if e.code == "AUTH":
+        db.run("UPDATE accounts SET snapshot=?...")   # 只有 AUTH 写库
+    continue                                          # 其他错误码：什么都不留
+```
+
+`pdd.check()` 可能抛 `HTTP` / `NET` / `NAV` / `NO_RESP` / `TIMEOUT` / `BROWSER`，
+这些全部走「不写库、不打日志、直接 continue」→ 事后完全无法区分
+「活动页 503」「网络抖动」「页面改版」还是「真的不可领」。
+
+对照实验：00:15 手动核验两个账号都成功（638ms / 574ms，`sold_out` 5/5），
+说明链路本身可用，00:00 那次是瞬时失败 —— 但具体是哪种，因为没有记录，**无法回溯**。
+
+## 修复（6 处补丁 + 1 个辅助函数）
+
+给 `run_nightly()` 里每个 `continue` 都补 `audit` 记录，action 分三类：
+
+| action | 触发条件 | detail 关键字段 |
+|---|---|---|
+| `nightly.skip` | owner 禁用 / 次数不足 / 无 CK / 现查非 ready | `reason`（`owner_disabled`/`no_credit`/`no_ck`/`not_ready`）+ `status` |
+| `nightly.check_error` | 现查抛 PddError 或普通异常 | `code`（`AUTH`/`HTTP`/`NAV`/`NO_RESP`/`EXC`…）+ `msg` |
+| `nightly.claim` | 进入领取并拿到结果 | `status`、`attempts`、`err` |
+
+同时把 `check_error` 列真正用起来：
+
+- 非 AUTH 错误 → `check_error=1` + `checked=now()`，**保留原 snapshot 不覆盖**
+  （前端状态映射没有 `check_error` 这个值，覆盖会显示成未知状态）
+- AUTH 错误 → 仍按原逻辑写 `snapshot={"status":"auth"}`
+
+## 验证
+
+生产库手动重跑（真实网络，不是桩）：
+
+```
+结果: {'participated': 0, 'succeeded': 0} 耗时 1.2s
+audit: 3 拼多多账号 1 nightly.skip {"reason":"not_ready","status":"sold_out"}
+       4 拼多多账号 2 nightly.skip {"reason":"not_ready","status":"sold_out"}
+checked 更新到 00:21:18 / 00:21:19，快照带 raw_status=31、button_text="明日再来 立即领券"
+```
+
+沙盒 4 分支（库副本 `/tmp/asbx.db` + monkeypatch `check/claim`，生产库零影响）：
+
+| 场景 | audit | 副作用 |
+|---|---|---|
+| check 抛 `HTTP 503` | `nightly.check_error code=HTTP` | `check_error=1`，snapshot 保持 `sold_out` |
+| 无 CK | `nightly.skip reason=no_ck` | 无 |
+| check 返回 ready + claim received | `nightly.claim status=received` | `history` 1 条、`hosting_state=recheck` |
+| check 抛 AUTH | `nightly.check_error code=AUTH` | `snapshot=auth` |
+
+## 教训
+
+1. **每个 `continue` 都要有落点**。静默跳过在「任务确实跑了」和「任务没跑」之间制造了
+   无法区分的黑箱，而这两者的运维处置完全不同。
+2. 「有没有执行」和「有没有生效」是两个问题：`global_reports` 只回答前者。
+3. 手动重跑前必须确认报表写入是幂等的（按当天 `history` 汇总），否则重跑会清零统计 ——
+   这条在 2026-10-17 的跨日补丁里已经修好，本次复验通过（重跑后仍 0/0）。

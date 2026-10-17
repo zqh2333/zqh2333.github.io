@@ -1,0 +1,135 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>pdd-clone 夜间任务「跑了但零参与」：静默 continue 让故障不可观测 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="pdd-clone-continue">pdd-clone 夜间任务「跑了但零参与」：静默 continue 让故障不可观测</h1>
+<ul>
+<li>日期：2026-10-18 00:00–00:25</li>
+<li>主机：宝塔 <LAN-8> / 容器 <code>pdd-clone</code></li>
+<li>结论：任务确实在 00:00:03 执行，但两个账号在「现查」阶段失败被静默吞掉，
+  <code>participated=0</code>、<code>checked</code> 不回写、日志无 traceback —— <strong>现象像没跑，其实跑了但零动作</strong>。</li>
+</ul>
+<h2 id="_1">现象</h2>
+<p>用户问「进行过领券任务没有」。库里三条互相矛盾的线索：</p>
+<table>
+<thead>
+<tr>
+<th>证据</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>global_reports</code>（10-18）</td>
+<td><code>participated=0, succeeded=0</code>，<code>created</code> = 00:00:03</td>
+</tr>
+<tr>
+<td><code>accounts.checked</code></td>
+<td>仍是 23:30:02（23:30 预检的时间）</td>
+</tr>
+<tr>
+<td><code>history</code></td>
+<td>0 条</td>
+</tr>
+<tr>
+<td>容器日志</td>
+<td>无 traceback、无任务输出</td>
+</tr>
+</tbody>
+</table>
+<p><code>global_reports</code> 是 <code>run_nightly()</code> 末尾无条件写的 → 证明<strong>函数跑到了最后</strong>；
+<code>checked</code> 没更新 → 证明<strong>两个账号都在现查阶段就退出了</strong>，一次 <code>claim()</code> 都没调用。</p>
+<h2 id="_2">根因</h2>
+<p><code>run_nightly()</code> 里现查的分支：</p>
+<pre><code class="language-python">except pdd.PddError as e:
+    if e.code == &quot;AUTH&quot;:
+        db.run(&quot;UPDATE accounts SET snapshot=?...&quot;)   # 只有 AUTH 写库
+    continue                                          # 其他错误码：什么都不留
+</code></pre>
+<p><code>pdd.check()</code> 可能抛 <code>HTTP</code> / <code>NET</code> / <code>NAV</code> / <code>NO_RESP</code> / <code>TIMEOUT</code> / <code>BROWSER</code>，
+这些全部走「不写库、不打日志、直接 continue」→ 事后完全无法区分
+「活动页 503」「网络抖动」「页面改版」还是「真的不可领」。</p>
+<p>对照实验：00:15 手动核验两个账号都成功（638ms / 574ms，<code>sold_out</code> 5/5），
+说明链路本身可用，00:00 那次是瞬时失败 —— 但具体是哪种，因为没有记录，<strong>无法回溯</strong>。</p>
+<h2 id="6-1">修复（6 处补丁 + 1 个辅助函数）</h2>
+<p>给 <code>run_nightly()</code> 里每个 <code>continue</code> 都补 <code>audit</code> 记录，action 分三类：</p>
+<table>
+<thead>
+<tr>
+<th>action</th>
+<th>触发条件</th>
+<th>detail 关键字段</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nightly.skip</code></td>
+<td>owner 禁用 / 次数不足 / 无 CK / 现查非 ready</td>
+<td><code>reason</code>（<code>owner_disabled</code>/<code>no_credit</code>/<code>no_ck</code>/<code>not_ready</code>）+ <code>status</code></td>
+</tr>
+<tr>
+<td><code>nightly.check_error</code></td>
+<td>现查抛 PddError 或普通异常</td>
+<td><code>code</code>（<code>AUTH</code>/<code>HTTP</code>/<code>NAV</code>/<code>NO_RESP</code>/<code>EXC</code>…）+ <code>msg</code></td>
+</tr>
+<tr>
+<td><code>nightly.claim</code></td>
+<td>进入领取并拿到结果</td>
+<td><code>status</code>、<code>attempts</code>、<code>err</code></td>
+</tr>
+</tbody>
+</table>
+<p>同时把 <code>check_error</code> 列真正用起来：</p>
+<ul>
+<li>非 AUTH 错误 → <code>check_error=1</code> + <code>checked=now()</code>，<strong>保留原 snapshot 不覆盖</strong>
+  （前端状态映射没有 <code>check_error</code> 这个值，覆盖会显示成未知状态）</li>
+<li>AUTH 错误 → 仍按原逻辑写 <code>snapshot={"status":"auth"}</code></li>
+</ul>
+<h2 id="_3">验证</h2>
+<p>生产库手动重跑（真实网络，不是桩）：</p>
+<pre><code>结果: {'participated': 0, 'succeeded': 0} 耗时 1.2s
+audit: 3 拼多多账号 1 nightly.skip {&quot;reason&quot;:&quot;not_ready&quot;,&quot;status&quot;:&quot;sold_out&quot;}
+       4 拼多多账号 2 nightly.skip {&quot;reason&quot;:&quot;not_ready&quot;,&quot;status&quot;:&quot;sold_out&quot;}
+checked 更新到 00:21:18 / 00:21:19，快照带 raw_status=31、button_text=&quot;明日再来 立即领券&quot;
+</code></pre>
+<p>沙盒 4 分支（库副本 <code>/tmp/asbx.db</code> + monkeypatch <code>check/claim</code>，生产库零影响）：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>audit</th>
+<th>副作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>check 抛 <code>HTTP 503</code></td>
+<td><code>nightly.check_error code=HTTP</code></td>
+<td><code>check_error=1</code>，snapshot 保持 <code>sold_out</code></td>
+</tr>
+<tr>
+<td>无 CK</td>
+<td><code>nightly.skip reason=no_ck</code></td>
+<td>无</td>
+</tr>
+<tr>
+<td>check 返回 ready + claim received</td>
+<td><code>nightly.claim status=received</code></td>
+<td><code>history</code> 1 条、<code>hosting_state=recheck</code></td>
+</tr>
+<tr>
+<td>check 抛 AUTH</td>
+<td><code>nightly.check_error code=AUTH</code></td>
+<td><code>snapshot=auth</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_4">教训</h2>
+<ol>
+<li><strong>每个 <code>continue</code> 都要有落点</strong>。静默跳过在「任务确实跑了」和「任务没跑」之间制造了
+   无法区分的黑箱，而这两者的运维处置完全不同。</li>
+<li>「有没有执行」和「有没有生效」是两个问题：<code>global_reports</code> 只回答前者。</li>
+<li>手动重跑前必须确认报表写入是幂等的（按当天 <code>history</code> 汇总），否则重跑会清零统计 ——
+   这条在 2026-10-17 的跨日补丁里已经修好，本次复验通过（重跑后仍 0/0）。</li>
+</ol></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-18</footer></div></body></html>
