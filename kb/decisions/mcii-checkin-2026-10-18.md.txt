@@ -1,0 +1,38 @@
+# MCII 签到失败排查与站点改版适配（2026-10-18）
+
+## 故障
+cron「MCII 每日签到」连续报 `MCII 登录失败`（10-18 08:00，此前 10-14~10-17 连续成功）。
+
+## 根因（两层）
+1. **站点改版**：登录不再跳 `accounts.mcii.cc`，改为页内 `<dialog>`（密码登录/邮箱验证码/LINUX DO OAuth）。旧脚本点第一个「登录」按钮（隐藏元素点不动）→ 兜底 goto /login（无输入框）→ 失败。
+2. **密码登录被拒**：`POST /api/v1/auth/login` 对 `@user` 返回 **409 password_unset**（该账号没设密码，只能 LINUX DO OAuth 登录）。
+
+## OAuth 链路修复
+- 链路：`proxy.mcii.cc` → `connect.linux.do/oauth2/authorize`（**CF 挑战 1-5 分钟**，title=请稍候…）→ `linux.do/session/sso_provider` → `connect.linux.do/authorize`（首次需点「允许」）→ `approve`（又一道 CF）→ callback → 回 MCII。
+- **linux.do 会话过期**是第二重故障：MCII 专用 Chrome（mcii-cdp profile）里 linux.do 登录态失效。
+
+### 关键发现：hermes-real profile 的 cookie 解密 key
+- `google-chrome-hermes-real` 是 Playwright `launch_persistent_context` 起的 Chrome，默认 `--password-store=basic`，cookie key = `PBKDF2("peanuts","saltysalt",1,16)`，**不是** gnome keyring 的 "Chrome Safe Storage"。
+- `x666_token_tool.decrypt`（keyring key）解 hermes-real 的 `_t` 会 UnicodeDecodeError 静默跳过 → harvest 只拿到 `google-chrome`(Default) 的旧 `_t`（12-05 到期）。
+- hermes-real 的 `_t`（12-14 到期，最新鲜）要用 peanuts key 解。解出后经 CDP `ctx.add_cookies` 注入 mcii-cdp，linux.do 登录态恢复（`#current-user` 出现）。
+- 注：google-chrome(Default) 的 `_t` 是 v11 前缀（763131），keyring key 可解；hermes-real 是 v10（763130），必须 peanuts key。
+
+## 签到入口也变了
+- 首页无签到按钮；入口在 `/account` 页「**签到并激活订阅**」按钮。
+- 新手引导遮罩（`.tour-layer`/`.tour-dim`）会挡点击，需先点「跳过」或强制移除。
+- 判定：成功文案「签到成功，经验 +5，积分 +2，订阅已激活」；已签=「已签到 · 激活续期」或按钮 disabled。
+
+## 修复后的脚本（~/.hermes/scripts/mcii_daily_checkin.py）
+1. `/account` 页判登录（用户名出现在页面 / 无「访客身份」）。
+2. 未登录 → 从 hermes-real profile 解 linux.do cookie（peanuts key）注入 → 重查。
+3. 仍不行 → 页内 dialog 点 LINUX DO OAuth，等 CF（最长 10 分钟），首次点「允许」。
+4. 签到：点「签到并激活订阅」，读「签到成功」/连续天数。
+
+## 验证
+- 手动全链路：注入 → OAuth → 授权 → `/api/v1/me` 200 → 签到成功「+5 经验 +2 积分，连续 10 天」。
+- 脚本重跑：`MCII 今日已签到（连续 10 天）`，exit=0，state 记 `ALREADY_CHECKED_IN`。
+- 明天 08:00 cron 走「签到成功」路径。
+
+## 遗留注意
+- connect.linux.do 的 CF 挑战每次 1-5 分钟，脚本已按最长 10 分钟等待；cron 08:00 跑，超时 700s 内可完成。
+- 若 hermes-real 的 linux.do 会话也过期（x666 保活失败），MCII OAuth 会跳 linux.do/login，脚本报「LINUX DO OAuth 未完成」——需人工跑 `x666_keepalive_login.sh` 登录一次。
