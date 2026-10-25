@@ -45,7 +45,7 @@
 
 | 状态 | 动作 |
 |---|---|
-| `busy` (6071002) | 15s 窗口内重试、间隔 200ms、连续 8 次相同即停；状态保持 busy，**绝不改写成「券已领完」** |
+| `busy` (6071002) | **1 秒窗口**内重试：10 次 × 100ms（实测 905ms 打满收手）；状态保持 busy，**绝不改写成「券已领完」** |
 | `auth` / `rate_limit` / `verification` / `sold_out` | 立即停 |
 | 收到 `success:true` | 归 `pending`，复查且 `hasReceived=true` 才升 `received` |
 | 请求已发出但读响应失败 | `pending`，**不重发**（可能已到账） |

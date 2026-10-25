@@ -76,7 +76,7 @@
 <tbody>
 <tr>
 <td><code>busy</code> (6071002)</td>
-<td>15s 窗口内重试、间隔 200ms、连续 8 次相同即停；状态保持 busy，<strong>绝不改写成「券已领完」</strong></td>
+<td><strong>1 秒窗口</strong>内重试：10 次 × 100ms（实测 905ms 打满收手）；状态保持 busy，<strong>绝不改写成「券已领完」</strong></td>
 </tr>
 <tr>
 <td><code>auth</code> / <code>rate_limit</code> / <code>verification</code> / <code>sold_out</code></td>
