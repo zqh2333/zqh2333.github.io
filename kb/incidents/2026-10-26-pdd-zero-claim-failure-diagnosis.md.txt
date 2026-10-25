@@ -1,0 +1,47 @@
+---
+title: 拼多多零点抢券失败复盘（2026-10-26）：4000004 + 派发键冲突 + 探测误杀
+date: 2026-10-26
+tags: [pdd, 抢券, 复盘, 调度器, 风控]
+---
+
+# 现象
+2026-10-26 00:00 仍未抢到券。用户反馈「还是没抢到」。
+
+# 真实证据（生产日志 + DB）
+```
+23:45 [nightly] 分类 满0 / 差1天0 / 日常0 / 跳过1  → 抢券队列 0 个
+00:00 [nightly] dispatch(fallback) date=2026-10-26 offset_ms=0.2
+00:00 [http-claim] account=6 attempt=1 status=rate_limit http=200 code=4000004 request_ms=246.68
+00:00 [nightly] account=6 status=rate_limit attempts=1 warm=no
+DB: 昨晚唯一一条记录 http_status=200 business_code=4000004 attempts=1 succeeded=0
+```
+关键判读：**请求确实发出了**（offset 0.2~4.5ms，HTTP 200），不是「发慢了」，而是被平台回 4000004。
+
+# 四个根因
+1. **RT 限流首发即停（阻断项）**：`claim_account` 循环写死 `if st != "busy": break`，
+   而文件头部的 `RETRY_VERDICTS` 明确包含 `rate_limit` —— 常量定义了却从未使用。
+   结果 4000004 一发即弃，1 秒窗口一次都没用上。已改为 `REPLAY_SAFE = {busy, rate_limit, http_error, net_error}`
+   （`unknown`/`empty` 仍不重放，防重复领取）。容器实测：attempts 1 → **10，905ms**。
+2. **23:57 准备派发永久不触发（隐性阻断）**：标记复用 `scheduler_run_done` 且写「明天」日期，
+   第二晚 23:57 查 `scheduler_task_done("run", 今天)` 必然为真 → 永久跳过。
+   于是每晚只有 00:00 兜底在跑，`warm=no`、无预热、无提前建线程。
+   修复：独立键 `scheduler_prep_done`（按目标零点日去重），兜底条件改为
+   `not prep_done(date) and not run_done(date)`。部署容器实测：今晚 23:57 → True，目标 2026-10-27。
+3. **23:45 探测一次断连就误杀账号**：`RemoteDisconnected` → status=error → 分类 skip → 踢出队列。
+   修复：传输类错误（RemoteDisconnected/timeout/reset/SSL/EOF/传输结果不确定）重试 3 次（间隔 0.4s），
+   仍失败也带 `transport=True` 进抢券队列，零点用一次真实请求判定；auth/业务错误仍 skip。
+4. **anti_content 为空（待解）**：该账号 ck 的 `anti_content` 长度为 0，从未抓到过。
+   领取请求只能发空 anti。平台在夜间高频场景更容易直接断连/回 4000004。
+   代码约定「不生成、不伪造 anti_content」（pdd.py:13），因此不能靠伪造解决；
+   下一步只能从登录浏览器侧把 anti_content 一起取回。
+
+# 附带改进
+- `extract()` 测试框架现在会注入模块级「字面量常量」（`ast.literal_eval` 可求值者），
+  避免函数新增常量引用后测试报 NameError 被误判成业务缺陷。
+- `[http-claim]` 日志新增 `resp=<平台原始回包截断240>`：平台常只给 errorCode 不给 errorMsg，
+  没有原始 body 只能猜「限流 vs 风控」。
+
+# 结论
+不是速度问题。真正卡住的是「一发即弃」+「准备派发从未生效」+「探测误杀」。
+首发延迟本身已经做到 offset < 5ms，仍被 4000004 挡住 —— 说明平台侧排队/风控才是主因，
+需要 1 秒内重放 + 预热 + 有效 anti_content 才算完整。

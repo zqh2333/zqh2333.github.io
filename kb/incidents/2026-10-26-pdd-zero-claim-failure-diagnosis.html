@@ -1,0 +1,50 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>现象 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><hr />
+<p>title: 拼多多零点抢券失败复盘（2026-10-26）：4000004 + 派发键冲突 + 探测误杀
+date: 2026-10-26
+tags: [pdd, 抢券, 复盘, 调度器, 风控]</p>
+<hr />
+<h1 id="_1">现象</h1>
+<p>2026-10-26 00:00 仍未抢到券。用户反馈「还是没抢到」。</p>
+<h1 id="db">真实证据（生产日志 + DB）</h1>
+<pre><code>23:45 [nightly] 分类 满0 / 差1天0 / 日常0 / 跳过1  → 抢券队列 0 个
+00:00 [nightly] dispatch(fallback) date=2026-10-26 offset_ms=0.2
+00:00 [http-claim] account=6 attempt=1 status=rate_limit http=200 code=4000004 request_ms=246.68
+00:00 [nightly] account=6 status=rate_limit attempts=1 warm=no
+DB: 昨晚唯一一条记录 http_status=200 business_code=4000004 attempts=1 succeeded=0
+</code></pre>
+<p>关键判读：<strong>请求确实发出了</strong>（offset 0.2~4.5ms，HTTP 200），不是「发慢了」，而是被平台回 4000004。</p>
+<h1 id="_2">四个根因</h1>
+<ol>
+<li><strong>RT 限流首发即停（阻断项）</strong>：<code>claim_account</code> 循环写死 <code>if st != "busy": break</code>，
+   而文件头部的 <code>RETRY_VERDICTS</code> 明确包含 <code>rate_limit</code> —— 常量定义了却从未使用。
+   结果 4000004 一发即弃，1 秒窗口一次都没用上。已改为 <code>REPLAY_SAFE = {busy, rate_limit, http_error, net_error}</code>
+   （<code>unknown</code>/<code>empty</code> 仍不重放，防重复领取）。容器实测：attempts 1 → <strong>10，905ms</strong>。</li>
+<li><strong>23:57 准备派发永久不触发（隐性阻断）</strong>：标记复用 <code>scheduler_run_done</code> 且写「明天」日期，
+   第二晚 23:57 查 <code>scheduler_task_done("run", 今天)</code> 必然为真 → 永久跳过。
+   于是每晚只有 00:00 兜底在跑，<code>warm=no</code>、无预热、无提前建线程。
+   修复：独立键 <code>scheduler_prep_done</code>（按目标零点日去重），兜底条件改为
+   <code>not prep_done(date) and not run_done(date)</code>。部署容器实测：今晚 23:57 → True，目标 2026-10-27。</li>
+<li><strong>23:45 探测一次断连就误杀账号</strong>：<code>RemoteDisconnected</code> → status=error → 分类 skip → 踢出队列。
+   修复：传输类错误（RemoteDisconnected/timeout/reset/SSL/EOF/传输结果不确定）重试 3 次（间隔 0.4s），
+   仍失败也带 <code>transport=True</code> 进抢券队列，零点用一次真实请求判定；auth/业务错误仍 skip。</li>
+<li><strong>anti_content 为空（待解）</strong>：该账号 ck 的 <code>anti_content</code> 长度为 0，从未抓到过。
+   领取请求只能发空 anti。平台在夜间高频场景更容易直接断连/回 4000004。
+   代码约定「不生成、不伪造 anti_content」（pdd.py:13），因此不能靠伪造解决；
+   下一步只能从登录浏览器侧把 anti_content 一起取回。</li>
+</ol>
+<h1 id="_3">附带改进</h1>
+<ul>
+<li><code>extract()</code> 测试框架现在会注入模块级「字面量常量」（<code>ast.literal_eval</code> 可求值者），
+  避免函数新增常量引用后测试报 NameError 被误判成业务缺陷。</li>
+<li><code>[http-claim]</code> 日志新增 <code>resp=&lt;平台原始回包截断240&gt;</code>：平台常只给 errorCode 不给 errorMsg，
+  没有原始 body 只能猜「限流 vs 风控」。</li>
+</ul>
+<h1 id="_4">结论</h1>
+<p>不是速度问题。真正卡住的是「一发即弃」+「准备派发从未生效」+「探测误杀」。
+首发延迟本身已经做到 offset &lt; 5ms，仍被 4000004 挡住 —— 说明平台侧排队/风控才是主因，
+需要 1 秒内重放 + 预热 + 有效 anti_content 才算完整。</p></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-26</footer></div></body></html>
