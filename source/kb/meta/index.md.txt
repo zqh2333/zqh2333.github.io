@@ -121,3 +121,4 @@
 - [夜间准点抢券改造（23:57 预热 + 整分对齐）](decisions/pdd-clone-nightly-warmup-2026-10-18.md)
 - [[decisions/pdd-clone-nightly-warmup-2026-10-18]] — 日期：2026-10-18
 - [[decisions/mcii-checkin-2026-10-18]] — cron「MCII 每日签到」连续报 MCII 登录失败（10-18 08:00，此前 10-14~10-17 连续成功）。
+- [[decisions/<TOKEN>]] — 日期：2026-10-25
