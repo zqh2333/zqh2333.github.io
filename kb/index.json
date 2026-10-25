@@ -1,12 +1,12 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-25",
- "count": 114,
+ "count": 115,
  "categories": [
   {
    "id": "decisions",
    "name": "决策记录",
-   "count": 28
+   "count": 29
   },
   {
    "id": "incidents",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "零点首发 HTTP 领取引擎：把「首个有效请求」提前到 00:00:00.x",
+   "date": "2026-10-25",
+   "category": "decisions",
+   "url": "decisions/zero-midnight-http-claim-engine-2026-10-25.html",
+   "summary": "零点首发 HTTP 领取引擎：把「首个有效请求」提前到 00:00:00.x 日期：2026 10 25 分类：decisions / runbooks 对象：券友站（pdd clone，纯 HTTP 业务链路） 背景 "
+  },
   {
    "title": "MCII 签到失败排查与站点改版适配（2026-10-18）",
    "date": "2026-10-18",

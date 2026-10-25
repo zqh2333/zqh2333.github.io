@@ -1,0 +1,129 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>零点首发 HTTP 领取引擎：把「首个有效请求」提前到 00:00:00.x - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="http-000000x">零点首发 HTTP 领取引擎：把「首个有效请求」提前到 00:00:00.x</h1>
+<ul>
+<li>日期：2026-10-25</li>
+<li>分类：decisions / runbooks</li>
+<li>对象：券友站（pdd-clone，纯 HTTP 业务链路）</li>
+</ul>
+<h2 id="_1">背景</h2>
+<p>限量券在零点极短窗口内抢光，决定成败的不是「重试多少次」，而是<strong>第一个有效请求有多快发出</strong>。
+旧实现的问题：</p>
+<ol>
+<li>调度整分对齐漂移，派发本身就迟到（曾 <code>offset_ms=60003</code>）。</li>
+<li>零点才开始建线程、建连接，DNS+TCP+TLS 全在首发路径上。</li>
+<li>零点后先去查资格/取 <code>task_id</code>，把最贵的时间花在非领取请求上。</li>
+<li>文案各写一份，通知里会漏出英文状态码（<code>busy</code>）。</li>
+</ol>
+<h2 id="_2">结论（最终形态）</h2>
+<h3 id="_3">阶段划分</h3>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>做什么</th>
+<th>明确不做</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>23:45</td>
+<td>纯 HTTP 查进度 → 分类 → 打卡 → 复查；只把满 5 天的放进队列；<code>task_id</code> 写快照</td>
+<td>—</td>
+</tr>
+<tr>
+<td>23:57</td>
+<td>派发 <code>run_nightly()</code>：筛选参与账号、预留次数（<code>credit_ledger</code> reserved）、建好工作线程、置内存态 <code>prepared</code></td>
+<td>不写 <code>accounts</code> 表</td>
+</tr>
+<tr>
+<td>零点前 10s</td>
+<td><code>prepare_claim()</code>：本地完整性检查（UID / PDDAccessToken / task_id）+ <code>conn.connect()</code> 只握手 + 预构造 body/headers</td>
+<td><strong>不发任何业务请求</strong>（不查资格、不用领取接口预热）</td>
+</tr>
+<tr>
+<td>00:00:00</td>
+<td>单调时钟门控 + <code>go</code> 放行，同一线程复用预热 socket 发领取</td>
+<td>不查资格、不写库、不发通知</td>
+</tr>
+<tr>
+<td>00:00 后</td>
+<td>串行落库、账本结算、通知</td>
+<td>已超时的请求不重发</td>
+</tr>
+</tbody>
+</table>
+<h3 id="10">为什么握手要卡在「零点前 10 秒」而不是派发时</h3>
+<p>23:57 握手 → 连接闲置约 3 分钟 → 被服务端 keep-alive 回收 → 零点首发反而走「重建连接」，白预热。
+所以线程 23:57 就建好（省掉零点创建线程的开销），握手等到 <code>fire_at - 10s</code>。</p>
+<h3 id="_4">门控三重保险（缺一不可）</h3>
+<pre><code>1) 睡到目标前 50ms（剩余 &gt;50ms 才 sleep，避免忙等烧 CPU）
+2) 最后 2ms 忙等，压掉调度抖动
+3) go.wait() 之后再用单调时钟兜一道：即使 go 被提前 set，也绝不提前发出
+</code></pre>
+<p><code>mono_target = time.monotonic() + (fire_at - time.time())</code>：用墙上时钟对齐、单调时钟等待，
+避免零点前后 NTP 跳变导致提前或错过。提前到达可能被平台直接拒绝，所以「晚 1ms」永远优于「早 1ms」。</p>
+<h3 id="_5">重试分类</h3>
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>动作</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>busy</code> (6071002)</td>
+<td>15s 窗口内重试、间隔 200ms、连续 8 次相同即停；状态保持 busy，<strong>绝不改写成「券已领完」</strong></td>
+</tr>
+<tr>
+<td><code>auth</code> / <code>rate_limit</code> / <code>verification</code> / <code>sold_out</code></td>
+<td>立即停</td>
+</tr>
+<tr>
+<td>收到 <code>success:true</code></td>
+<td>归 <code>pending</code>，复查且 <code>hasReceived=true</code> 才升 <code>received</code></td>
+</tr>
+<tr>
+<td>请求已发出但读响应失败</td>
+<td><code>pending</code>，<strong>不重发</strong>（可能已到账）</td>
+</tr>
+<tr>
+<td><code>conn.request()</code> 抛异常</td>
+<td>请求未发出 → 重建连接重发一次（安全）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">并发</h3>
+<p>默认 64、上限 256、下限 1，前端可调；零点窗口内同时首发。
+★ 存量数据库值会覆盖代码默认，改默认必须同步迁移 <code>meta</code> 表，否则界面上还是旧值。</p>
+<h2 id="_7">验证方式（可复现）</h2>
+<ol>
+<li><strong>连接复用必须实测</strong>：起本地 HTTPS 服务器，在 <strong>TCP accept 层</strong>计数。
+   注意不能在 handler <code>setup()</code> 里数——那只统计「处理过请求的连接」，
+   预热 socket 被丢弃后 claim 再新建一条也会显示 1，属于假阳性。</li>
+<li><strong>门控精度实测</strong>：目标设为 <code>now+2.5s</code>，服务器记录请求到达时刻，比较偏差。</li>
+<li><strong>文案一致性</strong>：解析代码里所有可能产出的状态码，逐个断言后端状态表与前端标签表都存在且含中文。</li>
+<li>单元测试覆盖：门控等待、超时 pending 不重发、busy 限窗重试、售罄即停、状态内存态清空、早间窗口。</li>
+</ol>
+<h2 id="_8">实际结果</h2>
+<ul>
+<li>同线程 prepare→claim：TCP accept = <strong>1</strong>，prepare 阶段 HTTP 请求数 = <strong>0</strong>，握手 7ms 不在首发路径上</li>
+<li>跨线程 prepare(A)→claim(B)：accept = <strong>2</strong> → 证明线程本地连接池不可跨线程复用，
+  所以准备函数必须在<strong>发放请求的那个线程</strong>里调用</li>
+<li>门控到达偏差：<strong>+1.5ms</strong>（从不提前），单次请求，<code>attempts=1</code></li>
+<li>顺带修掉两个真实缺陷：</li>
+<li>早间打卡窗口越界：服务在 08:30 后启动时，第一次调用随机出目标分钟就立刻执行 → 10 点、下午也会打卡；
+    已修为「仅在 08:00+minute ~ 08:30 内执行」，越窗记跳过日期。</li>
+<li><code>offset_ms</code> 基准错误：原先以「今天零点」为基准，兜底/手动重跑时算出十几小时的假值（实测 44146666ms）；
+    已改为以目标时刻 <code>fire_at</code> 为基准。</li>
+</ul>
+<h2 id="_9">教训</h2>
+<ul>
+<li>「用了连接池」≠「首发连接已预热」；「同进程」≠「同线程」。只有实测量化才能证明省掉了 DNS/TCP/TLS。</li>
+<li>文案一致性是功能问题：状态表缺一个键，通知里就会给用户看英文码。</li>
+<li>调度器里任何整分 sleep 都会漂移；用「秒级对齐 + 单调时钟 + 目标时刻兜底」三件套。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-25</footer></div></body></html>
