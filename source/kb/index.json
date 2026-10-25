@@ -1,7 +1,7 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-26",
- "count": 115,
+ "count": 116,
  "categories": [
   {
    "id": "decisions",
@@ -11,7 +11,7 @@
   {
    "id": "incidents",
    "name": "故障记录",
-   "count": 35
+   "count": 36
   },
   {
    "id": "infrastructure",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "现象",
+   "date": "2026-10-26",
+   "category": "incidents",
+   "url": "incidents/2026-10-26-pdd-zero-claim-failure-diagnosis.html",
+   "summary": "title: 拼多多零点抢券失败复盘（2026 10 26）：4000004 + 派发键冲突 + 探测误杀 date: 2026 10 26 tags: pdd, 抢券, 复盘, 调度器, 风控 现象 2026 10 2"
+  },
   {
    "title": "零点首发 HTTP 领取引擎：把「首个有效请求」提前到 00:00:00.x",
    "date": "2026-10-25",
