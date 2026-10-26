@@ -123,3 +123,4 @@
 - [[decisions/mcii-checkin-2026-10-18]] — cron「MCII 每日签到」连续报 MCII 登录失败（10-18 08:00，此前 10-14~10-17 连续成功）。
 - [[decisions/<TOKEN>]] — 日期：2026-10-25
 - [[incidents/<TOKEN>]] — title: 拼多多零点抢券失败复盘（2026-10-26）：4000004 + 派发键冲突 + 探测误杀
+- [[incidents/2026-10-27-pdd-window-too-short]] — title: 拼多多零点抢券再复盘（2026-10-27）：1 秒窗口是硬伤，4000004 是网关限流
