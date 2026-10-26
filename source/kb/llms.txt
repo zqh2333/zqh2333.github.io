@@ -1,4 +1,4 @@
-# 运维知识库 · 116 篇 · 生成于 2026-10-27
+# 运维知识库 · 117 篇 · 生成于 2026-10-27
 
 ## 决策记录 (29)
 - [2026-10-25] 零点首发 HTTP 领取引擎：把「首个有效请求」提前到 00:00:00.x — decisions/zero-midnight-http-claim-engine-2026-10-25.html
@@ -60,7 +60,9 @@
 - [2026-07-15] CPA 本地配置同步与低频模型审计 — decisions/cpa-local-model-sync.html
     CPA 本地配置同步与低频模型审计 服务位置 CPA 控制面：宝塔主机 <LAN 8 。 容器： cli proxy （ eceasy/cli proxy api ）。 本地配置： /root/CLIProxyAPI/c
 
-## 故障记录 (36)
+## 故障记录 (37)
+- [2026-10-27] 昨晚（10-27 00:00）结果 — incidents/2026-10-27-pdd-window-too-short.html
+    title: 拼多多零点抢券再复盘（2026 10 27）：1 秒窗口是硬伤，4000004 是网关限流 date: 2026 10 27 tags: pdd, 抢券, 复盘, 限流, 退避 昨晚（10 27 00:00
 - [2026-10-26] 现象 — incidents/2026-10-26-pdd-zero-claim-failure-diagnosis.html
     title: 拼多多零点抢券失败复盘（2026 10 26）：4000004 + 派发键冲突 + 探测误杀 date: 2026 10 26 tags: pdd, 抢券, 复盘, 调度器, 风控 现象 2026 10 2
 - [2026-10-18] pdd-clone 夜间任务「跑了但零参与」：静默 continue 让故障不可观测 — incidents/pdd-clone-nightly-silent-skip-2026-10-18.html

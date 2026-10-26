@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>昨晚（10-27 00:00）结果 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><hr />
+<p>title: 拼多多零点抢券再复盘（2026-10-27）：1 秒窗口是硬伤，4000004 是网关限流
+date: 2026-10-27
+tags: [pdd, 抢券, 复盘, 限流, 退避]</p>
+<hr />
+<h1 id="10-27-0000">昨晚（10-27 00:00）结果</h1>
+<p>修复全部生效，但依然没抢到。真实日志：</p>
+<pre><code>[nightly] 分类 满1 / 差1天0 / 日常0 / 跳过0
+[nightly] 抢券队列 1 个
+[nightly] dispatch(prepare) target=2026-10-27 hm=1437   ← 23:57 派发现在真的跑了
+[nightly] 队列过滤 1 → 1 个账号
+[http-claim] attempt=1..6 status=rate_limit http=200 code=4000004
+            resp={&quot;success&quot;:false,&quot;errorCode&quot;:4000004,&quot;errorMsg&quot;:&quot;RATE_LIMIT_EXCEED_EXCEPTION&quot;}
+[nightly] account=6 status=rate_limit attempts=6 elapsed_ms=180998.5 warm=ok
+</code></pre>
+<p>DB: <code>attempts=6 offset_ms=0.41 request_ms=57.9 http_status=200 business_code=4000004</code></p>
+<h1 id="_1">结论一：速度已达极限，不是「发慢了」</h1>
+<ul>
+<li>首发 <strong>零点后 0.41 毫秒</strong>发出（上一晚 4.5ms）</li>
+<li>首包 <strong>57.9ms</strong>（上一晚 246ms）→ 预热连接真的生效了（warm=ok）</li>
+<li>1 秒窗口内打了 6 发，全部 4000004</li>
+</ul>
+<h1 id="4000004-anti_content">结论二：4000004 = 网关限流，不是封号、不是 anti_content 缺失</h1>
+<p>零后 16 分钟做对照实验：
+- <strong>查询接口</strong>：<code>success=true</code>、进度 5/5、HTTP 200、160ms —— 同 Cookie / 同 IP / 同空 anti_content 完全正常
+- <strong>单发领取</strong>：<code>6071002 请稍后重试，活动太火爆了</code> —— 领取接口本身可用，只是券在火爆
+- <strong>连打 20 发</strong>：20/20 全是 <code>busy/6071002</code>，9.1s 内无一次 4000004</p>
+<p>→ 4000004 是<strong>零点瞬间网关对该客户端的限流</strong>，持续超过 1 秒；<code>anti_content</code> 为空<strong>不是</strong>阻塞点（能拿到业务码就说明调通了）。</p>
+<h1 id="1">结论三：1 秒窗口是真正的硬伤</h1>
+<p>10-26 按「券 1 秒就抢光」把窗口从 15s 收到 1s，结果限流还没退去就收手，整晚白跑。
+正确做法是<strong>分状态自适应</strong>：
+- <code>busy(6071002)</code>：150ms 快补，连续 20 次同样就停（≈3 秒，这一轮确实没量）
+- <code>rate_limit(4000004)</code>：<strong>指数退避 0.8→1.28→2.05→3s 封顶，且不计入 streak</strong>，窗口拉到 45 秒
+  （越撞限流越长，所以必须退避；但限流一解除必须还在抢，所以不能被 streak 提前结束）</p>
+<h1 id="_2">验收</h1>
+<ul>
+<li>容器实测：模拟「限流×5 → 成功」，6 发 / 10.1s 后拿到 <code>received</code>；旧 1 秒窗口下这一局必输</li>
+<li>测试 27/27 通过，新增「限流永不因 streak 提前结束」「限流退避不突破窗口」</li>
+<li>部署 md5 一致、容器 healthy、首页 200</li>
+</ul>
+<h1 id="_3">仍需观察</h1>
+<ul>
+<li>今晚 23:57 准备派发 + 00:00 首发，看 45 秒窗口内能否跨过限流窗口</li>
+<li>若连续多晚都是「零点头几秒 4000004 然后火爆」，说明平台对该客户端零点限流是常态，
+  下一步只能从降低零点并发特征入手（单账号已在最低并发，故更可能是该 IP/账号被标记），
+  可考虑 23:59 冷启动一次查询确认在线、避免首发被当成冷客户端。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-27</footer></div></body></html>
