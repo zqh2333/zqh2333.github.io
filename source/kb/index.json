@@ -1,12 +1,12 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-30",
- "count": 117,
+ "count": 118,
  "categories": [
   {
    "id": "decisions",
    "name": "决策记录",
-   "count": 29
+   "count": 30
   },
   {
    "id": "incidents",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "2026-10-30 CFnew / 中继 / 守卫 全量删除（Cloudflare Workers）",
+   "date": "2026-10-30",
+   "category": "decisions",
+   "url": "decisions/2026-10-30-cfnew-full-deletion.html",
+   "summary": "2026 10 30 CFnew / 中继 / 守卫 全量删除（Cloudflare Workers） 为什么删 用户明确指示删除这套 CFnew 家宽链式部署。删前实测：子账号 f9dc547a… 下的中继脚本 （改名"
+  },
   {
    "title": "昨晚（10-27 00:00）结果",
    "date": "2026-10-27",
