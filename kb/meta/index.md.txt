@@ -124,3 +124,4 @@
 - [[decisions/<TOKEN>]] — 日期：2026-10-25
 - [[incidents/<TOKEN>]] — title: 拼多多零点抢券失败复盘（2026-10-26）：4000004 + 派发键冲突 + 探测误杀
 - [[incidents/2026-10-27-pdd-window-too-short]] — title: 拼多多零点抢券再复盘（2026-10-27）：1 秒窗口是硬伤，4000004 是网关限流
+- [[decisions/2026-10-30-cfnew-full-deletion]] — 用户明确指示「删除 Cloudflare 的 cfnew」。删前实测：账号

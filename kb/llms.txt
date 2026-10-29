@@ -1,6 +1,8 @@
-# 运维知识库 · 117 篇 · 生成于 2026-10-30
+# 运维知识库 · 118 篇 · 生成于 2026-10-30
 
-## 决策记录 (29)
+## 决策记录 (30)
+- [2026-10-30] 2026-10-30 CFnew / 中继 / 守卫 全量删除（Cloudflare Workers） — decisions/2026-10-30-cfnew-full-deletion.html
+    2026 10 30 CFnew / 中继 / 守卫 全量删除（Cloudflare Workers） 为什么删 用户明确指示删除这套 CFnew 家宽链式部署。删前实测：子账号 f9dc547a… 下的中继脚本 （改名
 - [2026-10-25] 零点首发 HTTP 领取引擎：把「首个有效请求」提前到 00:00:00.x — decisions/zero-midnight-http-claim-engine-2026-10-25.html
     零点首发 HTTP 领取引擎：把「首个有效请求」提前到 00:00:00.x 日期：2026 10 25 分类：decisions / runbooks 对象：券友站（pdd clone，纯 HTTP 业务链路） 背景 
 - [2026-10-18] MCII 签到失败排查与站点改版适配（2026-10-18） — decisions/mcii-checkin-2026-10-18.html

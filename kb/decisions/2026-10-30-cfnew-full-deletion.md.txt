@@ -1,0 +1,43 @@
+# 2026-10-30 CFnew / 中继 / 守卫 全量删除（Cloudflare Workers）
+
+## 为什么删
+用户明确指示删除这套 CFnew 家宽链式部署。删前实测：子账号 `f9dc547a…` 下的中继脚本
+（改名后的 CFnew）已返回 **1101 This script has been killed**，经前置守卫的 service binding
+调用时对外表现为 **HTTP 500** —— 也就是说这条链路本来就是死的，不是"删了才坏"。
+两个脚本的脚本体**字节完全相同**（sha256 仅 multipart boundary 不同），印证历史结论：
+**CF 是按脚本名杀的，改名只能续命，会被再次杀**。
+
+## 删了什么（顺序有讲究）
+1. Worker 路由 `*/*` → 守卫（先断流量入口）
+2. DNS `AAAA 100::` 占位记录（再断解析；只删路由会留下空壳记录）
+3. 脚本：原始 CFnew、守卫、中继（三个）
+4. KV 命名空间 `cfnew`（含两个键：节点配置与版本号）
+   - 同账号下另一个 KV 命名空间属别的项目，**未动**
+
+## 备份
+本机 `~/.hermes/backups/cfnew-delete-20261030/`：
+- 三个脚本的 `/content/v2` 原始 multipart（各约 455KB / 11KB）
+- 两个脚本的 `settings`（bindings：KV、`jk`、`u`）
+- `estate_backup.json`（路由 / DNS / 脚本清单 / KV 命名空间）
+- `kv_cfnew_backup.json`（两个键的值）
+
+## 验收
+| 检查 | 结果 |
+|---|---|
+| 路由列表 | `[]` |
+| DNS 记录列表 | `[]`（count=0） |
+| 脚本列表 | `[]` |
+| KV 命名空间 | 只剩另一项目的那个 |
+| CF DoH 查询该域名 A/AAAA | `Status=0, Answer=null` = NODATA |
+| `curl https://<域名>/` | TLS `SSL_ERROR_SYSCALL` = 无服务 |
+
+## 坑
+- **API 里 0 条记录 ≠ 本地解析不到**：本机 AdGuard / 递归缓存仍会返回边缘 IP
+  （`104.21.x` / `172.67.x`），必须用 CF DoH 或 `dig @<PUBLIC-IP>` 复核，否则会误判成"没删掉"。
+  真正的判据是 DoH 的 `Answer=null` 加上 TLS 握手失败。
+- **脚本内容下载必须走 `/content/v2`**：裸 `/content` 返回 52 字节 `{"code":1001}`，
+  看着像"备份成功"，实际只存了个错误 JSON。
+- 删脚本前先确认**没有任何 service binding 指向它**：本次守卫绑的是中继，原始 CFnew 是纯孤儿，
+  删它对本已死掉的链路没有影响；审计日志窗口内也只有一条 `script_delete`。
+- 删完记得同步三处文档：技能参考文档打「已删除」标记、记忆条目改为指针、知识库归档 ——
+  否则下次看到 1101 会当成新故障去"修"一套已经不存在的东西。
