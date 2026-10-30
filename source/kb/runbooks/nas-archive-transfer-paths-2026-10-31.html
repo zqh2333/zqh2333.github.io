@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NAS 备份归档：三条路只有一条通 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><h1 id="nas">NAS 备份归档：三条路只有一条通</h1>
+<p>分类：runbooks
+日期：2026-10-31</p>
+<h2 id="_1">背景</h2>
+<p>要把本机备份包归档到局域网内一台 Synology NAS（DSM 7.x）。三条直觉上都能走的路，实测只有第三条可用：</p>
+<ol>
+<li><strong>FileStation REST API</strong>（<code>SYNO.API.Auth</code> 登录拿 SID → <code>SYNO.FileStation.Upload</code> / <code>CreateFolder</code>）</li>
+<li><strong><code>scp</code> / <code>sftp</code> 到 NAS</strong></li>
+<li><strong><code>ssh 'cat &gt; file'</code> 管道</strong></li>
+</ol>
+<h2 id="_2">结论</h2>
+<table>
+<thead>
+<tr>
+<th>路径</th>
+<th>实测结果</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FileStation <code>CreateFolder</code> / <code>Upload</code></td>
+<td><code>error.code 115</code>（权限不足）</td>
+<td>登录账号虽有 administrators 组身份，但<strong>没有共享文件夹的应用权限</strong>（DSM 里账号的文件访问权限与组身份是两套）</td>
+</tr>
+<tr>
+<td><code>list_share</code> / <code>list</code></td>
+<td>正常返回</td>
+<td>只读 API 可用，能列出共享名与真实挂载路径</td>
+</tr>
+<tr>
+<td><code>scp</code></td>
+<td><code>subsystem request failed on channel 0</code></td>
+<td>DSM 默认<strong>关闭 SFTP 子系统</strong>，scp 走的就是它</td>
+</tr>
+<tr>
+<td><code>ssh 'cat &gt; file'</code></td>
+<td><strong>成功</strong></td>
+<td>只用到 remote 的 <code>cat</code>，不依赖 sftp</td>
+</tr>
+<tr>
+<td>公钥登录（装 <code>authorized_keys</code>）</td>
+<td>装不上</td>
+<td><strong>未启用「用户主目录」服务</strong> → <code>%h</code> 不存在，<code>/volume1</code> 只有 root 可写；<code>authorized_keys</code> 无处安放</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键判断</strong>：DSM 的「共享文件夹应用权限」和「POSIX 文件权限」是两回事。
+FileStation 报 115 不代表 SSH 写不进去 —— 实测账号对目标共享在 POSIX 层是 <code>rwx</code>（共享目录普遍 777+ACL），
+所以<strong>用 SSH 管道传文件绕开 FileStation 即可</strong>，不必先去面板改权限。</p>
+<h2 id="_3">可照做步骤</h2>
+<pre><code class="language-bash"># 0) 目标路径要先建（共享根本身可写，子目录用 SSH 建）
+ssh &lt;nas&gt; 'mkdir -p /volume1/&lt;share&gt;/&lt;sub&gt;'
+
+# 1) 传单文件（sftp 不可用时的替代）
+cat ./file.tgz | ssh &lt;nas&gt; 'cat &gt; /volume1/&lt;share&gt;/&lt;sub&gt;/file.tgz'
+
+# 2) 必须回读核验，别信退出码
+md5sum ./file.tgz
+ssh &lt;nas&gt; 'md5sum /volume1/&lt;share&gt;/&lt;sub&gt;/file.tgz; ls -l /volume1/&lt;share&gt;/&lt;sub&gt;/'
+</code></pre>
+<p>打包目录归档时注意：<code>tar czf &lt;目标在源目录内&gt;</code> 会把自己套进去（生成"包里含旧包"的嵌套结构），
+应先 <code>tar</code> 到临时路径再传，或直接用 <code>tar cz -C src . | ssh ... 'cat &gt; dest.tgz'</code>。</p>
+<h2 id="_4">验证方式</h2>
+<ul>
+<li>本机与远端的 <code>md5sum</code> 一致</li>
+<li>远端 <code>tar tzf</code> 条目数与本机一致（本次 5 条 / 21 条都对上了）</li>
+<li>远端 <code>ls -l</code> 文件大小与 mtime 合理</li>
+</ul>
+<h2 id="_5">实际结果</h2>
+<p>3 个归档文件（备份包 + 明文凭据清理包 + 清单）成功落到 NAS 目标目录，md5 全部一致。
+公钥登录未完成 —— 需要在 DSM「控制面板 → 用户与群组 → 高级」勾选<strong>启用用户主目录服务</strong>（或提供 sudo 密码由管理员建目录），
+之后才能把公钥写进 <code>~/.ssh/authorized_keys</code> 走免密。</p>
+<h2 id="_6">坑</h2>
+<table>
+<thead>
+<tr>
+<th>坑</th>
+<th>正解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scp</code> 报 <code>subsystem request failed</code></td>
+<td>DSM 关了 SFTP；改 <code>cat \\| ssh 'cat &gt; f'</code></td>
+</tr>
+<tr>
+<td>FileStation 返回 115 就认为 NAS 不可写</td>
+<td>POSIX 层测一下；115 是应用权限，SSH 照样能写</td>
+</tr>
+<tr>
+<td><code>sudo -n id</code> 失败还继续尝试</td>
+<td>无免密 sudo 时不要管道喂密码（安全策略会拦），要用户配合</td>
+</tr>
+<tr>
+<td><code>mkdir /volume1/&lt;x&gt;</code> Permission denied</td>
+<td><code>/volume1</code> 是 root 755；只能建在已有共享目录里</td>
+</tr>
+</tbody>
+</table></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-31</footer></div></body></html>

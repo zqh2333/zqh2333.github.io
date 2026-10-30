@@ -1,7 +1,7 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-31",
- "count": 119,
+ "count": 122,
  "categories": [
   {
    "id": "decisions",
@@ -21,7 +21,7 @@
   {
    "id": "runbooks",
    "name": "操作手册",
-   "count": 10
+   "count": 13
   },
   {
    "id": "meta",
@@ -36,6 +36,27 @@
    "category": "decisions",
    "url": "decisions/2026-10-31-qinglong-telecom-js-to-python.html",
    "summary": "2026 10 31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘） 结论 青龙里原有的「电信」任务跑的是 dx.js （110KB，JS 版）。新版 Python 脚本 dx.py （签到 / "
+  },
+  {
+   "title": "DSM 7 没开「用户主目录服务」也能装 SSH 公钥",
+   "date": "2026-10-31",
+   "category": "runbooks",
+   "url": "runbooks/dsm-pubkey-without-home-service-2026-10-31.html",
+   "summary": "DSM 7 没开「用户主目录服务」也能装 SSH 公钥 分类：runbooks 日期：2026 10 31 结论先行 「DSM 未启用用户主目录服务 → 公钥登录结构性不可用」这个流传很广的判断 是错的 。 公钥完全能装"
+  },
+  {
+   "title": "NAS 备份归档：三条路只有一条通",
+   "date": "2026-10-31",
+   "category": "runbooks",
+   "url": "runbooks/nas-archive-transfer-paths-2026-10-31.html",
+   "summary": "NAS 备份归档：三条路只有一条通 分类：runbooks 日期：2026 10 31 背景 要把本机备份包归档到局域网内一台 Synology NAS（DSM 7.x）。三条直觉上都能走的路，实测只有第三条可用： 1."
+  },
+  {
+   "title": "青龙 API 调用契约（v2 后端实测）",
+   "date": "2026-10-31",
+   "category": "runbooks",
+   "url": "runbooks/qinglong-api-contract-2026-10-31.html",
+   "summary": "青龙 API 调用契约（v2 后端实测） 分类：runbooks 日期：2026 10 31 背景 给青龙写自动化脚本（触发任务、批量改环境变量、读日志）时，凭猜测写 HTTP 方法/body 会连续踩坑： 同一个 /a"
   },
   {
    "title": "2026-10-30 CFnew / 中继 / 守卫 全量删除（Cloudflare Workers）",

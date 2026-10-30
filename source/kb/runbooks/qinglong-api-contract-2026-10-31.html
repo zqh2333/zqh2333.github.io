@@ -1,0 +1,133 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>青龙 API 调用契约（v2 后端实测） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><h1 id="api-v2">青龙 API 调用契约（v2 后端实测）</h1>
+<p>分类：runbooks
+日期：2026-10-31</p>
+<h2 id="_1">背景</h2>
+<p>给青龙写自动化脚本（触发任务、批量改环境变量、读日志）时，凭猜测写 HTTP 方法/body 会连续踩坑：
+同一个 <code>/api/crons/run</code> 端点，<code>POST</code> 返回 <strong>404</strong>（路由未匹配，回的是 HTML 错误页），
+<code>PUT</code> + <code>{"ids":[123]}</code> 返回 <strong>400 Validation failed</strong>（提示 <code>"value" must be an array</code>），
+两种都看起来像"服务不可用"，实际只是契约不对。同理环境变量批量新建逐条提交必然 400。</p>
+<h2 id="_2">结论（可直接照抄的契约）</h2>
+<table>
+<thead>
+<tr>
+<th>用途</th>
+<th>方法</th>
+<th>路径</th>
+<th>body</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>登录</td>
+<td><code>POST</code></td>
+<td><code>/api/user/login</code></td>
+<td><code>{"username":"&lt;user&gt;","password":"&lt;pass&gt;"}</code> → <code>data.token</code></td>
+</tr>
+<tr>
+<td><strong>运行任务</strong></td>
+<td><strong><code>PUT</code></strong></td>
+<td><code>/api/crons/run</code></td>
+<td><strong>裸数组 <code>[123]</code></strong>（不是 <code>{"ids":[123]}</code>，不是 <code>{"value":[123]}</code>）</td>
+</tr>
+<tr>
+<td>读最新日志</td>
+<td><code>GET</code></td>
+<td><code>/api/crons/&lt;id&gt;/log</code></td>
+<td>无 → <code>data</code> 是<strong>整篇日志字符串</strong>，不是列表</td>
+</tr>
+<tr>
+<td>任务详情</td>
+<td><code>GET</code></td>
+<td><code>/api/crons/&lt;id&gt;</code></td>
+<td>无 → <code>data</code> 是 dict（<code>command</code>/<code>schedule</code>/<code>isDisabled</code>…）</td>
+</tr>
+<tr>
+<td>环境变量列表</td>
+<td><code>GET</code></td>
+<td><code>/api/envs?searchValue=</code></td>
+<td>无</td>
+</tr>
+<tr>
+<td>环境变量批量新建</td>
+<td><code>POST</code></td>
+<td><code>/api/envs</code></td>
+<td><strong>数组</strong>，每项 <code>{name,value,remarks}</code>；逐条字符串 value 会 400</td>
+</tr>
+<tr>
+<td>环境变量更新</td>
+<td><code>PUT</code></td>
+<td><code>/api/envs</code></td>
+<td>对象，<strong>必须带 <code>id</code></strong></td>
+</tr>
+<tr>
+<td>环境变量删除</td>
+<td><code>DELETE</code></td>
+<td><code>/api/envs</code></td>
+<td><code>id</code> 数组</td>
+</tr>
+<tr>
+<td>任务列表</td>
+<td><code>GET</code></td>
+<td><code>/api/crons?searchValue=</code></td>
+<td>无 → <code>data</code> 是 dict（<code>data[]</code> 才是条目）</td>
+</tr>
+</tbody>
+</table>
+<p>鉴权：所有请求加 <code>Authorization: Bearer &lt;token&gt;</code>；<code>Content-Type: application/json</code>。</p>
+<h2 id="_3">验证方式</h2>
+<ul>
+<li>触发后用日志全文做<strong>结束判定</strong>：轮询 <code>/api/crons/&lt;id&gt;/log</code>，日志全文发生变化且含 <code>## 执行结束</code> 标记 → 本轮结束。
+  注意不能靠"日志长度变大"判断，新日志会先变短（新一轮从 <code>## 开始执行</code> 写起）。</li>
+<li>触发成功返回 <code>{"code":200}</code>；失败会给出 <code>__http</code> + <code>__body</code>，照上表对号入座。</li>
+</ul>
+<h2 id="_4">实际结果</h2>
+<p>按上表改写后：<code>PUT /api/crons/run</code> + <code>[123]</code> → <code>code 200</code>，任务立即执行并在 5 秒内跑完（当日任务已全部完成时），
+日志轮询正确捕获 <code>## 执行结束</code>。</p>
+<h2 id="_5">坑</h2>
+<table>
+<thead>
+<tr>
+<th>坑</th>
+<th>正解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /api/crons/run</code></td>
+<td>404，HTML 错误页；必须 <code>PUT</code></td>
+</tr>
+<tr>
+<td><code>{"ids":[…]}</code> 传 id 列表</td>
+<td>400 <code>"value" must be an array</code>；要<strong>裸数组</strong></td>
+</tr>
+<tr>
+<td>把 <code>/log</code> 的 <code>data</code> 当列表遍历</td>
+<td>它是字符串；要日志列表用别的手段</td>
+</tr>
+<tr>
+<td>逐条 POST <code>/api/envs</code></td>
+<td>400；一次提交整个数组</td>
+</tr>
+<tr>
+<td>用"日志变长"判结束</td>
+<td>新日志先变短；用 <code>## 执行结束</code> 标记</td>
+</tr>
+<tr>
+<td>终端里跑 <code>docker exec … grep/tail</code> 只回 1 行</td>
+<td>命令输出重定向到 <code>/tmp/x</code>，再用脚本读文件解析</td>
+</tr>
+<tr>
+<td>远端嵌套引号被双层 shell 吃掉</td>
+<td><code>shlex.quote</code> 单层引号 + 单引号包 <code>sh -c</code></td>
+</tr>
+<tr>
+<td>非登录 shell 里 <code>task</code> 命令 127</td>
+<td>用 <code>bash -lc</code> 或先 <code>source /ql/shell/env.sh</code></td>
+</tr>
+</tbody>
+</table></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-31</footer></div></body></html>
