@@ -1,4 +1,4 @@
-# 运维知识库 · 119 篇 · 生成于 2026-10-31
+# 运维知识库 · 122 篇 · 生成于 2026-10-31
 
 ## 决策记录 (31)
 - [2026-10-31] 2026-10-31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘） — decisions/2026-10-31-qinglong-telecom-js-to-python.html
@@ -218,7 +218,13 @@
 - [] Verification Challenge Lab v1.0.1 — infrastructure/verification-challenge-lab-v1.0.1.html
     Verification Challenge Lab v1.0.1 本地产物： /home/user/artifacts/verification challenge lab v1.0.1.zip SHA 256： <H
 
-## 操作手册 (10)
+## 操作手册 (13)
+- [2026-10-31] DSM 7 没开「用户主目录服务」也能装 SSH 公钥 — runbooks/dsm-pubkey-without-home-service-2026-10-31.html
+    DSM 7 没开「用户主目录服务」也能装 SSH 公钥 分类：runbooks 日期：2026 10 31 结论先行 「DSM 未启用用户主目录服务 → 公钥登录结构性不可用」这个流传很广的判断 是错的 。 公钥完全能装
+- [2026-10-31] NAS 备份归档：三条路只有一条通 — runbooks/nas-archive-transfer-paths-2026-10-31.html
+    NAS 备份归档：三条路只有一条通 分类：runbooks 日期：2026 10 31 背景 要把本机备份包归档到局域网内一台 Synology NAS（DSM 7.x）。三条直觉上都能走的路，实测只有第三条可用： 1.
+- [2026-10-31] 青龙 API 调用契约（v2 后端实测） — runbooks/qinglong-api-contract-2026-10-31.html
+    青龙 API 调用契约（v2 后端实测） 分类：runbooks 日期：2026 10 31 背景 给青龙写自动化脚本（触发任务、批量改环境变量、读日志）时，凭猜测写 HTTP 方法/body 会连续踩坑： 同一个 /a
 - [2026-10-10] luckyg 每日签到 cron 静默停跑：fire_claim 残留卡死 — runbooks/luckyg-checkin-cron-fireclaim-wedge-2026-10-10.html
     luckyg 每日签到 cron 静默停跑：fire_claim 残留卡死 日期 ：2026 10 10 现象 ： luckyg.131518.xyz 每日签到 cron（job 4b53ae5ee8cf ）从 2026
 - [2026-10-09] 去掉 DSM 登录时的「管理员帐户安全性」2FA 弹窗（2026-10-09） — runbooks/dsm-disable-admin-2fa-nag-2026-10-09.html
