@@ -1,6 +1,8 @@
-# 运维知识库 · 118 篇 · 生成于 2026-10-31
+# 运维知识库 · 119 篇 · 生成于 2026-10-31
 
-## 决策记录 (30)
+## 决策记录 (31)
+- [2026-10-31] 2026-10-31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘） — decisions/2026-10-31-qinglong-telecom-js-to-python.html
+    2026 10 31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘） 结论 青龙里原有的「电信」任务跑的是 dx.js （110KB，JS 版）。新版 Python 脚本 dx.py （签到 / 
 - [2026-10-30] 2026-10-30 CFnew / 中继 / 守卫 全量删除（Cloudflare Workers） — decisions/2026-10-30-cfnew-full-deletion.html
     2026 10 30 CFnew / 中继 / 守卫 全量删除（Cloudflare Workers） 为什么删 用户明确指示删除这套 CFnew 家宽链式部署。删前实测：子账号 f9dc547a… 下的中继脚本 （改名
 - [2026-10-25] 零点首发 HTTP 领取引擎：把「首个有效请求」提前到 00:00:00.x — decisions/zero-midnight-http-claim-engine-2026-10-25.html

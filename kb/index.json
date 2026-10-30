@@ -1,12 +1,12 @@
 {
  "site": "运维知识库",
  "generated": "2026-10-31",
- "count": 118,
+ "count": 119,
  "categories": [
   {
    "id": "decisions",
    "name": "决策记录",
-   "count": 30
+   "count": 31
   },
   {
    "id": "incidents",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "2026-10-31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘）",
+   "date": "2026-10-31",
+   "category": "decisions",
+   "url": "decisions/2026-10-31-qinglong-telecom-js-to-python.html",
+   "summary": "2026 10 31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘） 结论 青龙里原有的「电信」任务跑的是 dx.js （110KB，JS 版）。新版 Python 脚本 dx.py （签到 / "
+  },
   {
    "title": "2026-10-30 CFnew / 中继 / 守卫 全量删除（Cloudflare Workers）",
    "date": "2026-10-30",

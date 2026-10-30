@@ -1,0 +1,106 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2026-10-31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · decisions</nav><article><h1 id="2026-10-31-js-python">2026-10-31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘）</h1>
+<h2 id="_1">结论</h2>
+<p>青龙里原有的「电信」任务跑的是 <code>dx.js</code>（110KB，JS 版）。新版 Python 脚本
+<code>dx.py</code>（签到 / 连签累签领奖 / 聚合任务 / 喂食 / 宠物 / 金豆 / 转盘抽奖 / 企业微信推送）
+已部署并<strong>用 <code>task dx.py</code> wrapper 实跑通过</strong>：53 秒跑完，企业微信推送成功。</p>
+<h2 id="_2">步骤</h2>
+<ol>
+<li><strong>备份</strong>：<code>dx.js</code>、<code>chinaTelecom_cache.json</code>、任务行 → <code>/ql/data/backups/dx-20261030/</code></li>
+<li><strong>补推送导入</strong>：脚本原本 <code>from sendNotify import send</code>，青龙只有 <code>notify.py</code>
+   （签名同为 <code>send(title, content)</code>），补一层兜底：
+   <code>python
+   try:
+       from sendNotify import send as send_notify
+   except ImportError:
+       try:
+           from notify import send as send_notify
+       except ImportError:
+           send_notify = None</code></li>
+<li>上传到 <code>/ql/data/scripts/dx.py</code>（<code>docker cp</code>，owner root:root 644）</li>
+<li>改任务 712：<code>task dx.js</code> → <code>task dx.py</code>，改名「电信(签到+金豆+转盘)」，cron 保持 <code>0 5 * * *</code></li>
+<li>实跑验证（见下）</li>
+</ol>
+<h2 id="_3">关键坑</h2>
+<h3 id="1-api-token">1. 青龙 API token 已过期 → 只能改库 + 重启</h3>
+<p><code>/api/crons</code> 直接带 <code>auth.json</code> 里的 <code>token</code> 会返回 <code>401 invalid signature</code>；
+<code>config/token.json</code> 里的 <code>value</code> 是 36 位 UUID，带上返回 <code>401 jwt malformed</code>
+（面板要求 HS384 JWT，<code>auth.json.tokens</code> 里存的旧 JWT 已 exp 过期）。
+<strong>没有明文密码就无法登录 API</strong>。可行路径：直接改 SQLite <code>Crontabs</code> 表，然后
+<code>docker restart qinglong</code>（调度器在启动时重读，实测 10 秒面板恢复，
+重启后 <code>crontab.list</code> 立即出现新 command）。改库前先确认容器内没有任务在跑。</p>
+<h3 id="2-task-python3-dxpy">2. 通知必须走 <code>task</code> 包装器，直接 <code>python3 dx.py</code> 不会推送</h3>
+<p>青龙的推送是 <code>task</code> 预加载（<code>/ql/shell/preload/__ql_notify__.py</code>）接管的，
+<code>notify.py</code> 本身只认 <code>SKIP_PUSH_TITLE</code>，账号里也没有任何 <code>PUSH_*</code>/<code>WEBHOOK</code> 类环境变量。
+所以：
+- <code>docker exec ... python3 dx.py</code> → 只打印，<strong>不推送</strong>；
+- <code>docker exec ... task dx.py</code> → 末尾「企业微信推送成功！」✅
+验证任务时一定要用 <code>task</code> 形态，否则会误判"推送没配"。</p>
+<h3 id="3-schema">3. 缓存 schema 被新版接管</h3>
+<p><code>chinaTelecom_cache.json</code> 原本是 JS 版写的，Python 版读它会走 <code>token</code> 复用分支
+（<code>token</code> + <code>userId</code> 齐全就直接用，<code>map/clientXML</code> 报"过期"才重登）。
+实跑后缓存被覆写为 Python 结构（每账号 3 字段），旧文件已备份可回滚。</p>
+<h2 id="2026-10-31-0235-0238">实跑证据（2026-10-31 02:35 / 02:38 两次）</h2>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>账号1</th>
+<th>账号2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>签到</td>
+<td>成功</td>
+<td>成功</td>
+</tr>
+<tr>
+<td>连签</td>
+<td>6 天</td>
+<td>6 天</td>
+</tr>
+<tr>
+<td>累签</td>
+<td>31 天（非 15/28，不领奖）</td>
+<td>31 天</td>
+</tr>
+<tr>
+<td>聚合任务</td>
+<td>20+ 条「聚合任务接口成功」</td>
+<td>同</td>
+</tr>
+<tr>
+<td>喂食</td>
+<td>10/10 次成功</td>
+<td>同</td>
+</tr>
+<tr>
+<td>宠物</td>
+<td>Lv.6 36455/99999</td>
+<td>Lv.4 7445/8000</td>
+</tr>
+<tr>
+<td>金豆</td>
+<td>22259 → 22304</td>
+<td>11090 → 11135</td>
+</tr>
+<tr>
+<td>抽奖</td>
+<td>3 次（券/话费/金豆）</td>
+<td>第二次跑已 0 次</td>
+</tr>
+</tbody>
+</table>
+<p>任务完成后日志落在 <code>/ql/data/log/dx_712/&lt;日期&gt;-05-00-01-*.log</code>，
+本次手动跑的日志为 <code>2026-10-31-02-37-42-934.log</code>（1736 字节）。</p>
+<h2 id="_4">回滚</h2>
+<ol>
+<li><code>docker cp /ql/data/backups/dx-20261030/dx.js /ql/data/scripts/dx.js</code> 一直没删，原文件在</li>
+<li>改库 <code>update Crontabs set command='task dx.js' where id=712</code> 并重启青龙</li>
+<li>缓存若要恢复 JS 结构：覆盖回 <code>backups/dx-20261030/chinaTelecom_cache.json</code></li>
+</ol></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-10-31</footer></div></body></html>

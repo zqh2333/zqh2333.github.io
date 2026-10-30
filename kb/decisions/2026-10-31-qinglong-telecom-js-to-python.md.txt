@@ -1,0 +1,66 @@
+# 2026-10-31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘）
+
+## 结论
+青龙里原有的「电信」任务跑的是 `dx.js`（110KB，JS 版）。新版 Python 脚本
+`dx.py`（签到 / 连签累签领奖 / 聚合任务 / 喂食 / 宠物 / 金豆 / 转盘抽奖 / 企业微信推送）
+已部署并**用 `task dx.py` wrapper 实跑通过**：53 秒跑完，企业微信推送成功。
+
+## 步骤
+1. **备份**：`dx.js`、`chinaTelecom_cache.json`、任务行 → `/ql/data/backups/dx-20261030/`
+2. **补推送导入**：脚本原本 `from sendNotify import send`，青龙只有 `notify.py`
+   （签名同为 `send(title, content)`），补一层兜底：
+   ```python
+   try:
+       from sendNotify import send as send_notify
+   except ImportError:
+       try:
+           from notify import send as send_notify
+       except ImportError:
+           send_notify = None
+   ```
+3. 上传到 `/ql/data/scripts/dx.py`（`docker cp`，owner root:root 644）
+4. 改任务 712：`task dx.js` → `task dx.py`，改名「电信(签到+金豆+转盘)」，cron 保持 `0 5 * * *`
+5. 实跑验证（见下）
+
+## 关键坑
+
+### 1. 青龙 API token 已过期 → 只能改库 + 重启
+`/api/crons` 直接带 `auth.json` 里的 `token` 会返回 `401 invalid signature`；
+`config/token.json` 里的 `value` 是 36 位 UUID，带上返回 `401 jwt malformed`
+（面板要求 HS384 JWT，`auth.json.tokens` 里存的旧 JWT 已 exp 过期）。
+**没有明文密码就无法登录 API**。可行路径：直接改 SQLite `Crontabs` 表，然后
+`docker restart qinglong`（调度器在启动时重读，实测 10 秒面板恢复，
+重启后 `crontab.list` 立即出现新 command）。改库前先确认容器内没有任务在跑。
+
+### 2. 通知必须走 `task` 包装器，直接 `python3 dx.py` 不会推送
+青龙的推送是 `task` 预加载（`/ql/shell/preload/__ql_notify__.py`）接管的，
+`notify.py` 本身只认 `SKIP_PUSH_TITLE`，账号里也没有任何 `PUSH_*`/`WEBHOOK` 类环境变量。
+所以：
+- `docker exec ... python3 dx.py` → 只打印，**不推送**；
+- `docker exec ... task dx.py` → 末尾「企业微信推送成功！」✅
+验证任务时一定要用 `task` 形态，否则会误判"推送没配"。
+
+### 3. 缓存 schema 被新版接管
+`chinaTelecom_cache.json` 原本是 JS 版写的，Python 版读它会走 `token` 复用分支
+（`token` + `userId` 齐全就直接用，`map/clientXML` 报"过期"才重登）。
+实跑后缓存被覆写为 Python 结构（每账号 3 字段），旧文件已备份可回滚。
+
+## 实跑证据（2026-10-31 02:35 / 02:38 两次）
+| 项 | 账号1 | 账号2 |
+|---|---|---|
+| 签到 | 成功 | 成功 |
+| 连签 | 6 天 | 6 天 |
+| 累签 | 31 天（非 15/28，不领奖） | 31 天 |
+| 聚合任务 | 20+ 条「聚合任务接口成功」 | 同 |
+| 喂食 | 10/10 次成功 | 同 |
+| 宠物 | Lv.6 36455/99999 | Lv.4 7445/8000 |
+| 金豆 | 22259 → 22304 | 11090 → 11135 |
+| 抽奖 | 3 次（券/话费/金豆） | 第二次跑已 0 次 |
+
+任务完成后日志落在 `/ql/data/log/dx_712/<日期>-05-00-01-*.log`，
+本次手动跑的日志为 `2026-10-31-02-37-42-934.log`（1736 字节）。
+
+## 回滚
+1. `docker cp /ql/data/backups/dx-20261030/dx.js /ql/data/scripts/dx.js` 一直没删，原文件在
+2. 改库 `update Crontabs set command='task dx.js' where id=712` 并重启青龙
+3. 缓存若要恢复 JS 结构：覆盖回 `backups/dx-20261030/chinaTelecom_cache.json`
