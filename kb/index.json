@@ -1,7 +1,7 @@
 {
  "site": "运维知识库",
  "generated": "2026-11-07",
- "count": 122,
+ "count": 123,
  "categories": [
   {
    "id": "decisions",
@@ -21,7 +21,7 @@
   {
    "id": "runbooks",
    "name": "操作手册",
-   "count": 13
+   "count": 14
   },
   {
    "id": "meta",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "CPAMP 升级后「数据库升级维护尚未完成」的正确处理",
+   "date": "2026-11-07",
+   "category": "runbooks",
+   "url": "runbooks/cpamp-deferred-index-maintenance-2026-11-07.html",
+   "summary": "CPAMP 升级后「数据库升级维护尚未完成」的正确处理 分类：runbooks 日期：2026 11 07 主机：宝塔 <LAN 8 （docker cpa manager plus ） 现象 CPAMP 面板顶部横幅："
+  },
   {
    "title": "2026-10-31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘）",
    "date": "2026-10-31",

@@ -1,0 +1,60 @@
+# CPAMP 升级后「数据库升级维护尚未完成」的正确处理
+
+分类：runbooks
+日期：2026-11-07
+主机：宝塔 <LAN-8>（docker `cpa-manager-plus`）
+
+## 现象
+
+CPAMP 面板顶部横幅：
+
+> 数据库升级维护尚未完成 / 还有 1 个查询索引待准备 / 性能降级
+> 部分查询索引或旧派生数据维护尚未完成，历史请求查询可能明显变慢或超时。
+> 权威请求数据没有丢失。
+
+容器日志里的直接证据：
+
+```
+[derived-migration] deferring index idx_usage_events_ts_latency_ttft_cover because usage_events is non-empty
+[derived-migration] deferred index preparation indexes=1 ... command=cleanup-derived
+```
+
+## 根因
+
+CPAMP 只在**离线**状态构建某些覆盖索引；表非空时在线启动会主动推迟（defer），并把待办记进
+`usage_derived_deferred_indexes`。所以这不是升级失败，是设计上的两步流程。
+
+## 正确做法（离线执行）
+
+```bash
+docker stop cpa-manager-plus
+docker run --rm \
+  -e USAGE_DATA_DIR=/data \
+  -e USAGE_DB_PATH=/data/usage.sqlite \
+  -e TZ=Asia/Shanghai \
+  -v /root/cpa-manager-plus-data:/data \
+  seakee/cpa-manager-plus:latest \
+  cleanup-derived --db-path /data/usage.sqlite
+docker start cpa-manager-plus
+```
+
+成功输出：`Derived cleanup completed: jobs=0 processed_rows=0 prepared_indexes=1`
+
+## 验收
+
+- 索引数 53 → 54，`idx_usage_events_ts_latency_ttft_cover` 存在
+- `PRAGMA integrity_check` = `ok`
+- `usage_derived_deferred_indexes` = 0 行（横幅数据的来源）
+- 各 `usage_*_rollup_state` 行 `state=ready`，processed = total = 67239
+- `/management.html` 200，公网 `cpamp.example.com:2333` 200
+- 面板需刷新一次横幅才消失
+
+## 踩过的坑
+
+1. **`--no-deps` 只属于 `docker compose run`**。抄面板给的 compose 片段直接喂 `docker run` 会 `exit 125 unknown flag: --no-deps`，
+   容器照样能起，但**维护没做**（索引依旧缺失）——很容易误判成"跑了没用"。
+2. **不要对在线 SQLite 用 tar 备份**。493MB 的 `usage.sqlite` 正在写，
+   `tar: ./usage.sqlite: file changed as we read it`（exit 1），包不可信。必须先停机再 `cp -a` 并比对字节数。
+3. **重启后 `SQLITE_BUSY` 刷屏是瞬态**。pricing / hourly / rollup / monitoring 追赶任务并发抢写，
+   日志出现 `database is locked (5)`，几秒后自行重试成功；3 分钟内即归零。只有持续不消才当故障。
+4. 在线期间**不要**从 Web 面板执行清理（面板自己也这么提示）。

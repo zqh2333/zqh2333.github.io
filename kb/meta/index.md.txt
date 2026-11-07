@@ -129,3 +129,4 @@
 - [[runbooks/<TOKEN>]] — 分类：runbooks
 - [[runbooks/nas-archive-transfer-paths-2026-10-31]] — 分类：runbooks
 - [[runbooks/qinglong-api-contract-2026-10-31]] — 分类：runbooks
+- [[runbooks/<TOKEN>]] — 分类：runbooks
