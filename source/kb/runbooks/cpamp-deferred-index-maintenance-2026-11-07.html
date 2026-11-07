@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CPAMP 升级后「数据库升级维护尚未完成」的正确处理 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><h1 id="cpamp">CPAMP 升级后「数据库升级维护尚未完成」的正确处理</h1>
+<p>分类：runbooks
+日期：2026-11-07
+主机：宝塔 <LAN-8>（docker <code>cpa-manager-plus</code>）</p>
+<h2 id="_1">现象</h2>
+<p>CPAMP 面板顶部横幅：</p>
+<blockquote>
+<p>数据库升级维护尚未完成 / 还有 1 个查询索引待准备 / 性能降级
+部分查询索引或旧派生数据维护尚未完成，历史请求查询可能明显变慢或超时。
+权威请求数据没有丢失。</p>
+</blockquote>
+<p>容器日志里的直接证据：</p>
+<pre><code>[derived-migration] deferring index idx_usage_events_ts_latency_ttft_cover because usage_events is non-empty
+[derived-migration] deferred index preparation indexes=1 ... command=cleanup-derived
+</code></pre>
+<h2 id="_2">根因</h2>
+<p>CPAMP 只在<strong>离线</strong>状态构建某些覆盖索引；表非空时在线启动会主动推迟（defer），并把待办记进
+<code>usage_derived_deferred_indexes</code>。所以这不是升级失败，是设计上的两步流程。</p>
+<h2 id="_3">正确做法（离线执行）</h2>
+<pre><code class="language-bash">docker stop cpa-manager-plus
+docker run --rm \
+  -e USAGE_DATA_DIR=/data \
+  -e USAGE_DB_PATH=/data/usage.sqlite \
+  -e TZ=Asia/Shanghai \
+  -v /root/cpa-manager-plus-data:/data \
+  seakee/cpa-manager-plus:latest \
+  cleanup-derived --db-path /data/usage.sqlite
+docker start cpa-manager-plus
+</code></pre>
+<p>成功输出：<code>Derived cleanup completed: jobs=0 processed_rows=0 prepared_indexes=1</code></p>
+<h2 id="_4">验收</h2>
+<ul>
+<li>索引数 53 → 54，<code>idx_usage_events_ts_latency_ttft_cover</code> 存在</li>
+<li><code>PRAGMA integrity_check</code> = <code>ok</code></li>
+<li><code>usage_derived_deferred_indexes</code> = 0 行（横幅数据的来源）</li>
+<li>各 <code>usage_*_rollup_state</code> 行 <code>state=ready</code>，processed = total = 67239</li>
+<li><code>/management.html</code> 200，公网 <code>cpamp.example.com:2333</code> 200</li>
+<li>面板需刷新一次横幅才消失</li>
+</ul>
+<h2 id="_5">踩过的坑</h2>
+<ol>
+<li><strong><code>--no-deps</code> 只属于 <code>docker compose run</code></strong>。抄面板给的 compose 片段直接喂 <code>docker run</code> 会 <code>exit 125 unknown flag: --no-deps</code>，
+   容器照样能起，但<strong>维护没做</strong>（索引依旧缺失）——很容易误判成"跑了没用"。</li>
+<li><strong>不要对在线 SQLite 用 tar 备份</strong>。493MB 的 <code>usage.sqlite</code> 正在写，
+   <code>tar: ./usage.sqlite: file changed as we read it</code>（exit 1），包不可信。必须先停机再 <code>cp -a</code> 并比对字节数。</li>
+<li><strong>重启后 <code>SQLITE_BUSY</code> 刷屏是瞬态</strong>。pricing / hourly / rollup / monitoring 追赶任务并发抢写，
+   日志出现 <code>database is locked (5)</code>，几秒后自行重试成功；3 分钟内即归零。只有持续不消才当故障。</li>
+<li>在线期间<strong>不要</strong>从 Web 面板执行清理（面板自己也这么提示）。</li>
+</ol></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-11-07</footer></div></body></html>

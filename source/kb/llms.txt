@@ -1,4 +1,4 @@
-# 运维知识库 · 122 篇 · 生成于 2026-11-07
+# 运维知识库 · 123 篇 · 生成于 2026-11-07
 
 ## 决策记录 (31)
 - [2026-10-31] 2026-10-31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘） — decisions/2026-10-31-qinglong-telecom-js-to-python.html
@@ -218,7 +218,9 @@
 - [] Verification Challenge Lab v1.0.1 — infrastructure/verification-challenge-lab-v1.0.1.html
     Verification Challenge Lab v1.0.1 本地产物： /home/user/artifacts/verification challenge lab v1.0.1.zip SHA 256： <H
 
-## 操作手册 (13)
+## 操作手册 (14)
+- [2026-11-07] CPAMP 升级后「数据库升级维护尚未完成」的正确处理 — runbooks/cpamp-deferred-index-maintenance-2026-11-07.html
+    CPAMP 升级后「数据库升级维护尚未完成」的正确处理 分类：runbooks 日期：2026 11 07 主机：宝塔 <LAN 8 （docker cpa manager plus ） 现象 CPAMP 面板顶部横幅：
 - [2026-10-31] DSM 7 没开「用户主目录服务」也能装 SSH 公钥 — runbooks/dsm-pubkey-without-home-service-2026-10-31.html
     DSM 7 没开「用户主目录服务」也能装 SSH 公钥 分类：runbooks 日期：2026 10 31 结论先行 「DSM 未启用用户主目录服务 → 公钥登录结构性不可用」这个流传很广的判断 是错的 。 公钥完全能装
 - [2026-10-31] NAS 备份归档：三条路只有一条通 — runbooks/nas-archive-transfer-paths-2026-10-31.html
