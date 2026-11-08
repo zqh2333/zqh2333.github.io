@@ -1,7 +1,7 @@
 {
  "site": "运维知识库",
- "generated": "2026-11-08",
- "count": 123,
+ "generated": "2026-11-09",
+ "count": 124,
  "categories": [
   {
    "id": "decisions",
@@ -21,7 +21,7 @@
   {
    "id": "runbooks",
    "name": "操作手册",
-   "count": 14
+   "count": 15
   },
   {
    "id": "meta",
@@ -30,6 +30,13 @@
   }
  ],
  "entries": [
+  {
+   "title": "网上国网（国家电网）每日签到 —— 青龙部署记录",
+   "date": "2026-11-08",
+   "category": "runbooks",
+   "url": "runbooks/sgcc-daily-checkin-deploy-2026-11-08.html",
+   "summary": "网上国网（国家电网）每日签到 —— 青龙部署记录 日期：2026 11 08 任务：青龙 851「网上国网(成长金签到)」 0 8 脚本： /ql/data/scripts/sgcc/ （本地留档 ~/.hermes/s"
+  },
   {
    "title": "CPAMP 升级后「数据库升级维护尚未完成」的正确处理",
    "date": "2026-11-07",

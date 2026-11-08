@@ -130,3 +130,4 @@
 - [[runbooks/nas-archive-transfer-paths-2026-10-31]] — 分类：runbooks
 - [[runbooks/qinglong-api-contract-2026-10-31]] — 分类：runbooks
 - [[runbooks/<TOKEN>]] — 分类：runbooks
+- [[runbooks/sgcc-daily-checkin-deploy-2026-11-08]] — 日期：2026-11-08
