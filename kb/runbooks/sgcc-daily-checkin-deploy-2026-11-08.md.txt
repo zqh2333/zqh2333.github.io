@@ -1,0 +1,80 @@
+# 网上国网（国家电网）每日签到 —— 青龙部署记录
+
+日期：2026-11-08
+任务：青龙 **851「网上国网(成长金签到)」** `0 8 * * *`
+脚本：`/ql/data/scripts/sgcc/`（本地留档 `~/.hermes/scripts/sgcc/`）
+
+## 一、这是什么
+
+第三方脱敏脚本，自动完成「网上国网」App 每日成长金签到：
+密码登录拿令牌（缓存约 15 天，到期用密码静默重登）→ 查状态 → 签到 → 回查余额。
+
+```
+sgcc_checkin.py          主脚本（签到/登录/查状态）
+sgcc_daily.sh            青龙入口（随机延迟包装）
+sgcc_turing/             图灵盾设备令牌生成（登录必需）
+gmssl/                   vendor 的纯 Python SM2/SM3/SM4（容器缺 pycryptodomex）
+```
+
+依赖：`requests`（青龙自带）+ `Crypto`（pycryptodome，青龙自带）+ `gmssl`（vendor）。
+
+## 二、投毒核查结论（重要，跑前必做）
+
+- 外发域名只有 1 个：`csc-service.sgcc.com.cn`（官方）
+- 无 `subprocess` / `os.system` / `eval` / `base64.b64decode` 等可疑动作
+- 手机号、密码、令牌都不在代码里，只从环境变量读，日志脱敏
+
+## 三、部署踩到的四个坑
+
+1. **容器缺 `gmssl`**：青龙 `python3` 有 `requests`、`Crypto`，没有 `gmssl`。
+   解决：把纯 Python 的 `gmssl` wheel 解包 **vendor 进脚本目录**（容器重建不丢），
+   不要 `pip install` 进容器层。
+2. **`gmssl` 要 `Cryptodome`（pycryptodomex）**：青龙装的是 `Crypto`（pycryptodome）。
+   `gmssl/sm2.py` 第 4 行改成 `try: from Cryptodome... except ImportError: from Crypto...`。
+3. **青龙 OpenAPI 取 token 是 `GET` 带 query**，不是 `POST` JSON：
+   `GET /open/auth/token?client_id=..&client_secret=..`（`client_id/secret` 在 DB `Apps` 表，`name='tool'`）。
+   `POST` 会返回 404 `Cannot POST /open/auth/token`。
+4. **OpenAPI 建变量的 body 必须是数组**：`POST /open/envs` 传 `[{"name","value","remarks"}, ...]`，
+   传单个对象报 `"value" must be an array`。
+   建任务时 `allow_multiple_instances` 必须是 **数字 0**，传 `false` 报 Validation failed。
+
+## 四、任务生效的关键点
+
+- `POST /open/crons` 建出来的任务 `saved=false`，**不会进 crontab**；
+  必须再 `PUT /open/crons/enable` + 裸数组 `[851]`，回读 `saved=True` 才算真生效。
+- 生效判据两条同时满足：API 回读 `saved=True`，且 `/ql/data/config/crontab.list` 出现该行。
+- 青龙 `task` 命令**自己会从 DB 注入环境变量**，不需要 `docker exec -e`。
+
+## 五、变量与运行参数
+
+| 变量 | 说明 |
+|---|---|
+| `SGCC_ACCOUNT` | App 登录手机号（180****1314） |
+| `SGCC_PASSWORD` | App 登录密码 |
+| `SGCC_DEVICE_IP` | 青龙出口公网 IP。默认 `127.0.0.1`，固定伪造易被判 RK 错误 |
+| `SGCC_STATE_DIR` | 令牌缓存目录，设成 `/ql/data/scripts/sgcc/.state` 才随 `/ql/data` 持久化 |
+
+- 出口 IP 会变（换线路/换宽带）时要同步改 `SGCC_DEVICE_IP`。
+- `SGCC_MODE`：`all`(默认) / `sign` / `query` / `resign`。
+- 首次登录若返回 `4006` = 被当新设备，需 `--send-sms` 发码 + `--code <6位>`（要手机收码，人工）。
+
+## 六、退出码语义（配告警时用）
+
+`0` = 成功**或今日已签到**；`1` = 失败。
+判定看 `data.rtnCode`，不是外层 `srvrt.resultCode`（外层永远 1）：
+`1/0/0000` 成功；`102007` 或含「次数已用完/已签到」= 今日已签（仍退出 0）；`101007` = 令牌失效自动重登。
+
+签到接口 `member/m1/0103514`，补签 `member/m1/0584615`（原抓包把名字标反了，本版已纠正）。
+
+## 七、验收记录（2026-11-08）
+
+- 登录：密码登录成功，未触发短信校验，令牌缓存 15 天
+- 签到：成长金 **10 → 25（+15）**，`EXIT=0`
+- 二次运行：返回「今日已签到」，`EXIT=0`（幂等正确）
+- 青龙注入验证：不传 `-e`，仅靠 DB 变量跑通
+- 任务 851：`saved=True`、`disabled=0`、已写入 `crontab.list`
+
+## 八、随机延迟
+
+`sgcc_daily.sh` 在 08:00 触发后随机 `sleep 0~1800s`，落在 08:00–08:30 之间执行，避免固定时刻被风控。
+手动试跑时加 `SGCC_NO_DELAY=1` 跳过延迟。
