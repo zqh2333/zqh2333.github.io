@@ -1,7 +1,7 @@
 {
  "site": "运维知识库",
  "generated": "2026-11-10",
- "count": 125,
+ "count": 126,
  "categories": [
   {
    "id": "decisions",
@@ -21,7 +21,7 @@
   {
    "id": "runbooks",
    "name": "操作手册",
-   "count": 15
+   "count": 16
   },
   {
    "id": "meta",
@@ -36,6 +36,13 @@
    "category": "incidents",
    "url": "incidents/qqvideo-lucky-direct-proxy-2026-11-10.html",
    "summary": "云视听反代切回 Lucky 直连（2026 11 10） 背景 云视听解析服务出现域名打不开。现场检查发现后端服务本身在线，但公开 DNS 记录错误地指向内网地址，且 Lucky 的 HTTPS 父规则内没有该域名的反向"
+  },
+  {
+   "title": "云视听自建服务：部署现状与入口基线",
+   "date": "2026-11-10",
+   "category": "runbooks",
+   "url": "runbooks/qqvideo-selfhost-baseline-2026-11-10.html",
+   "summary": "云视听自建服务：部署现状与入口基线 日期 2026 11 10 何时用 排查「云视听 / 电视端播不了 / 设备未授权 / 转圈 / 拿不到播放地址」，或需要确认这套服务到底装到哪一步时。 服务定位 自建腾讯视频（云视听"
   },
   {
    "title": "网上国网（国家电网）每日签到 —— 青龙部署记录",

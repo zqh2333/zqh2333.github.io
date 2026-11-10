@@ -1,0 +1,269 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>云视听自建服务：部署现状与入口基线 - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · runbooks</nav><article><h1 id="_1">云视听自建服务：部署现状与入口基线</h1>
+<h2 id="_2">日期</h2>
+<p>2026-11-10</p>
+<h2 id="_3">何时用</h2>
+<p>排查「云视听 / 电视端播不了 / 设备未授权 / 转圈 / 拿不到播放地址」，或需要确认这套服务到底装到哪一步时。</p>
+<h2 id="_4">服务定位</h2>
+<p>自建腾讯视频（云视听极光）解析中转：服务器持有腾讯登录态 Cookie，电视端 APK 指向本机，由服务端代取播放地址。<strong>不是</strong>破解，本质是把网页版登录态转成 TV 端可播流。</p>
+<h2 id="_5">拓扑</h2>
+<pre><code class="language-text">电视 APK ──https://qqvideo.example.com:2333/&lt;secret&gt;/...──▶ Lucky :2333
+                                                              └─▶ https://&lt;LAN-8&gt;:18081
+                                                                   （qqvideo-resolver, TLS）
+后台浏览器 ──https://qqvideo.example.com:2333/admin──▶ 同上
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>后端主机</td>
+<td><code>&lt;LAN-8&gt;</code>（宝塔 docker 宿主机）</td>
+</tr>
+<tr>
+<td>程序目录</td>
+<td><code>/opt/qqvideo-relay/</code></td>
+</tr>
+<tr>
+<td>监听</td>
+<td><code>0.0.0.0:18081</code>（HTTPS）、Chrome CDP <code>127.0.0.1:9333</code></td>
+</tr>
+<tr>
+<td>运行用户</td>
+<td><code>resolver</code>（uid 999）</td>
+</tr>
+<tr>
+<td>外网入口</td>
+<td><code>https://qqvideo.example.com:2333</code>（Lucky 反代，<code>:2333</code> 必须带）</td>
+</tr>
+<tr>
+<td>DNS</td>
+<td><code>qqvideo.example.com → &lt;PUBLIC-IP&gt;</code>，灰云（proxied=false）</td>
+</tr>
+<tr>
+<td>证书</td>
+<td>复用 Lucky 的 <code>*.example.com</code> Let's Encrypt 泛域名，无需单独签发</td>
+</tr>
+<tr>
+<td>后台</td>
+<td><code>https://qqvideo.example.com:2333/admin</code>，账号 <code>admin</code>，密码见 <code>config.json</code> 的 pbkdf2 哈希（不可逆）</td>
+</tr>
+<tr>
+<td>secret</td>
+<td><code>config.json</code> 的 <code>secret</code> 字段，APK 地址 <code>https://qqvideo.example.com:2333/&lt;secret&gt;</code></td>
+</tr>
+<tr>
+<td>导航条目</td>
+<td>Sun-Panel id 33「云视听」，sort 23，图标手绘（电视+播放三角，<code>#3B82F6→#22D3EE</code>）</td>
+</tr>
+<tr>
+<td>教程与工具归档</td>
+<td><code>~/qqvideo-tutorial/</code>（<code>tutorial_pack.zip</code> / <code>apk_tool.zip</code> / 解压目录）</td>
+</tr>
+</tbody>
+</table>
+<h2 id="systemd">三个 systemd 单元</h2>
+<pre><code class="language-bash">systemctl status qqvideo-resolver qqvideo-chrome qqvideo-keepalive
+</code></pre>
+<ul>
+<li><code>qqvideo-resolver</code> — 主服务，18081，TLS</li>
+<li><code>qqvideo-chrome</code> — headless Chrome，给 resolver 走腾讯网页接口</li>
+<li><code>qqvideo-keepalive</code> — 每约 9 分钟刷新 Cookie</li>
+</ul>
+<h2 id="_6">健康判据（按顺序）</h2>
+<pre><code class="language-bash"># 1. 服务
+systemctl is-active qqvideo-resolver qqvideo-chrome qqvideo-keepalive
+
+# 2. 后端直连
+curl -skS -o /dev/null -w '%{http_code}\n' https://&lt;LAN-8&gt;:18081/admin/login   # 200
+
+# 3. 外网严格 TLS（禁 -k）
+curl -sS -o /dev/null -w 'http=%{http_code} verify=%{ssl_verify_result}\n' \
+  https://qqvideo.example.com:2333/admin/login      # http=200 verify=0
+
+# 4. 应用层
+curl -sS -o /dev/null -w '%{http_code}\n' https://qqvideo.example.com:2333/&lt;secret&gt;/getvinfo  # 200
+</code></pre>
+<h2 id="_7">故障分层对照</h2>
+<table>
+<thead>
+<tr>
+<th>现象</th>
+<th>根因</th>
+<th>位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>电视一直转圈 / 「设备未授权」</td>
+<td>设备没在后台授权</td>
+<td><code>devices.json</code> 里 <code>authorized=false</code></td>
+</tr>
+<tr>
+<td>能连上但取不到播放地址</td>
+<td><strong>Cookie 池为空</strong>（从未扫码）</td>
+<td><code>cookies_pool.json</code> 不存在，日志 <code>cookies=0</code></td>
+</tr>
+<tr>
+<td>保活日志反复 <code>no vusession</code></td>
+<td>Chrome 没有登录态</td>
+<td><code>cookies.json</code> 缺失，先扫码</td>
+</tr>
+<tr>
+<td>后台打不开</td>
+<td>走了 <code>:443</code> 而非 <code>:2333</code>，或 Lucky 规则缺失</td>
+<td><code>https://dh.example.com/</code> 会撞 iStoreOS 自签证书</td>
+</tr>
+<tr>
+<td>公网直连 18081 不通</td>
+<td>正常，18081 未做公网映射</td>
+<td>一律走 Lucky <code>:2333</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="_8">关键坑</h2>
+<ol>
+<li><strong>教程写的 <code>:18081</code> 在本环境外网不通</strong>，APK 必须填 <code>:2333</code> 的 Lucky 地址，否则直接连不上。</li>
+<li><strong>版本一致性可校验</strong>：<code>/opt/qqvideo-relay/resolver.py</code> 的 sha256 与教程包内 <code>服务端/resolver.py</code> 完全一致（本次核对 v3，2095 行）。升级前先比 hash。</li>
+<li><strong><code>cookies=0</code> 是硬阻塞</strong>，不是配置问题 —— 必须人工扫码 <code>/admin/qr</code>，任何自动化都替代不了。</li>
+<li><code>devices.json</code> 里出现 <code>ip:127.0.0.1</code> / <code>ip:&lt;LAN-3&gt;</code> 是本地探测留下的，不代表电视已连接。</li>
+<li><code>admin_allow_cidrs</code> 为空 = 后台对全网开放；要收紧就填内网段 + 家庭出口 IP。</li>
+<li>UFW 当前 <code>inactive</code>（教程 install.sh 第 7 步会配），不影响访问但少了层防护；如启用务必先放行 18081 和 SSH。</li>
+</ol>
+<h2 id="apk">APK 改包：绕过「没有找到作者的原始地址」</h2>
+<h3 id="_9">报错根因</h3>
+<p>作者工具 <code>云视听改包工具.exe</code>（PyInstaller 打包）定位方式是 <strong>匹配作者写死的完整原始地址字符串</strong>，所以只认 <code>2026-02-09</code> 那一版打印包。任何其它版本都会报：</p>
+<blockquote>
+<p>这个 APK 已经改过地址了，请用 2026-02-09.apk 原始包</p>
+</blockquote>
+<p>判断手上 APK 是不是那一版：看 zip 内 <code>classes3.dex</code> 的修改时间戳 —— 目标版是 <code>2026-02-09 15:50</code>（<code>classes5.dex</code> 同为该时间）。</p>
+<h3 id="test-exampleapk">实际改的两个点（从 <code>云视听test-example.apk</code> 反编译确认）</h3>
+<table>
+<thead>
+<tr>
+<th>dex</th>
+<th>smali 文件</th>
+<th>原始常量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>classes3.dex</code></td>
+<td><code>com/tencent/qqlive/tvkplayer/vinfo/vod/b.smali</code></td>
+<td><code>https://&lt;server&gt;/getvinfo</code></td>
+</tr>
+<tr>
+<td><code>classes5.dex</code></td>
+<td><code>com/tencent/qqlivetv/windowplayer/module/business/defauth/DefAuthRequest.smali</code></td>
+<td><code>https://&lt;server&gt;/i-tvbin/app/playable?</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>腾讯官方 <code>https://vv.video.qq.com/getvinfo</code> 和 <code>https://bkvv.video.qq.com/getvinfo</code> 必须保留</strong>（主/备链路），改了反而难回退。</p>
+<h3 id="_10">版本无关改包器</h3>
+<p><code>~/.hermes/scripts/patch_qqvideo_apk.py</code> —— 不匹配完整 URL，按 <strong>接口路径后缀</strong>（<code>/getvinfo</code>、<code>/i-tvbin/app/playable</code>）定位，因此不挑 APK 版本。</p>
+<pre><code class="language-bash"># 先探测能不能改（只读）
+python3 ~/.hermes/scripts/patch_qqvideo_apk.py --scan-only --apk 云视听极光.apk
+
+# 真改包
+python3 ~/.hermes/scripts/patch_qqvideo_apk.py \
+  --apk 云视听极光.apk \
+  --server https://qqvideo.example.com:2333/&lt;SECRET&gt; \
+  --out 云视听极光.patched.apk
+</code></pre>
+<p>流程：解 zip → baksmali 反编译命中的 dex → 正则替换 <code>const-string</code> → smali 回编译 → 按原 ZipInfo 重新打包 → <code>zipalign -p 4</code> → <code>apksigner</code> 用 <code>testkey.jks</code> 重签 → <code>apksigner verify</code>。</p>
+<p><strong>工具链（本机已装）</strong>：<code>default-jdk-headless</code>、<code>apksigner</code>、<code>zipalign</code>；baksmali/smali 用工具包自带 jar。</p>
+<p><strong>签名密钥</strong>：<code>~/qqvideo-tutorial/apk_tool/云视听改包工具/tools/testkey.jks</code>，storepass=<code>android</code>，alias=<code>testkey</code>，证书指纹 SHA-256 <code>a40da80a…71bf5dc</code>（与作者工具同一把 AOSP testkey）。</p>
+<h3 id="2026-11-10">交付记录（2026-11-10）</h3>
+<ul>
+<li>输入：<code>云视听test-example.apk</code>（30.3 MB，地址为占位符 <code>test.example:8443</code>）</li>
+<li>输出：<code>~/qqvideo-tutorial/云视听极光.patched.apk</code>（28.8 MB）</li>
+<li>MD5 <code>&lt;HASH&gt;</code></li>
+<li><code>apksigner verify</code> → v1/v2/v3 全通过，签名者 CN=Android（AOSP testkey）</li>
+<li>包内地址已指向 <code>https://qqvideo.example.com:2333/&lt;SECRET&gt;/getvinfo</code> 与 <code>.../i-tvbin/app/playable?</code></li>
+</ul>
+<h3 id="windows-2026-11-10">Windows 桌面通用版（2026-11-10 交付）</h3>
+<p>给非 Linux 环境用的双击版：<strong>换域名 / 换 secret / 整串换</strong> 三种模式，内置 Java，不挑 APK 版本。</p>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>产物</td>
+<td><code>~/qqvideo-tutorial/改包工具通用版/云视听改包工具.exe</code>（34 MB，PE32+ GUI x86-64）</td>
+</tr>
+<tr>
+<td>打包</td>
+<td><code>云视听改包工具-通用版.zip</code>（含使用说明）</td>
+</tr>
+<tr>
+<td>MD5</td>
+<td><code>&lt;HASH&gt;</code></td>
+</tr>
+<tr>
+<td>源码</td>
+<td><code>~/.hermes/tools/qqvideo-patcher-win/</code>（<code>main.py</code> GUI + <code>wpatch.py</code> 引擎 + <code>tools/</code> + <code>runtime/jre</code>）</td>
+</tr>
+<tr>
+<td>重打</td>
+<td><code>bash ~/.hermes/tools/qqvideo-patcher-win/build.sh</code>（Linux + wine 交叉编译，约 5 分钟）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>设计要点</strong></p>
+<ul>
+<li>定位逻辑与 Linux 版一致：按 <code>/getvinfo</code>、<code>/i-tvbin/app/playable</code> 接口后缀找，不依赖作者写死的完整 URL</li>
+<li><code>只换域名</code> 不带端口 → 继承原端口（<code>:2333</code>）；secret 原样保留</li>
+<li>腾讯官方 <code>vv.video.qq.com</code> / <code>bkvv.video.qq.com</code> 始终保留</li>
+<li>内嵌作者原包的 <code>runtime/jre</code>（Windows x64 JRE 17.0.18，jlink 裁剪），客户端无需装 Java</li>
+<li>签名仍用同一把 AOSP testkey，输出 v1+v2+v3</li>
+</ul>
+<p><strong>验证证据（在 Windows 环境实测，非仅编译通过）</strong></p>
+<ul>
+<li>引擎级：<code>secret</code> 模式改包 → 域名保持 <code>qqvideo.example.com:2333</code>，v1/v2/v3 验签通过</li>
+<li>exe 级自测（<code>QQPATCH_AUTOTEST</code> 环境变量入口）：<code>OK|2|...</code>，替换 2 处并正常退出</li>
+<li>产物核验：<code>https://exetest.example.org:2333/&lt;22位secret&gt;/getvinfo</code>，端口继承成功、腾讯 2 条未动、secret 长度 22</li>
+<li>子进程命令行确认跑在 <code>C:\users\...\Temp\_MEI######\tools\smali-fat.jar</code> → 内嵌资源解析正确</li>
+<li>界面在 Xvfb 下截图核验：无乱码、无豆腐块、无控件截断</li>
+</ul>
+<p><strong>坑（重打时注意）</strong></p>
+<ul>
+<li>tkinter 字号必须整数，<code>9.5</code> 直接抛 <code>TclError</code></li>
+<li><code>--add-data</code> 的源必须写绝对路径，否则 <code>--specpath</code> 会让它去 <code>build/</code> 下找</li>
+<li><code>--windowed</code> 下 <code>sys.stdout</code> 是 None，日志只能写 GUI 控件</li>
+<li>子进程必须加 <code>CREATE_NO_WINDOW</code>（<code>creationflags=0x08000000</code>），否则每个 java 调用弹黑窗</li>
+<li>Windows Defender 常误报 PyInstaller 单文件产物，使用说明里已提示加白名单</li>
+</ul>
+<p>完整交叉编译流程见技能 <code>windows-exe-cross-build-wine</code>。</p>
+<h3 id="_11">装电视</h3>
+<ol>
+<li><strong>先卸载电视上的官方/旧版 App</strong>（签名不同，覆盖装会报「应用未安装」）</li>
+<li>允许「未知来源应用」</li>
+<li>装 <code>云视听极光.apk</code>，打开后播放任意视频一次触发设备注册</li>
+<li>回后台批准设备，再设默认清晰度</li>
+</ol>
+<h3 id="_12">端到端判据</h3>
+<pre><code class="language-bash">curl -sS &quot;https://qqvideo.example.com:2333/&lt;SECRET&gt;/getvinfo&quot;
+# 打通时应答（85 字节），设备未批准时内容是：
+#   &lt;root&gt;&lt;em&gt;61&lt;/em&gt;&lt;exem&gt;1&lt;/exem&gt;&lt;msg&gt;设备未授权，请在后台批准&lt;/msg&gt;&lt;/root&gt;
+</code></pre>
+<p><strong>看到「设备未授权」= 链路完全正常</strong>，只剩后台授权这一步；若 timeout/404 才是链路问题。</p>
+<h2 id="2026-11-10_1">待办（截至 2026-11-10）</h2>
+<ul>
+<li>[ ] 后台 <code>/admin/qr</code> 扫码登录，确认 <code>cookies_pool.json</code> 生成</li>
+<li>[ ] 用 <code>apk_tool.zip</code> 打包 APK，地址填 <code>https://qqvideo.example.com:2333/&lt;secret&gt;</code></li>
+<li>[ ] 电视安装后到后台授权设备、设默认清晰度</li>
+<li>[ ] 视需要收紧 <code>admin_allow_cidrs</code>、启用 UFW</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-11-10</footer></div></body></html>
