@@ -12,12 +12,14 @@
 
 ```text
 客户端
-→ qqvideo.<自有域名>:2333（灰云 DNS，仅解析）
+→ qqvideo.example.com:2333（灰云 DNS，仅解析）
 → 公网 Lucky:2333
 → HTTPS 内网后端:18081
 ```
 
 Cloudflare 只承载权威 DNS，记录必须是 `proxied=false`；流量不经过 Cloudflare 边缘代理。
+
+> 域名纠正：首次处理误用了另一域名。误加的 Lucky 子规则、单域名证书和 DNS 改动均已按变更前快照精确回滚；正确入口固定为 `qqvideo.example.com:2333`。
 
 ## 落地
 
@@ -27,8 +29,8 @@ Cloudflare 只承载权威 DNS，记录必须是 `proxied=false`；流量不经�
    - 上游：`https://<LAN-BACKEND>:18081`
    - 启用：是
    - 上游证书校验跳过：是（内网固定受控后端）
-3. 将云视听 A 记录从内网地址改为 Lucky 的公网 DDNS 地址，保持灰云。
-4. 将后端已有的有效 Let's Encrypt 单域名证书导入 Lucky。否则 Lucky 会返回默认自签证书，电视端/浏览器会因 TLS 校验失败而打不开。
+3. 将 `qqvideo.example.com` A 记录新增为 Lucky 的公网 DDNS 地址，保持灰云。
+4. 复用 Lucky 中现有的 `*.example.com` Let's Encrypt 泛域名证书；无需另导入单域名证书。
 
 ## 验证方式
 

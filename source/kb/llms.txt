@@ -1,4 +1,4 @@
-# 运维知识库 · 125 篇 · 生成于 2026-11-10
+# 运维知识库 · 126 篇 · 生成于 2026-11-10
 
 ## 决策记录 (31)
 - [2026-10-31] 2026-10-31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘） — decisions/2026-10-31-qinglong-telecom-js-to-python.html
@@ -220,7 +220,9 @@
 - [] Verification Challenge Lab v1.0.1 — infrastructure/verification-challenge-lab-v1.0.1.html
     Verification Challenge Lab v1.0.1 本地产物： /home/user/artifacts/verification challenge lab v1.0.1.zip SHA 256： <H
 
-## 操作手册 (15)
+## 操作手册 (16)
+- [2026-11-10] 云视听自建服务：部署现状与入口基线 — runbooks/qqvideo-selfhost-baseline-2026-11-10.html
+    云视听自建服务：部署现状与入口基线 日期 2026 11 10 何时用 排查「云视听 / 电视端播不了 / 设备未授权 / 转圈 / 拿不到播放地址」，或需要确认这套服务到底装到哪一步时。 服务定位 自建腾讯视频（云视听
 - [2026-11-08] 网上国网（国家电网）每日签到 —— 青龙部署记录 — runbooks/sgcc-daily-checkin-deploy-2026-11-08.html
     网上国网（国家电网）每日签到 —— 青龙部署记录 日期：2026 11 08 任务：青龙 851「网上国网(成长金签到)」 0 8 脚本： /ql/data/scripts/sgcc/ （本地留档 ~/.hermes/s
 - [2026-11-07] CPAMP 升级后「数据库升级维护尚未完成」的正确处理 — runbooks/cpamp-deferred-index-maintenance-2026-11-07.html
