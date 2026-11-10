@@ -131,3 +131,4 @@
 - [[runbooks/qinglong-api-contract-2026-10-31]] — 分类：runbooks
 - [[runbooks/<TOKEN>]] — 分类：runbooks
 - [[runbooks/sgcc-daily-checkin-deploy-2026-11-08]] — 日期：2026-11-08
+- [[incidents/qqvideo-lucky-direct-proxy-2026-11-10]] — 云视听解析服务出现域名打不开。现场检查发现后端服务本身在线，但公开 DNS 记录错误地指向内网地址，且 Lucky 的 HTTPS 父规则内没有该域名的反向代理子规则。
