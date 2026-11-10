@@ -1,0 +1,46 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>云视听反代切回 Lucky 直连（2026-11-10） - 运维知识库</title>
+<link rel="stylesheet" href="../assets/kb.css"></head><body><div class="wrap">
+<nav class="crumb"><a href="../index.html">← 知识库首页</a> · incidents</nav><article><h1 id="lucky-2026-11-10">云视听反代切回 Lucky 直连（2026-11-10）</h1>
+<h2 id="_1">背景</h2>
+<p>云视听解析服务出现域名打不开。现场检查发现后端服务本身在线，但公开 DNS 记录错误地指向内网地址，且 Lucky 的 HTTPS 父规则内没有该域名的反向代理子规则。</p>
+<p>用户明确要求：云视听走 Lucky 反向代理，不经过 Cloudflare 代理。</p>
+<h2 id="_2">结论</h2>
+<p>固定链路为：</p>
+<pre><code class="language-text">客户端
+→ qqvideo.&lt;自有域名&gt;:2333（灰云 DNS，仅解析）
+→ 公网 Lucky:2333
+→ HTTPS 内网后端:18081
+</code></pre>
+<p>Cloudflare 只承载权威 DNS，记录必须是 <code>proxied=false</code>；流量不经过 Cloudflare 边缘代理。</p>
+<h2 id="_3">落地</h2>
+<ol>
+<li>备份 Lucky 父规则、Lucky 配置文件和原 DNS 记录。</li>
+<li>在 Lucky 的 TLS 父规则 <code>2333</code> 中新增云视听子规则：
+   - 域名：云视听专用域名
+   - 上游：<code>https://&lt;LAN-BACKEND&gt;:18081</code>
+   - 启用：是
+   - 上游证书校验跳过：是（内网固定受控后端）</li>
+<li>将云视听 A 记录从内网地址改为 Lucky 的公网 DDNS 地址，保持灰云。</li>
+<li>将后端已有的有效 Let's Encrypt 单域名证书导入 Lucky。否则 Lucky 会返回默认自签证书，电视端/浏览器会因 TLS 校验失败而打不开。</li>
+</ol>
+<h2 id="_4">验证方式</h2>
+<ul>
+<li>后端三个 systemd 服务均为 active，端口 <code>18081</code> 与 Chrome CDP 端口正常监听。</li>
+<li>Lucky API 回读：父规则启用、监听 2333、TLS 开启、云视听子规则恰好 1 条。</li>
+<li>Cloudflare DNS API 回读：云视听 A 记录指向 Lucky 公网入口，<code>proxied=false</code>。</li>
+<li>Cloudflare DoH 与 Google DoH 均返回 Lucky 公网地址。</li>
+<li>严格 TLS（不使用 <code>-k</code>）分别通过内网 Lucky 和公网 Lucky：证书校验结果为 0，SAN 匹配云视听域名。</li>
+<li>根路径返回后端应用的 404，而非 Lucky 404；专用管理路径返回后端应用级响应，证明 Host 路由和上游链路实际贯通。</li>
+</ul>
+<h2 id="_5">实际结果</h2>
+<p>链路恢复：DNS → 公网 Lucky:2333 → 内网 HTTPS 后端:18081。公网与内网两条严格 TLS 测试均通过。</p>
+<h2 id="_6">运维注意</h2>
+<ul>
+<li>云视听域名禁止切橙云。</li>
+<li>客户端入口必须包含 <code>:2333</code>；直接访问默认 443 不属于本链路。</li>
+<li>后端证书续期后，Lucky 中导入的文件证书不会自动跟随更新。续期时应同步更新 Lucky 证书，或后续改成安全的自动证书同步流程。</li>
+<li>Lucky 新增域名后必须检查实际 SNI 证书，不能只用 <code>curl -k</code> 验收；默认自签证书会制造“反代 200 但客户端打不开”的假成功。</li>
+</ul></article>
+<footer>脱敏发布的运维知识库 · 生成于 2026-11-10</footer></div></body></html>

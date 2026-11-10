@@ -1,4 +1,4 @@
-# 运维知识库 · 124 篇 · 生成于 2026-11-10
+# 运维知识库 · 125 篇 · 生成于 2026-11-10
 
 ## 决策记录 (31)
 - [2026-10-31] 2026-10-31 青龙：把电信任务从 JS 版换成 Python 版（签到+金豆+转盘） — decisions/2026-10-31-qinglong-telecom-js-to-python.html
@@ -64,7 +64,9 @@
 - [2026-07-15] CPA 本地配置同步与低频模型审计 — decisions/cpa-local-model-sync.html
     CPA 本地配置同步与低频模型审计 服务位置 CPA 控制面：宝塔主机 <LAN 8 。 容器： cli proxy （ eceasy/cli proxy api ）。 本地配置： /root/CLIProxyAPI/c
 
-## 故障记录 (37)
+## 故障记录 (38)
+- [2026-11-10] 云视听反代切回 Lucky 直连（2026-11-10） — incidents/qqvideo-lucky-direct-proxy-2026-11-10.html
+    云视听反代切回 Lucky 直连（2026 11 10） 背景 云视听解析服务出现域名打不开。现场检查发现后端服务本身在线，但公开 DNS 记录错误地指向内网地址，且 Lucky 的 HTTPS 父规则内没有该域名的反向
 - [2026-10-27] 昨晚（10-27 00:00）结果 — incidents/2026-10-27-pdd-window-too-short.html
     title: 拼多多零点抢券再复盘（2026 10 27）：1 秒窗口是硬伤，4000004 是网关限流 date: 2026 10 27 tags: pdd, 抢券, 复盘, 限流, 退避 昨晚（10 27 00:00
 - [2026-10-26] 现象 — incidents/2026-10-26-pdd-zero-claim-failure-diagnosis.html
